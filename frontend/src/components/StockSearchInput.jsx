@@ -12,13 +12,26 @@ export default function StockSearchInput({
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
+  
   const containerRef = useRef(null);
+  const isSelectingRef = useRef(false);
 
   useEffect(() => {
-    setQuery(value || '');
+    if (value !== query) {
+      isSelectingRef.current = true;
+      setQuery(value || '');
+      setSuggestions([]);
+      setIsOpen(false);
+    }
   }, [value]);
 
   useEffect(() => {
+    // If the change came from clicking a dropdown selection or prop update, do not re-fetch and re-open dropdown
+    if (isSelectingRef.current) {
+      isSelectingRef.current = false;
+      return;
+    }
+
     if (!query || query.trim().length < 1) {
       setSuggestions([]);
       setIsOpen(false);
@@ -26,10 +39,17 @@ export default function StockSearchInput({
     }
 
     const timer = setTimeout(async () => {
-      const results = await searchStocks(query);
-      setSuggestions(results);
-      setIsOpen(results.length > 0);
-      setHighlightIdx(0);
+      try {
+        const results = await searchStocks(query);
+        // Only open if the user hasn't just selected a stock
+        if (!isSelectingRef.current) {
+          setSuggestions(results);
+          setIsOpen(results.length > 0);
+          setHighlightIdx(0);
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+      }
     }, 120);
 
     return () => clearTimeout(timer);
@@ -47,8 +67,10 @@ export default function StockSearchInput({
   }, []);
 
   const handleSelect = (stock) => {
+    isSelectingRef.current = true;
     setQuery(stock.symbol);
     setIsOpen(false);
+    setSuggestions([]);
     onSelectStock(stock.symbol, stock);
   };
 
@@ -64,6 +86,9 @@ export default function StockSearchInput({
       if (isOpen && suggestions.length > 0) {
         handleSelect(suggestions[highlightIdx]);
       } else if (query.trim()) {
+        isSelectingRef.current = true;
+        setIsOpen(false);
+        setSuggestions([]);
         let sym = query.trim().toUpperCase();
         if (!sym.includes('.') && !['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA'].includes(sym)) {
           sym += '.NS';
@@ -82,9 +107,14 @@ export default function StockSearchInput({
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            isSelectingRef.current = false;
+            setQuery(e.target.value);
+          }}
           onFocus={() => {
-            if (suggestions.length > 0) setIsOpen(true);
+            if (suggestions.length > 0 && !isSelectingRef.current) {
+              setIsOpen(true);
+            }
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
@@ -102,7 +132,10 @@ export default function StockSearchInput({
           {suggestions.map((stock, idx) => (
             <div
               key={stock.symbol}
-              onMouseDown={() => handleSelect(stock)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(stock);
+              }}
               onMouseEnter={() => setHighlightIdx(idx)}
               className={`px-4 py-3 flex items-center justify-between cursor-pointer transition-colors ${
                 idx === highlightIdx ? 'bg-cyan-500/15 text-cyan-200' : 'text-gray-200 hover:bg-gray-800/60'
