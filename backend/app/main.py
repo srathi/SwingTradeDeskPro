@@ -1,6 +1,6 @@
 """
 FastAPI Main Application Entrypoint for Institutional Swing Trading Platform.
-Developed by rupeemap.in labs.
+Developed by rupeemap.in labs (by Sandesh Rathi).
 """
 
 import os
@@ -18,11 +18,11 @@ from backend.app.api.search_routes import router as search_router
 from backend.app.api.deep_scan_routes import router as deep_scan_router
 
 app = FastAPI(
-    title="SwingDesk Pro — rupeemap.in labs",
-    description="Quantitative Screener, TradingView Charting Engine, and Backtest Studio for NSE/BSE and Global Equities. Powered by rupeemap.in labs.",
+    title="SwingDesk Pro — rupeemap.in labs (by Sandesh Rathi)",
+    description="Quantitative Screener, TradingView Charting Engine, and Backtest Studio for NSE/BSE and Global Equities. Developed by Sandesh Rathi at rupeemap.in labs.",
     version="1.0.0",
     contact={
-        "name": "rupeemap.in labs",
+        "name": "Sandesh Rathi (rupeemap.in labs)",
         "url": "https://rupeemap.in"
     }
 )
@@ -51,8 +51,9 @@ def health_check():
     return {
         "status": "healthy",
         "service": "SwingDesk Pro Quantitative Engine",
+        "author": "Sandesh Rathi",
         "organization": "rupeemap.in labs",
-        "copyright": "© 2026 rupeemap.in labs. All rights reserved.",
+        "copyright": "© 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.",
         "market_supported": ["NSE", "BSE", "US"],
         "strategies": [
             "trend_pullback",

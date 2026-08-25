@@ -289,8 +289,8 @@ This software is for educational and quantitative research purposes only. It is 
 
 ## 🏛️ Organization & Copyright
 
-**SwingDesk Pro** is developed and maintained by **[rupeemap.in labs](https://rupeemap.in)**.
+**SwingDesk Pro** is designed, developed, and maintained by **Sandesh Rathi** at **[rupeemap.in labs](https://rupeemap.in)**.
 
 ```
-Copyright (c) 2026 rupeemap.in labs. All rights reserved.
+Copyright (c) 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.
 ```

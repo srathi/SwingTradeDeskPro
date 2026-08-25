@@ -6,7 +6,6 @@ import {
   ShieldAlert, 
   Bookmark, 
   Activity, 
-  Cpu,
   Zap
 } from 'lucide-react';
 
@@ -35,7 +34,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <span className="font-bold text-lg text-white tracking-tight">SwingDesk</span>
                 <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">PRO</span>
               </div>
-              <p className="text-[10px] text-cyan-400/80 tracking-wider uppercase font-mono font-medium">rupeemap.in labs</p>
+              <p className="text-[10px] text-cyan-400/90 tracking-wide font-mono font-medium">
+                rupeemap.in labs <span className="text-gray-500 font-sans">• by Sandesh Rathi</span>
+              </p>
             </div>
           </div>
 

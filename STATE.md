@@ -139,3 +139,11 @@
   * Registered all 6 strategies in `STRATEGY_REGISTRY` in `backend/app/strategies/__init__.py`.
   * Deep Scan API and Screener API automatically evaluate all 6 models concurrently.
   * Pushed code changes to GitHub repository (`1e05942`): `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Copyright & Branding: rupeemap.in labs:**
+  * Added `rupeemap.in labs` branding to Navbar (`frontend/src/components/Navbar.jsx`).
+  * Added `© 2026 rupeemap.in labs. All rights reserved.` to the app footer (`frontend/src/App.jsx`).
+  * Added `organization: rupeemap.in labs` and copyright metadata to FastAPI app & `/api/health` (`backend/app/main.py`).
+  * Added `LICENSE` file with MIT license (Copyright (c) 2026 rupeemap.in labs).
+  * Updated `README.md` with organization and copyright badge.
+  * Pushed commit (`bcb21fe`) to GitHub repository: `https://github.com/srathi/SwingTradeDeskPro.git`.

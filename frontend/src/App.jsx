@@ -95,13 +95,13 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      {/* Institutional Footer with rupeemap.in labs Copyright */}
+      {/* Institutional Footer with Sandesh Rathi & rupeemap.in labs Copyright */}
       <footer className="border-t border-gray-900/90 py-5 bg-[#080C14] text-xs text-gray-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap">
             <span className="font-semibold text-gray-200">SwingDesk Pro</span>
             <span className="text-gray-600">|</span>
-            <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong>. All rights reserved.</span>
+            <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by <strong className="text-gray-200 font-medium">Sandesh Rathi</strong>). All rights reserved.</span>
           </div>
           <div className="flex items-center space-x-4 text-[11px] text-gray-400 font-mono">
             <span>Quantitative Market Intelligence</span>
