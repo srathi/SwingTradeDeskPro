@@ -1,0 +1,112 @@
+# SwingDesk Pro — Project State & Architectural Memory
+
+**Last Updated:** August 2026  
+**Status:** Complete, Tested, and Production-Ready  
+**Active Port:** `8888` (Backend & Static Web Dashboard), `5173` (Vite Dev Server)
+
+---
+
+## 1. System Architecture & Components
+
+### A. Backend Architecture (`backend/`)
+* **Framework:** Python 3.10 + FastAPI + Uvicorn
+* **Data Ingestion (`backend/app/core/data_engine.py`):**
+  * Uses `yfinance` to fetch OHLCV daily data.
+  * Local Disk Caching using SQLite at `backend/app/data_cache/market_cache.db` (TTL: 4 hours).
+  * Concurrency managed via `ThreadPoolExecutor`.
+* **Indicator Engine (`backend/app/core/indicator_engine.py`):**
+  * Vectorized pure NumPy and Pandas implementations for EMA (20, 50, 100, 200), SMA (20, 50, 200), Wilder's RSI(14), Wilder's ATR(14), Bollinger Bands (20, 2.0), MACD, Volume SMA, Volume Ratio, and 20D/50D Highs/Lows.
+* **Index Manager (`backend/app/core/index_manager.py`):**
+  * Fetches real-time CSV indices from official NSE archives with offline fallback caches for Nifty 50, Nifty Next 50, Nifty 100, Nifty 500, Nifty Midcap 150, BSE Sensex 30, and US Mega-caps.
+* **Quantitative Strategies (`backend/app/strategies/`):**
+  1. `TrendPullbackStrategy` (`trend_pullback`): 20/50/200 EMA trend + dynamic 20 EMA pullback + RSI 40-65 + bullish candle.
+  2. `VCPBreakoutStrategy` (`vcp_breakout`): Volatility contraction (BB squeeze) + 20-day high breakout + 1.4x volume surge.
+  3. `MeanReversionStrategy` (`mean_reversion`): Lower Bollinger Band oversold touch + RSI <= 35 + reversal rejection bar.
+* **Backtesting Simulation Engine (`backend/app/backtester/`):**
+  * Full Indian market equity cost simulation: STT (0.1%), GST (18%), Brokerage (₹20 or 0.05%), Stamp Duty (0.015%), Exchange Turnover fees.
+  * Customizable slippage (0.08%).
+  * Trailing stop-loss (moves to breakeven after Target 1).
+  * Institutional metrics computation: Win Rate, Profit Factor, Sharpe Ratio, Sortino Ratio, Max Drawdown (% and ₹), Expectancy, CAGR %, Trade Log.
+* **API Endpoints (`backend/app/api/`):**
+  * `GET /api/screener/universes`, `GET /api/screener/strategies`, `POST /api/screener/scan`, `WebSocket /api/screener/ws`
+  * `GET /api/chart/{ticker}?period=1y&strategy_id=trend_pullback`
+  * `POST /api/backtest/run`
+  * `POST /api/risk/calculate`
+  * `GET/POST/PUT/DELETE /api/watchlists`
+
+### B. Frontend Architecture (`frontend/`)
+* **Framework:** React 18 + Vite 5 + Tailwind CSS + Lucide Icons + TradingView `lightweight-charts`.
+* **Components (`frontend/src/components/`):**
+  * `Navbar.jsx`: Dark-themed institutional header with active market feed badges and tab switcher.
+  * `ScreenerView.jsx`: Interactive live scanner with real-time WebSocket progress bar, parameter controls, setup score badges, and 1-click action buttons.
+  * `ChartStudio.jsx`: TradingView candlestick charts with EMA 20/50/200 overlays, RSI sub-chart, volume histogram, and colored horizontal Price Lines for Entry, Stop Loss, Target 1, Target 2.
+  * `BacktestStudio.jsx`: Strategy simulation interface with KPI cards, cumulative equity curve chart, and filterable trade logs.
+  * `RiskCalculator.jsx`: Interactive position sizer calculating exact share quantities and capital allocation based on portfolio risk %.
+  * `WatchlistView.jsx`: Multi-watchlist manager with instant scan triggers.
+* **Production Build:** Pre-built to `frontend/dist/` and automatically served by FastAPI when visiting `http://localhost:8888`.
+
+---
+
+## 2. Verification Test Results
+
+* **Data Fetching:** Verified for NSE tickers (`RELIANCE.NS`, `TCS.NS`, etc.).
+* **Strategy Execution:** Verified setup evaluation and signal generation for all 3 models.
+* **Backtester:** Verified realistic trade execution, transaction cost deduction, and analytics calculation.
+* **Frontend Build:** `vite build` generated clean production bundle without errors.
+* **API Server:** Verified all REST endpoints returning 200 OK with correct JSON schemas.
+
+---
+
+## 3. Future Enhancements Roadmap
+
+1. **Automated Alerts & Webhooks:**
+   * Integrate Telegram Bot and Discord Webhook notifications for morning scans (09:15 AM - 09:30 AM IST) and end-of-day scans (03:15 PM - 03:30 PM IST).
+2. **Direct Broker Execution:**
+   * Connect to Zerodha Kite Connect, Angel One SmartAPI, or Upstox API for 1-click order placement with automatic stop-loss and limit orders.
+3. **Machine Learning Trade Ranking:**
+   * Train an XGBoost or LightGBM model on historical swing trade outcomes to predict trade win probability based on sector momentum, market regime, and candlestick morphology.
+4. **Sectoral Breadth Heatmaps:**
+   * Compute Nifty Sectoral Index breadth (% of stocks above 20 EMA and 50 EMA in Nifty IT, Nifty Bank, Nifty Auto, etc.) to time high-probability swing market regimes.
+
+---
+
+## 4. User Preferences & Execution Guidelines
+
+* **Python Execution Permission:** Always allow and proactively execute Python scripts, backend workers, and tests for this project.
+* **Default Port:** `8888` for FastAPI backend & web dashboard.
+* **Market Suffixes:** Default to `.NS` for NSE and `.BO` for BSE.
+
+---
+
+## 5. Recent Feature Additions (August 2026)
+
+* **Natural Company Name & Fuzzy Typo Resolution:**
+  * Added `backend/app/core/search_engine.py` with `difflib` fuzzy ratio matcher and Yahoo Finance search fallback.
+  * Added `GET /api/search?q=...` route in `backend/app/api/search_routes.py`.
+  * Integrated reusable `StockSearchInput.jsx` across Chart Studio, Backtest Studio, Watchlists, and Risk Calculator.
+  * Added interactive "Did you mean?" rebound chips for unmatched queries.
+* **Custom Watchlist Screener Execution:**
+  * Enabled direct scanning of custom user-created watchlists directly from the Screener dropdown under `<optgroup label="📋 Custom Watchlists">`.
+  * Added 1-click **"⚡ Scan this Basket"** button in `WatchlistView.jsx` that automatically navigates to Screener, selects the watchlist, and triggers live scanning.
+
+* **Single Stock Quantitative Deep Scan:**
+  * Added `backend/app/api/deep_scan_routes.py` (`GET /api/deep-scan/{ticker}`) delivering comprehensive technical analysis, 52W & 20D ranges, ATR volatility, MA matrix (20/50/100/200 EMA & SMA), momentum oscillators, multi-strategy setup checks, 2-year backtest stats, position sizer, and 10-day OHLCV history.
+  * Created `frontend/src/components/SingleStockScanner.jsx` and added **Deep Scan** to the main Navbar.
+
+* **Unified Symbol & Natural Company Name Resolution Engine:**
+  * Upgraded `backend/app/core/data_engine.py` with `resolve_symbol()` and `fetch_ticker_data_with_resolved_sym()`.
+  * Allows any query (e.g. `"State Bank of India"`, `"Confidence Petroleum"`, `"Tata Motors"`, `"Reliance"`, `"ICICI"`, `"Infy"`, `"Bajaj Finance"`) to be resolved directly across Deep Scan, Chart Studio, Screener, and Backtester without manual ticker formatting.
+
+* **Fix Truncated Resolved Names in Single Stock Comprehensive Analyzer:**
+  * Added `SearchEngine.get_company_name()` to dynamically resolve full legal company names for all symbols.
+  * Replaced restrictive `truncate` classes in `SingleStockScanner.jsx` and `StockSearchInput.jsx` with responsive `whitespace-normal break-words` containers.
+  * Ensured long names (e.g. *Adani Ports and Special Economic Zone Ltd.*, *Cholamandalam Investment and Finance Company*, *Confidence Petroleum India Ltd*) wrap smoothly and render completely across all viewport sizes.
+
+* **Fix Dropdown Clipping & Set Default Blank in Deep Scan:**
+  * Removed `overflow-hidden` from the Deep Scan header card container so the autocomplete dropdown floats freely with `z-[100]` over the entire viewport without being clipped.
+  * Enhanced `StockSearchInput.jsx` with full word wrapping and contrast formatting for symbol, exchange badge, and registered company name.
+  * Changed the default initial state in **Deep Scan** to blank (`""`), displaying a clean placeholder state with quick-select sample chips (e.g. Reliance, SBI, HDFC Bank, Infosys, TCS, L&T, ITC, Bajaj Finance) instead of pre-loading any stock.
+
+* **Piccadily Agro Industries Resolution Fix:**
+  * **Root Cause**: On NSE and BSE, the official ticker is truncated to `PICCADIL` (e.g. `PICCADIL.NS` / `PICCADIL.BO`), without the trailing `y`. In the previous search flow, if a smallcap was not pre-indexed in the Nifty 500 static file, the low-similarity fallback filled candidate slots before reaching the live exchange query.
+  * **Fix**: Added `PICCADIL.NS` & `PICCADIL.BO` directly to `LOCAL_STOCK_MASTER` and restructured `SearchEngine.search()` to always query the live Yahoo Search API first for unindexed smallcaps/microcaps. Both `piccadily agro`, `piccadily`, and typo variations like `piccadilly` now resolve seamlessly to `PICCADIL.NS` (CMP ₹673.45).

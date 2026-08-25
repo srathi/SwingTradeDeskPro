@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: swingtradedesk-pro
+    env: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8888
