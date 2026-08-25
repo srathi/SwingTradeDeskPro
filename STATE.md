@@ -110,3 +110,23 @@
 * **Piccadily Agro Industries Resolution Fix:**
   * **Root Cause**: On NSE and BSE, the official ticker is truncated to `PICCADIL` (e.g. `PICCADIL.NS` / `PICCADIL.BO`), without the trailing `y`. In the previous search flow, if a smallcap was not pre-indexed in the Nifty 500 static file, the low-similarity fallback filled candidate slots before reaching the live exchange query.
   * **Fix**: Added `PICCADIL.NS` & `PICCADIL.BO` directly to `LOCAL_STOCK_MASTER` and restructured `SearchEngine.search()` to always query the live Yahoo Search API first for unindexed smallcaps/microcaps. Both `piccadily agro`, `piccadily`, and typo variations like `piccadilly` now resolve seamlessly to `PICCADIL.NS` (CMP ₹673.45).
+
+* **Git Repository Initialized & Pushed to GitHub:**
+  * Initialized Git repository on branch `main`.
+  * Added production `Dockerfile` (multi-stage build), `render.yaml`, `.gitignore`, `requirements.txt`, and full codebase.
+  * Pushed initial commit (`09902fd`) to remote repository: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Fix Dropdown Dismissal After Selection:**
+  * **Root Cause**: In `StockSearchInput.jsx`, selecting a stock updated `query` to the selected ticker symbol. This triggered the debounced `useEffect([query])` hook 120ms later, which re-queried the search API and re-opened the dropdown (`setIsOpen(true)`).
+  * **Fix**: Added `isSelectingRef` to distinguish user typing from programmatic selection, immediately cleared suggestions on selection, and prevented re-querying upon clicking/entering an item.
+  * Pushed fix to GitHub (`ac57c69`) for automatic continuous deployment to Render production.
+
+* **Updated Comprehensive README.md:**
+  * Added Academic & Empirical Research Foundations table with win rates, Sharpe ratios, and average holding periods.
+  * Added Strategy Specifications & Trigger Rules table for all 6 trading models.
+  * Added Architecture Mermaid Diagram and Live Production URL badges.
+  * Pushed update (`134bcae`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Added Individual Strategy Scorecard Tables to README.md:**
+  * Added individual dedicated specification and scorecard tables for all 6 trading models (Strategy ID, Research Basis, Empirical Edge, Win Rate, Sharpe Ratio, Holding Period, Trend Filters, Entry Triggers, Stop Loss, Profit Targets).
+  * Pushed commit (`a610723`) to GitHub repository: `https://github.com/srathi/SwingTradeDeskPro.git`.

@@ -3,11 +3,17 @@ from backend.app.strategies.base import BaseStrategy
 from backend.app.strategies.trend_pullback import TrendPullbackStrategy
 from backend.app.strategies.vcp_breakout import VCPBreakoutStrategy
 from backend.app.strategies.mean_reversion import MeanReversionStrategy
+from backend.app.strategies.volatility_squeeze import VolatilitySqueezeStrategy
+from backend.app.strategies.connors_rsi2 import ConnorsRSI2Strategy
+from backend.app.strategies.relative_strength_leader import RelativeStrengthLeaderStrategy
 
 STRATEGY_REGISTRY: Dict[str, BaseStrategy] = {
     "trend_pullback": TrendPullbackStrategy(),
     "vcp_breakout": VCPBreakoutStrategy(),
-    "mean_reversion": MeanReversionStrategy()
+    "mean_reversion": MeanReversionStrategy(),
+    "volatility_squeeze": VolatilitySqueezeStrategy(),
+    "connors_rsi2": ConnorsRSI2Strategy(),
+    "relative_strength_leader": RelativeStrengthLeaderStrategy()
 }
 
 

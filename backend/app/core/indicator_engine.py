@@ -67,6 +67,19 @@ def bollinger_bands(
     return upper, mid, lower, bandwidth, percent_b
 
 
+def keltner_channels(
+    high: pd.Series, low: pd.Series, close: pd.Series, length: int = 20, mult: float = 1.5, atr_length: int = 10
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """
+    Keltner Channels (KC): Upper, Middle, Lower.
+    """
+    mid = ema(close, length)
+    atr_val = atr(high, low, close, length=atr_length)
+    upper = mid + (mult * atr_val)
+    lower = mid - (mult * atr_val)
+    return upper, mid, lower
+
+
 def macd(
     close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
 ) -> Tuple[pd.Series, pd.Series, pd.Series]:
@@ -109,30 +122,44 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     data['EMA_200'] = ema(data['Close'], 200)
 
     # SMAs
+    data['SMA_5'] = sma(data['Close'], 5)
     data['SMA_20'] = sma(data['Close'], 20)
     data['SMA_50'] = sma(data['Close'], 50)
     data['SMA_200'] = sma(data['Close'], 200)
 
-    # Momentum & Volatility
+    # Wilder Oscillators & Volatility
     data['RSI_14'] = rsi(data['Close'], 14)
+    data['RSI_2'] = rsi(data['Close'], 2)
     data['ATR_14'] = atr(data['High'], data['Low'], data['Close'], 14)
 
-    # Bollinger Bands
-    bb_upper, bb_mid, bb_lower, bb_width, bb_pct = bollinger_bands(data['Close'], 20, 2.0)
+    # Bollinger Bands (20, 2.0)
+    bb_upper, bb_mid, bb_lower, bb_width, bb_pct_b = bollinger_bands(data['Close'], 20, 2.0)
     data['BB_Upper'] = bb_upper
     data['BB_Middle'] = bb_mid
     data['BB_Lower'] = bb_lower
     data['BB_Width'] = bb_width
-    data['BB_PctB'] = bb_pct
+    data['BB_PctB'] = bb_pct_b
+
+    # Keltner Channels (20, 1.5, 10 ATR)
+    kc_upper, kc_mid, kc_lower = keltner_channels(data['High'], data['Low'], data['Close'], 20, 1.5, 10)
+    data['KC_Upper'] = kc_upper
+    data['KC_Middle'] = kc_mid
+    data['KC_Lower'] = kc_lower
+
+    # MACD
+    m_line, s_line, hist = macd(data['Close'], 12, 26, 9)
+    data['MACD'] = m_line
+    data['MACD_Signal'] = s_line
+    data['MACD_Hist'] = hist
 
     # Volume Indicators
     data['Vol_SMA20'] = volume_sma(data['Volume'], 20)
-    data['Vol_Ratio'] = data['Volume'] / data['Vol_SMA20'].replace(0, np.nan)
+    data['Vol_Ratio'] = (data['Volume'] / data['Vol_SMA20'].replace(0, np.nan)).fillna(1.0)
 
-    # 20-Day and 50-Day Highs/Lows
-    data['High_20D'] = highest(data['High'], 20)
-    data['Low_20D'] = lowest(data['Low'], 20)
-    data['High_50D'] = highest(data['High'], 50)
-    data['Low_50D'] = lowest(data['Low'], 50)
+    # Ranges & Donchian Pivots
+    data['High_20'] = highest(data['High'], 20)
+    data['Low_20'] = lowest(data['Low'], 20)
+    data['High_50'] = highest(data['High'], 50)
+    data['Low_50'] = lowest(data['Low'], 50)
 
     return data
