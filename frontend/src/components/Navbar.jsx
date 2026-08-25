@@ -6,7 +6,8 @@ import {
   ShieldAlert, 
   Bookmark, 
   Activity, 
-  Zap
+  Zap,
+  BookOpen
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
@@ -17,6 +18,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'backtest', label: 'Backtest Studio', icon: TrendingUp },
     { id: 'risk', label: 'Risk Calculator', icon: ShieldAlert },
     { id: 'watchlists', label: 'Watchlists', icon: Bookmark },
+    { id: 'matrix', label: 'Strategy Matrix', icon: BookOpen },
   ];
 
   return (
@@ -41,7 +43,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex space-x-1 sm:space-x-2">
+          <nav className="flex space-x-1 sm:space-x-1.5 overflow-x-auto py-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -49,7 +51,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 ${
+                  className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-150 ${
                     isActive
                       ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm shadow-cyan-500/10'
                       : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 border border-transparent'
@@ -63,7 +65,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </nav>
 
           {/* Status Indicator */}
-          <div className="hidden lg:flex items-center space-x-2.5 bg-gray-900/60 border border-gray-800 px-3 py-1.5 rounded-full">
+          <div className="hidden xl:flex items-center space-x-2.5 bg-gray-900/60 border border-gray-800 px-3 py-1.5 rounded-full flex-shrink-0">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>

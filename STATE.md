@@ -147,3 +147,10 @@
   * Added `LICENSE` file with MIT license (Copyright (c) 2026 rupeemap.in labs).
   * Updated `README.md` with organization and copyright badge.
   * Pushed commit (`bcb21fe`) to GitHub repository: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Added Author Attribution: by Sandesh Rathi:**
+  * Header/Navbar: `rupeemap.in labs • by Sandesh Rathi`
+  * Footer: `© 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.`
+  * Backend API & `/api/health`: `author: Sandesh Rathi` & `organization: rupeemap.in labs`
+  * Legal LICENSE & README: `Copyright (c) 2026 rupeemap.in labs (by Sandesh Rathi)`.
+  * Pushed commit (`8c5f35f`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

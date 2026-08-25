@@ -6,6 +6,7 @@ import ChartStudio from './components/ChartStudio';
 import BacktestStudio from './components/BacktestStudio';
 import RiskCalculator from './components/RiskCalculator';
 import WatchlistView from './components/WatchlistView';
+import StrategyGuideView from './components/StrategyGuideView';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -39,6 +40,15 @@ export default function App() {
     setPresetUniverse('custom');
     setPresetCustomTickers(tickers);
     setActiveTab('screener');
+  };
+
+  const handleLaunchScreenerWithStrategy = (strategyId) => {
+    setActiveTab('screener');
+  };
+
+  const handleLaunchBacktestWithStrategy = (strategyId) => {
+    setBacktestStrategy(strategyId);
+    setActiveTab('backtest');
   };
 
   return (
@@ -90,6 +100,13 @@ export default function App() {
             <WatchlistView
               onSelectTicker={handleSelectTicker}
               onScanWatchlist={handleScanWatchlist}
+            />
+          )}
+
+          {activeTab === 'matrix' && (
+            <StrategyGuideView
+              onLaunchScreener={handleLaunchScreenerWithStrategy}
+              onLaunchBacktest={handleLaunchBacktestWithStrategy}
             />
           )}
         </ErrorBoundary>
