@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import ScreenerView from './components/ScreenerView';
+import SingleStockScanner from './components/SingleStockScanner';
 import ChartStudio from './components/ChartStudio';
 import BacktestStudio from './components/BacktestStudio';
 import RiskCalculator from './components/RiskCalculator';
 import WatchlistView from './components/WatchlistView';
-import SingleStockScanner from './components/SingleStockScanner';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -17,23 +17,9 @@ export default function App() {
   const [presetUniverse, setPresetUniverse] = useState(null);
   const [presetCustomTickers, setPresetCustomTickers] = useState(null);
 
-  // Cross-component navigation handlers
   const handleSelectTicker = (ticker) => {
-    let sym = ticker;
-    if (sym && !sym.includes('.') && !['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA'].includes(sym)) {
-      sym += '.NS';
-    }
-    setSelectedTicker(sym);
+    setSelectedTicker(ticker);
     setActiveTab('chart');
-  };
-
-  const handleOpenDeepScan = (ticker) => {
-    let sym = ticker;
-    if (sym && !sym.includes('.') && !['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA'].includes(sym)) {
-      sym += '.NS';
-    }
-    setDeepScanTicker(sym);
-    setActiveTab('deepscan');
   };
 
   const handleOpenRisk = (setup) => {
@@ -42,20 +28,16 @@ export default function App() {
   };
 
   const handleOpenBacktest = (ticker, strategyId) => {
-    let sym = ticker;
-    if (sym && !sym.includes('.') && !['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA'].includes(sym)) {
-      sym += '.NS';
+    setSelectedTicker(ticker);
+    if (strategyId) {
+      setBacktestStrategy(strategyId);
     }
-    setSelectedTicker(sym);
-    setBacktestStrategy(strategyId || 'trend_pullback');
     setActiveTab('backtest');
   };
 
-  const handleScanWatchlist = (watchlist) => {
-    if (watchlist) {
-      setPresetUniverse(`WL_${watchlist.id}`);
-      setPresetCustomTickers(watchlist.tickers);
-    }
+  const handleScanWatchlist = (watchlistName, tickers) => {
+    setPresetUniverse('custom');
+    setPresetCustomTickers(tickers);
     setActiveTab('screener');
   };
 
@@ -113,11 +95,19 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      {/* Institutional Footer */}
-      <footer className="border-t border-gray-900/80 py-4 bg-[#0B0F19] text-center text-xs text-gray-400">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SwingDesk Pro — Quantitative Swing Trading Platform for Indian & Global Markets</span>
-          <span className="font-mono text-gray-400">Data powered by Yahoo Finance API</span>
+      {/* Institutional Footer with rupeemap.in labs Copyright */}
+      <footer className="border-t border-gray-900/90 py-5 bg-[#080C14] text-xs text-gray-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold text-gray-200">SwingDesk Pro</span>
+            <span className="text-gray-600">|</span>
+            <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong>. All rights reserved.</span>
+          </div>
+          <div className="flex items-center space-x-4 text-[11px] text-gray-400 font-mono">
+            <span>Quantitative Market Intelligence</span>
+            <span className="text-gray-700">•</span>
+            <span>NSE & BSE Indian Equities</span>
+          </div>
         </div>
       </footer>
     </div>

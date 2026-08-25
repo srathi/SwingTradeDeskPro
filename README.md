@@ -284,3 +284,13 @@ SwingTradeDeskPro/
 ## 📜 License & Disclaimer
 
 This software is for educational and quantitative research purposes only. It is not financial or investment advice. Always backtest strategies and practice sound risk management before deploying real capital.
+
+---
+
+## 🏛️ Organization & Copyright
+
+**SwingDesk Pro** is developed and maintained by **[rupeemap.in labs](https://rupeemap.in)**.
+
+```
+Copyright (c) 2026 rupeemap.in labs. All rights reserved.
+```

@@ -35,7 +35,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <span className="font-bold text-lg text-white tracking-tight">SwingDesk</span>
                 <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">PRO</span>
               </div>
-              <p className="text-[10px] text-gray-400 tracking-wider uppercase font-medium">NSE & BSE Quantitative Suite</p>
+              <p className="text-[10px] text-cyan-400/80 tracking-wider uppercase font-mono font-medium">rupeemap.in labs</p>
             </div>
           </div>
 
@@ -61,16 +61,13 @@ export default function Navbar({ activeTab, setActiveTab }) {
             })}
           </nav>
 
-          {/* System Status Indicators */}
-          <div className="hidden lg:flex items-center space-x-3 text-xs">
-            <div className="flex items-center space-x-2 px-2.5 py-1 rounded-md bg-gray-900/80 border border-gray-800 text-gray-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-[11px] font-medium text-emerald-400">YF Feed Active</span>
-            </div>
-            <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-gray-900/80 border border-gray-800 text-gray-400">
-              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-[11px] font-mono">v1.0.0-PRO</span>
-            </div>
+          {/* Status Indicator */}
+          <div className="hidden lg:flex items-center space-x-2.5 bg-gray-900/60 border border-gray-800 px-3 py-1.5 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[11px] font-mono text-gray-300 font-medium">NSE/BSE Feeds Active</span>
           </div>
 
         </div>
