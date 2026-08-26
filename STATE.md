@@ -160,3 +160,11 @@
   * Added 1-click `"⚡ Run Live Screener"` and `"📈 Backtest Strategy"` action buttons directly inside the strategy matrix cards.
   * Added `Strategy Matrix` tab with `BookOpen` icon to the Navbar.
   * Pushed commit (`42faa84`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Fixed Backtest Studio Execution & Chart Rendering:**
+  * **Root Cause 1**: `backtest_routes.py` was calling `data_engine.fetch_ticker_data()` directly without symbol resolution, causing 404 errors whenever users entered lowercase or natural stock names (e.g. `tatamotors`, `piccadily agro`, `reliance`, `confidence petro`).
+  * **Root Cause 2**: In `BacktestStudio.jsx`, the equity curve chart was feeding duplicate dates to TradingView Lightweight Charts, which throws an exception when timestamps are not strictly unique and ascending.
+  * **Fix Applied**: 
+    1. Upgraded `backtest_routes.py` to use `fetch_ticker_data_with_resolved_sym()`.
+    2. Added date map deduplication and ascending sort in `BacktestStudio.jsx` before rendering the equity curve series.
+  * Pushed commit (`881ac0e`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

@@ -545,7 +545,7 @@ export default function SingleStockScanner({
               <div className="p-3 bg-gray-950/80 rounded-xl border border-gray-800 flex items-center justify-between text-xs font-mono">
                 <span className="text-gray-400">Total 2Y Return:</span>
                 <span className={`font-bold ${data.backtest_snapshot.net_profit_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {data.backtest_snapshot.net_profit_pct >= 0 ? `+${data.backtest_snapshot.net_profit_pct}%` : `${data.backtest_snapshot.net_profit_pct}%`} (+₹{data.backtest_snapshot.net_profit?.toLocaleString()})
+                  {data.backtest_snapshot.net_profit_pct >= 0 ? `+${data.backtest_snapshot.net_profit_pct}%` : `${data.backtest_snapshot.net_profit_pct}%`} (+₹{(data.backtest_snapshot.net_profit || 0).toLocaleString()})
                 </span>
               </div>
             </div>
@@ -589,15 +589,15 @@ export default function SingleStockScanner({
                 </div>
                 <div className="flex justify-between items-center text-gray-300">
                   <span>Capital Required:</span>
-                  <span className="font-semibold text-gray-100">₹{data.position_sizing.capital_required.toLocaleString()} ({data.position_sizing.portfolio_allocation_pct}% of account)</span>
+                  <span className="font-semibold text-gray-100">₹{(data.position_sizing?.capital_required || 0).toLocaleString()} ({data.position_sizing?.portfolio_allocation_pct || 0}% of account)</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-300">
                   <span>Max Risk Budget:</span>
-                  <span className="font-semibold text-red-400">₹{data.position_sizing.total_risk_amount.toLocaleString()}</span>
+                  <span className="font-semibold text-red-400">₹{(data.position_sizing?.total_risk_amount || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-300 pt-1 border-t border-gray-800">
                   <span>Target 1 Profit (2R):</span>
-                  <span className="font-bold text-emerald-400">+₹{data.position_sizing.potential_profit_target_1.toLocaleString()}</span>
+                  <span className="font-bold text-emerald-400">+₹{(data.position_sizing?.potential_profit_target_1 || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -180,7 +180,7 @@ export default function RiskCalculator({ prefillSetup = null }) {
                     {result.shares} <span className="text-sm text-cyan-400 font-medium">Shares</span>
                   </div>
                   <span className="text-xs text-gray-400 font-mono">
-                    Total Outlay: ₹{result.capital_required.toLocaleString()} ({result.portfolio_allocation_pct}% of capital)
+                    Total Outlay: ₹{(result.capital_required || 0).toLocaleString()} ({result.portfolio_allocation_pct || 0}% of capital)
                   </span>
                 </div>
 
@@ -192,7 +192,7 @@ export default function RiskCalculator({ prefillSetup = null }) {
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-gray-800">
                     <span className="text-gray-400 font-sans">Total Monetary Risk</span>
-                    <span className="text-red-400 font-bold">₹{result.total_risk_amount.toLocaleString()} ({result.total_risk_pct}%)</span>
+                    <span className="text-red-400 font-bold">₹{(result.total_risk_amount || 0).toLocaleString()} ({result.total_risk_pct || 0}%)</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-gray-800">
                     <span className="text-gray-400 font-sans">Risk-to-Reward (R:R)</span>
@@ -200,11 +200,11 @@ export default function RiskCalculator({ prefillSetup = null }) {
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-gray-800">
                     <span className="text-gray-400 font-sans">Profit at Target 1 (2R - ₹{result.target_1_2R})</span>
-                    <span className="text-emerald-400 font-bold">+₹{result.potential_profit_target_1.toLocaleString()}</span>
+                    <span className="text-emerald-400 font-bold">+₹{(result.potential_profit_target_1 || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-gray-800">
                     <span className="text-gray-400 font-sans">Profit at Target 2 (3R - ₹{result.target_2_3R})</span>
-                    <span className="text-emerald-300 font-bold">+₹{result.potential_profit_target_2.toLocaleString()}</span>
+                    <span className="text-emerald-300 font-bold">+₹{(result.potential_profit_target_2 || 0).toLocaleString()}</span>
                   </div>
                 </div>
 
