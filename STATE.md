@@ -201,3 +201,9 @@
   * Modified `App.jsx`, `ChartStudio.jsx`, and `BacktestStudio.jsx` so that no default stock (e.g. `RELIANCE.NS`) is preselected upon initial tab load.
   * Added clean placeholder states in both tabs prompting the user to search and select their desired equity symbol.
   * Pushed commit (`872799f`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Migrated to Institutional Vertical Left Sidebar Navigation:**
+  * Created `Sidebar.jsx` with organized workflow tiers (Discovery & Regime, Execution & Analysis, Workspace & Research), collapsible rail mode (240px <-> 64px), active state indicators, and responsive mobile drawer.
+  * Created `TopHeader.jsx` with dynamic breadcrumb navigation, quick stock search jumper, and live market indicator.
+  * Preserved 100% of functional capabilities, drilldowns, and sub-actions across all 8 modules with zero regressions.
+  * Pushed commit (`f494859`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
