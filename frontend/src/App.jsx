@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import ScreenerView from './components/ScreenerView';
 import SingleStockScanner from './components/SingleStockScanner';
+import SectorPulseView from './components/SectorPulseView';
 import ChartStudio from './components/ChartStudio';
 import BacktestStudio from './components/BacktestStudio';
 import RiskCalculator from './components/RiskCalculator';
@@ -42,6 +43,18 @@ export default function App() {
     setActiveTab('screener');
   };
 
+  const handleScanSector = (sectorName) => {
+    // Map sector to appropriate universe or custom tickers
+    if (sectorName.includes('Bank')) {
+      setPresetUniverse('NIFTY_BANK');
+    } else if (sectorName.includes('IT')) {
+      setPresetUniverse('NIFTY_IT');
+    } else {
+      setPresetUniverse('NIFTY_500');
+    }
+    setActiveTab('screener');
+  };
+
   const handleLaunchScreenerWithStrategy = (strategyId) => {
     setActiveTab('screener');
   };
@@ -73,6 +86,12 @@ export default function App() {
               onOpenChart={handleSelectTicker}
               onOpenBacktest={handleOpenBacktest}
               onOpenRisk={handleOpenRisk}
+            />
+          )}
+
+          {activeTab === 'sectors' && (
+            <SectorPulseView
+              onScanSector={handleScanSector}
             />
           )}
 

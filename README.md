@@ -294,3 +294,59 @@ This software is for educational and quantitative research purposes only. It is 
 ```
 Copyright (c) 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.
 ```
+
+---
+
+## 🧭 SectorPulse — Quantitative Sector Rotation & Regime Forecaster
+
+`SectorPulse` is a high-performance quantitative package and CLI service built to detect top-down macro sector trends, quantify Mansfield Relative Strength against the benchmark, and forecast regime duration/exhaustion using econometric models (Hurst Exponent, Markov Transition Matrices) and deep learning foundation forecasters (Amazon Chronos).
+
+### CLI Usage
+
+```bash
+# 1. Scan Indian sector indices against Nifty 50 benchmark in formatted table
+python3 -m sectorpulse.cli --benchmark "^NSEI" --sectors "^CNXIT,^NSEBANK,^CNXAUTO,^CNXMETAL,^CNXPHARMA" --format table
+
+# 2. Output strictly typed JSON contract
+python3 -m sectorpulse.cli --benchmark "^NSEI" --sectors "^CNXIT" --format json
+```
+
+### JSON Output Contract
+
+```json
+{
+  "timestamp": "2026-08-26T17:36:54Z",
+  "sector": "^CNXMETAL",
+  "name": "Nifty Metal",
+  "regime": {
+    "trend_classification": "EARLY_UPTREND",
+    "mrs_score": 7.89,
+    "mrs_slope_5d": 8.73,
+    "adx_14": 13.0,
+    "hurst_exponent": 0.68
+  },
+  "duration_forecast": {
+    "current_regime_age_days": 1,
+    "expected_total_duration_days": 21,
+    "estimated_remaining_days": 20,
+    "chronos_median_peak_horizon_days": 23,
+    "exhaustion_probability": 0.04
+  },
+  "risk_parameters": {
+    "atr_14": 250.82,
+    "trailing_stop_level": 12052.71,
+    "overextension_flag": true
+  },
+  "trade_recommendation": {
+    "action": "ACCUMULATE_BREAKOUT",
+    "sector_weight_multiplier": 1.15
+  }
+}
+```
+
+### Running Unit Tests
+
+```bash
+python3 -m pytest tests/test_sectorpulse.py -v
+```
+

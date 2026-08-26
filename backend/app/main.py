@@ -16,10 +16,11 @@ from backend.app.api.risk_routes import router as risk_router
 from backend.app.api.watchlist_routes import router as watchlist_router
 from backend.app.api.search_routes import router as search_router
 from backend.app.api.deep_scan_routes import router as deep_scan_router
+from backend.app.api.sector_routes import router as sector_router
 
 app = FastAPI(
     title="SwingDesk Pro — rupeemap.in labs (by Sandesh Rathi)",
-    description="Quantitative Screener, TradingView Charting Engine, and Backtest Studio for NSE/BSE and Global Equities. Developed by Sandesh Rathi at rupeemap.in labs.",
+    description="Quantitative Screener, TradingView Charting Engine, SectorPulse Rotation Matrix, and Backtest Studio for NSE/BSE and Global Equities. Developed by Sandesh Rathi at rupeemap.in labs.",
     version="1.0.0",
     contact={
         "name": "Sandesh Rathi (rupeemap.in labs)",
@@ -44,6 +45,7 @@ app.include_router(risk_router)
 app.include_router(watchlist_router)
 app.include_router(search_router)
 app.include_router(deep_scan_router)
+app.include_router(sector_router)
 
 
 @app.get("/api/health")
@@ -55,6 +57,14 @@ def health_check():
         "organization": "rupeemap.in labs",
         "copyright": "© 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.",
         "market_supported": ["NSE", "BSE", "US"],
+        "modules": [
+            "screener",
+            "chart_studio",
+            "backtest_studio",
+            "risk_calculator",
+            "sector_pulse",
+            "strategy_matrix"
+        ],
         "strategies": [
             "trend_pullback",
             "vcp_breakout",

@@ -168,3 +168,9 @@
     1. Upgraded `backtest_routes.py` to use `fetch_ticker_data_with_resolved_sym()`.
     2. Added date map deduplication and ascending sort in `BacktestStudio.jsx` before rendering the equity curve series.
   * Pushed commit (`881ac0e`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Reverted Commit 13b16a6 & Fixed Strategy Matrix Tab Visibility:**
+  * Reverted commit `13b16a6` via `8faae81` as requested.
+  * Identified and fixed navigation tab truncation in [`Navbar.jsx`](file:///Users/sandesh/antigravity/SwingTrades/frontend/src/components/Navbar.jsx) so all 7 tabs (including the 7th **Strategy Matrix** tab) fit cleanly without overflow or being pushed off-screen across any device size.
+  * Added distinct highlighted badge styling to the **Strategy Matrix** tab button.
+  * Rebuilt frontend bundle and pushed commits (`8faae81`, `b562384`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

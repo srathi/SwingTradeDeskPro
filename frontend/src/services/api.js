@@ -119,3 +119,12 @@ export async function fetchDeepScan(ticker, period = "2y", capital = 500000, ris
   }
   return res.json();
 }
+
+export async function fetchSectorPulse(market = "NSE", period = "2y") {
+  const res = await fetch(`${API_BASE}/sectors/pulse?market=${encodeURIComponent(market)}&period=${encodeURIComponent(period)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load sector pulse data");
+  }
+  return res.json();
+}

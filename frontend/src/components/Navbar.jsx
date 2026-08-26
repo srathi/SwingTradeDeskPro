@@ -7,13 +7,15 @@ import {
   Bookmark, 
   Activity, 
   Zap,
-  BookOpen
+  BookOpen,
+  Compass
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
   const navItems = [
     { id: 'screener', label: 'Live Screener', icon: Layers },
     { id: 'deepscan', label: 'Deep Scan', icon: Zap },
+    { id: 'sectors', label: 'Sector Pulse', icon: Compass },
     { id: 'chart', label: 'Chart Studio', icon: BarChart2 },
     { id: 'backtest', label: 'Backtest Studio', icon: TrendingUp },
     { id: 'risk', label: 'Risk Calculator', icon: ShieldAlert },
