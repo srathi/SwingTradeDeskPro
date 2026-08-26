@@ -25,8 +25,8 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
 
-  const [ticker, setTicker] = useState(initialTicker);
-  const [strategyId, setStrategyId] = useState(initialStrategy);
+  const [ticker, setTicker] = useState(initialTicker || "RELIANCE.NS");
+  const [strategyId, setStrategyId] = useState(initialStrategy || "trend_pullback");
   const [period, setPeriod] = useState("2y");
   const [initialCapital, setInitialCapital] = useState(500000);
   const [riskPct, setRiskPct] = useState(1.0);
@@ -52,16 +52,15 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
 
   const handleRunBacktest = async (e) => {
     if (e) e.preventDefault();
+    if (!ticker || !ticker.trim()) {
+      setErrorMsg("Please enter or select a stock symbol to backtest.");
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     try {
-      let sym = ticker.trim().toUpperCase();
-      if (!sym.includes('.') && !sym.startsWith('BASKET') && !['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'TSLA'].includes(sym)) {
-        sym += '.NS';
-      }
-
       const res = await runBacktest({
-        ticker: sym,
+        ticker: ticker.trim(),
         strategy_id: strategyId,
         period: period,
         initial_capital: Number(initialCapital),
@@ -77,7 +76,7 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
     }
   };
 
-  // Render Equity Curve via Lightweight Charts
+  // Render Equity Curve via Lightweight Charts with strict deduplication
   useEffect(() => {
     if (!chartContainerRef.current || !metrics || !metrics.equity_curve || metrics.equity_curve.length === 0) return;
 
@@ -115,12 +114,17 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
       });
       chartRef.current = chart;
 
-      const equityData = metrics.equity_curve
-        .filter(p => p.date !== 'Start' && p.date.includes('-'))
-        .map(p => ({
-          time: p.date,
-          value: p.equity
-        }));
+      // Deduplicate by date and ensure ascending sort
+      const dateMap = new Map();
+      metrics.equity_curve
+        .filter(p => p.date && p.date !== 'Start' && p.date.includes('-'))
+        .forEach(p => {
+          dateMap.set(p.date, p.equity);
+        });
+
+      const equityData = Array.from(dateMap.entries())
+        .map(([time, value]) => ({ time, value }))
+        .sort((a, b) => (a.time > b.time ? 1 : -1));
 
       if (equityData.length > 0) {
         const areaSeries = chart.addAreaSeries({
@@ -160,18 +164,25 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
     };
   }, [metrics]);
 
-  const filteredTrades = metrics?.trades?.filter(t => {
-    if (tradeFilter === 'WIN') return t.is_win;
-    if (tradeFilter === 'LOSS') return !t.is_win;
-    return true;
-  }) || [];
-
-  const exportTradeLogCSV = () => {
+  const exportCSV = () => {
     if (!metrics || !metrics.trades || metrics.trades.length === 0) return;
-    const headers = ["Trade #", "Ticker", "Entry Date", "Exit Date", "Entry Price", "Exit Price", "Shares", "Capital Deployed", "Gross PnL", "Net PnL", "Return %", "Exit Reason", "Bars Held"];
+    const headers = ["Trade #", "Ticker", "Entry Date", "Exit Date", "Entry Price", "Exit Price", "Shares", "Capital Deployed", "Gross PnL", "Net PnL", "Return %", "Exit Reason", "Days Held"];
     const rows = metrics.trades.map(t => [
-      t.trade_no, t.ticker, t.entry_date, t.exit_date, t.entry_price, t.exit_price, t.shares, t.capital_deployed, t.gross_pnl, t.net_pnl, `${t.return_pct}%`, `"${t.exit_reason}"`, t.bars_held
+      t.trade_no,
+      t.ticker,
+      t.entry_date,
+      t.exit_date,
+      t.entry_price,
+      t.exit_price,
+      t.shares,
+      t.capital_deployed,
+      t.gross_pnl,
+      t.net_pnl,
+      t.return_pct,
+      `"${t.exit_reason}"`,
+      t.bars_held
     ]);
+
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -182,20 +193,26 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
     document.body.removeChild(link);
   };
 
+  const filteredTrades = metrics && metrics.trades ? metrics.trades.filter(t => {
+    if (tradeFilter === 'WIN') return t.is_win;
+    if (tradeFilter === 'LOSS') return !t.is_win;
+    return true;
+  }) : [];
+
   return (
     <div className="space-y-6">
       
-      {/* Control & Parameters Panel */}
-      <div className="bg-gray-900/90 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
-          <div>
-            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-semibold uppercase tracking-wider border border-cyan-500/20">
-              Institutional Simulation
-            </span>
-            <h1 className="text-xl font-bold text-white mt-1">Quantitative Backtest Studio</h1>
-            <p className="text-xs text-gray-400">
-              Simulates realistic trade lifecycle including STT, GST, brokerage, slippage, and fixed risk position sizing.
-            </p>
+      {/* Control Panel Card */}
+      <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-800 pb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">Institutional Backtest Studio</h1>
+              <p className="text-xs text-gray-400">Realistic bar-by-bar simulation with STT, GST, Brokerage, and Slippage models</p>
+            </div>
           </div>
 
           <button
@@ -230,7 +247,7 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
             <select
               value={strategyId}
               onChange={(e) => setStrategyId(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 font-mono"
             >
               {strategies.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -258,219 +275,233 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
               type="number"
               value={initialCapital}
               onChange={(e) => setInitialCapital(e.target.value)}
-              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 font-mono focus:outline-none focus:border-cyan-500"
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 font-mono"
             />
           </div>
-        </div>
 
-        {/* Frictions & Risk Settings */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-800/60 bg-gray-950/60 p-3.5 rounded-xl text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-400">Risk per Trade (%):</span>
+          <div>
+            <label className="text-xs font-medium text-gray-400 block mb-1">Risk / Trade (%)</label>
             <input
               type="number"
-              step="0.5"
-              min="0.5"
-              max="5"
+              step="0.1"
               value={riskPct}
               onChange={(e) => setRiskPct(e.target.value)}
-              className="w-20 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-cyan-300 font-mono text-center"
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 font-mono"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-gray-400">Estimated Slippage (%):</span>
+          <div>
+            <label className="text-xs font-medium text-gray-400 block mb-1">Slippage (%)</label>
             <input
               type="number"
               step="0.01"
               value={slippagePct}
               onChange={(e) => setSlippagePct(e.target.value)}
-              className="w-20 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-cyan-300 font-mono text-center"
+              className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 font-mono"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-gray-400">Indian Taxes & Brokerage:</span>
-            <button
-              onClick={() => setEnableTaxes(!enableTaxes)}
-              className={`px-3 py-1 rounded font-semibold transition-colors ${
-                enableTaxes ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-gray-800 text-gray-500'
-              }`}
-            >
-              {enableTaxes ? "Enabled (STT+GST)" : "Zero Costs"}
-            </button>
+          <div className="sm:col-span-2 lg:col-span-2 flex items-center space-x-2 pt-6">
+            <input
+              type="checkbox"
+              id="taxToggle"
+              checked={enableTaxes}
+              onChange={(e) => setEnableTaxes(e.target.checked)}
+              className="w-4 h-4 rounded text-cyan-500 bg-gray-950 border-gray-700 focus:ring-0 cursor-pointer"
+            />
+            <label htmlFor="taxToggle" className="text-xs text-gray-300 font-medium cursor-pointer">
+              Enable Indian Taxes (STT, GST, Stamp Duty, Brokerage)
+            </label>
           </div>
         </div>
 
+        {errorMsg && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
       </div>
 
-      {errorMsg && (
-        <div className="p-4 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded-xl flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {/* Backtest Results Dashboard */}
+      {/* Results View */}
       {metrics && (
         <div className="space-y-6">
           
-          {/* Key Metric Scorecards */}
+          {/* Top Scorecard KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Net Profit</span>
-              <div className={`text-lg font-bold font-mono ${metrics.net_profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {metrics.net_profit >= 0 ? `+₹${metrics.net_profit.toLocaleString()}` : `-₹${Math.abs(metrics.net_profit).toLocaleString()}`}
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Net Profit</div>
+              <div className={`text-lg font-bold font-mono mt-0.5 ${metrics.net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {metrics.net_profit >= 0 ? '+' : ''}₹{metrics.net_profit.toLocaleString()}
               </div>
-              <span className={`text-xs font-semibold ${metrics.net_profit_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {metrics.net_profit_pct >= 0 ? `+${metrics.net_profit_pct}%` : `${metrics.net_profit_pct}%`} Return
-              </span>
+              <div className={`text-xs font-mono ${metrics.net_profit_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {metrics.net_profit_pct >= 0 ? '+' : ''}{metrics.net_profit_pct}% Return
+              </div>
             </div>
 
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Win Rate</span>
-              <div className="text-lg font-bold font-mono text-cyan-300">
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Win Rate %</div>
+              <div className="text-lg font-bold text-cyan-400 font-mono mt-0.5">
                 {metrics.win_rate}%
               </div>
-              <span className="text-xs text-gray-400">
+              <div className="text-xs text-gray-400 font-mono">
                 {metrics.winning_trades}W / {metrics.losing_trades}L ({metrics.total_trades} total)
-              </span>
+              </div>
             </div>
 
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Profit Factor</span>
-              <div className={`text-lg font-bold font-mono ${metrics.profit_factor >= 1.5 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Profit Factor</div>
+              <div className="text-lg font-bold text-indigo-400 font-mono mt-0.5">
                 {metrics.profit_factor}
               </div>
-              <span className="text-xs text-gray-400">Gross Wins / Losses</span>
+              <div className="text-xs text-gray-400 font-mono">
+                Payoff: {metrics.payoff_ratio}x
+              </div>
             </div>
 
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Max Drawdown</span>
-              <div className="text-lg font-bold font-mono text-red-400">
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Max Drawdown</div>
+              <div className="text-lg font-bold text-rose-400 font-mono mt-0.5">
                 -{metrics.max_drawdown_pct}%
               </div>
-              <span className="text-xs text-gray-400">-₹{metrics.max_drawdown_amount.toLocaleString()}</span>
+              <div className="text-xs text-gray-400 font-mono">
+                -₹{metrics.max_drawdown_val?.toLocaleString()}
+              </div>
             </div>
 
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Sharpe Ratio</span>
-              <div className="text-lg font-bold font-mono text-purple-300">
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Sharpe Ratio</div>
+              <div className="text-lg font-bold text-amber-400 font-mono mt-0.5">
                 {metrics.sharpe_ratio}
               </div>
-              <span className="text-xs text-gray-400">Sortino: {metrics.sortino_ratio}</span>
-            </div>
-
-            <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-500">Taxes & Friction</span>
-              <div className="text-lg font-bold font-mono text-amber-400">
-                ₹{metrics.total_taxes_paid.toLocaleString()}
+              <div className="text-xs text-gray-400 font-mono">
+                Sortino: {metrics.sortino_ratio}
               </div>
-              <span className="text-xs text-gray-400">STT, GST, Brokerage</span>
             </div>
 
+            <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">
+              <div className="text-[11px] text-gray-400 uppercase font-mono">Avg Holding</div>
+              <div className="text-lg font-bold text-purple-400 font-mono mt-0.5">
+                {metrics.avg_holding_days} Days
+              </div>
+              <div className="text-xs text-gray-400 font-mono">
+                CAGR: {metrics.cagr_pct}%
+              </div>
+            </div>
           </div>
 
           {/* Equity Curve Chart */}
-          <div className="bg-gray-900/80 border border-gray-800 p-4 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-bold text-white">Portfolio Equity Curve (₹)</h3>
+                <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-mono">
+                  Portfolio Equity Curve ({metrics.ticker})
+                </h3>
               </div>
-              <span className="text-xs font-mono text-gray-400">
-                Final Equity: <strong className="text-cyan-300">₹{metrics.final_equity.toLocaleString()}</strong>
-              </span>
+              <div className="text-xs text-gray-400 font-mono">
+                Initial: ₹{metrics.initial_capital.toLocaleString()} ➔ Final: ₹{metrics.final_capital.toLocaleString()}
+              </div>
             </div>
-            
-            <div ref={chartContainerRef} className="w-full rounded-lg overflow-hidden" />
+
+            <div ref={chartContainerRef} className="w-full rounded-xl overflow-hidden" />
           </div>
 
-          {/* Trade Execution Log Table */}
-          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800 pb-4">
+          {/* Trade Execution Logs Table */}
+          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center space-x-3">
-                <h3 className="text-base font-bold text-white">Trade-by-Trade Execution Log</h3>
-                <div className="flex items-center space-x-1 bg-gray-950 p-1 rounded-lg border border-gray-800 text-xs">
-                  {['ALL', 'WIN', 'LOSS'].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setTradeFilter(f)}
-                      className={`px-2.5 py-1 rounded font-semibold text-xs ${
-                        tradeFilter === f ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-gray-400 hover:text-gray-200'
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
+                <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-mono">
+                  Trade Execution Log ({filteredTrades.length} Trades)
+                </h3>
+                
+                {/* Filter Tabs */}
+                <div className="flex space-x-1 bg-gray-950 p-1 rounded-lg border border-gray-800 text-xs">
+                  <button
+                    onClick={() => setTradeFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${tradeFilter === 'ALL' ? 'bg-gray-800 text-white font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+                  >
+                    All ({metrics.total_trades})
+                  </button>
+                  <button
+                    onClick={() => setTradeFilter('WIN')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${tradeFilter === 'WIN' ? 'bg-emerald-500/20 text-emerald-300 font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+                  >
+                    Winners ({metrics.winning_trades})
+                  </button>
+                  <button
+                    onClick={() => setTradeFilter('LOSS')}
+                    className={`px-2.5 py-1 rounded-md transition-colors ${tradeFilter === 'LOSS' ? 'bg-rose-500/20 text-rose-300 font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+                  >
+                    Losers ({metrics.losing_trades})
+                  </button>
                 </div>
               </div>
 
               <button
-                onClick={exportTradeLogCSV}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-xs font-medium text-gray-200 self-start sm:self-auto"
+                onClick={exportCSV}
+                className="px-3.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-mono flex items-center space-x-1.5 transition-colors"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export Trades CSV</span>
+                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Export CSV</span>
               </button>
             </div>
 
-            {filteredTrades.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-gray-300 font-mono">
-                  <thead className="bg-gray-950/80 text-gray-400 uppercase text-[10px] font-semibold tracking-wider border-b border-gray-800">
-                    <tr>
-                      <th className="px-3 py-2.5">#</th>
-                      <th className="px-3 py-2.5">Symbol</th>
-                      <th className="px-3 py-2.5">Entry</th>
-                      <th className="px-3 py-2.5">Exit</th>
-                      <th className="px-3 py-2.5">Entry ₹</th>
-                      <th className="px-3 py-2.5">Exit ₹</th>
-                      <th className="px-3 py-2.5">Shares</th>
-                      <th className="px-3 py-2.5">Capital</th>
-                      <th className="px-3 py-2.5">Net PnL</th>
-                      <th className="px-3 py-2.5">Return</th>
-                      <th className="px-3 py-2.5">Exit Reason</th>
-                      <th className="px-3 py-2.5">Held</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-gray-950 text-gray-400 uppercase font-mono border-b border-gray-800">
+                  <tr>
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">Symbol</th>
+                    <th className="py-2.5 px-3">Entry Date</th>
+                    <th className="py-2.5 px-3">Exit Date</th>
+                    <th className="py-2.5 px-3 text-right">Entry Price</th>
+                    <th className="py-2.5 px-3 text-right">Exit Price</th>
+                    <th className="py-2.5 px-3 text-right">Shares</th>
+                    <th className="py-2.5 px-3 text-right">Net PnL (₹)</th>
+                    <th className="py-2.5 px-3 text-right">Return %</th>
+                    <th className="py-2.5 px-3">Exit Reason</th>
+                    <th className="py-2.5 px-3 text-center">Held</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800 text-gray-200 font-mono">
+                  {filteredTrades.map((t) => (
+                    <tr key={t.trade_no} className="hover:bg-gray-800/40 transition-colors">
+                      <td className="py-2.5 px-3 text-gray-400">#{t.trade_no}</td>
+                      <td className="py-2.5 px-3 font-semibold text-white">{t.ticker}</td>
+                      <td className="py-2.5 px-3 text-gray-300">{t.entry_date}</td>
+                      <td className="py-2.5 px-3 text-gray-300">{t.exit_date}</td>
+                      <td className="py-2.5 px-3 text-right">₹{t.entry_price}</td>
+                      <td className="py-2.5 px-3 text-right">₹{t.exit_price}</td>
+                      <td className="py-2.5 px-3 text-right">{t.shares}</td>
+                      <td className={`py-2.5 px-3 text-right font-bold ${t.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {t.net_pnl >= 0 ? '+' : ''}₹{t.net_pnl.toLocaleString()}
+                      </td>
+                      <td className={`py-2.5 px-3 text-right font-bold ${t.return_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {t.return_pct >= 0 ? '+' : ''}{t.return_pct}%
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                          t.exit_reason.includes('Target') 
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                            : (t.exit_reason.includes('Stop') ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-gray-800 text-gray-300')
+                        }`}>
+                          {t.exit_reason}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center text-gray-400">{t.bars_held}d</td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-800/60">
-                    {filteredTrades.map((t) => (
-                      <tr key={t.trade_no} className="hover:bg-gray-800/40 transition-colors">
-                        <td className="px-3 py-2 text-gray-500 font-bold">{t.trade_no}</td>
-                        <td className="px-3 py-2 text-white font-bold">{t.ticker}</td>
-                        <td className="px-3 py-2 text-gray-400">{t.entry_date}</td>
-                        <td className="px-3 py-2 text-gray-400">{t.exit_date}</td>
-                        <td className="px-3 py-2 text-gray-200">₹{t.entry_price}</td>
-                        <td className="px-3 py-2 text-gray-200">₹{t.exit_price}</td>
-                        <td className="px-3 py-2 text-cyan-300">{t.shares}</td>
-                        <td className="px-3 py-2 text-gray-300">₹{t.capital_deployed.toLocaleString()}</td>
-                        <td className={`px-3 py-2 font-bold ${t.net_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {t.net_pnl >= 0 ? `+₹${t.net_pnl.toLocaleString()}` : `-₹${Math.abs(t.net_pnl).toLocaleString()}`}
-                        </td>
-                        <td className={`px-3 py-2 font-bold ${t.return_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {t.return_pct >= 0 ? `+${t.return_pct}%` : `${t.return_pct}%`}
-                        </td>
-                        <td className="px-3 py-2 text-gray-400">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                            t.is_win ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                          }`}>
-                            {t.exit_reason}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-gray-400">{t.bars_held} bars</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 text-xs">
-                No trades match the selected filter.
-              </div>
-            )}
-
+                  ))}
+                  {filteredTrades.length === 0 && (
+                    <tr>
+                      <td colSpan="11" className="text-center py-8 text-gray-500">
+                        No trades triggered for this setup in the selected horizon.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>

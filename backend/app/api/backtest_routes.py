@@ -1,5 +1,5 @@
 """
-Backtest API Routes.
+Backtest API Routes with Symbol Resolution and Robust Cost Models.
 """
 
 from typing import Optional, Dict, Any, List
@@ -38,36 +38,48 @@ def run_backtest(req: BacktestRequest):
         enable_indian_taxes=req.enable_indian_taxes
     )
 
-    # Single ticker backtest
+    # 1. Single ticker backtest
     if req.ticker and not req.universe:
-        df = data_engine.fetch_ticker_data(req.ticker, period=req.period, interval="1d")
-        if df is None or len(df) < 50:
-            raise HTTPException(status_code=404, detail=f"Insufficient historical data for {req.ticker}")
+        query = req.ticker.strip()
+        clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(query, period=req.period, interval="1d")
+        
+        if df is None or len(df) < 40:
+            # Fallback retry with 1y or 5y
+            clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(query, period="1y", interval="1d")
 
-        sim_res = engine.run_single(req.ticker, df, strategy_id=req.strategy_id, strategy_params=req.params)
+        if df is None or len(df) < 40:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Insufficient price history found for '{req.ticker}'. Please select a valid ticker or try another period."
+            )
+
+        sim_res = engine.run_single(clean_ticker, df, strategy_id=req.strategy_id, strategy_params=req.params)
         if "error" in sim_res:
             raise HTTPException(status_code=400, detail=sim_res["error"])
 
         metrics = compute_performance_metrics(sim_res["trades"], sim_res["equity_curve"], req.initial_capital)
-        metrics["ticker"] = req.ticker
+        metrics["ticker"] = clean_ticker
         metrics["strategy_id"] = req.strategy_id
         metrics["period"] = req.period
         return metrics
 
-    # Portfolio basket backtest
-    tickers = IndexManager.get_tickers(req.universe or "NIFTY_50")[:15]  # Top 15 liquid for speed
+    # 2. Portfolio basket backtest
+    universe_id = req.universe or "NIFTY_50"
+    tickers = IndexManager.get_tickers(universe_id)[:15]  # Top 15 liquid for responsive backtesting
     all_trades = []
-    combined_equity = []
     
     # Run backtest across basket
     for t in tickers:
-        df = data_engine.fetch_ticker_data(t, period=req.period, interval="1d")
-        if df is not None and len(df) > 50:
-            res = engine.run_single(t, df, strategy_id=req.strategy_id, strategy_params=req.params)
-            if "trades" in res:
-                all_trades.extend(res["trades"])
+        try:
+            _, df = data_engine.fetch_ticker_data_with_resolved_sym(t, period=req.period, interval="1d")
+            if df is not None and len(df) >= 40:
+                res = engine.run_single(t, df, strategy_id=req.strategy_id, strategy_params=req.params)
+                if "trades" in res:
+                    all_trades.extend(res["trades"])
+        except Exception:
+            continue
 
-    all_trades.sort(key=lambda x: x["entry_date"])
+    all_trades.sort(key=lambda x: x.get("entry_date", ""))
     for i, tr in enumerate(all_trades):
         tr["trade_no"] = i + 1
 
@@ -84,7 +96,7 @@ def run_backtest(req: BacktestRequest):
         })
 
     metrics = compute_performance_metrics(all_trades, portfolio_curve, req.initial_capital)
-    metrics["ticker"] = f"Basket: {req.universe or 'NIFTY_50'}"
+    metrics["ticker"] = f"Basket: {universe_id}"
     metrics["strategy_id"] = req.strategy_id
     metrics["period"] = req.period
     return metrics

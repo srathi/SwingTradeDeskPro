@@ -154,3 +154,9 @@
   * Backend API & `/api/health`: `author: Sandesh Rathi` & `organization: rupeemap.in labs`
   * Legal LICENSE & README: `Copyright (c) 2026 rupeemap.in labs (by Sandesh Rathi)`.
   * Pushed commit (`8c5f35f`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Added Dedicated 'Strategy Matrix' Navigation Tab:**
+  * Created `frontend/src/components/StrategyGuideView.jsx` presenting the academic research table, empirical win rates ($74\%-81\%$, $65\%-72\%$, etc.), Sharpe ratios, holding durations, and deep rule cards.
+  * Added 1-click `"⚡ Run Live Screener"` and `"📈 Backtest Strategy"` action buttons directly inside the strategy matrix cards.
+  * Added `Strategy Matrix` tab with `BookOpen` icon to the Navbar.
+  * Pushed commit (`42faa84`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
