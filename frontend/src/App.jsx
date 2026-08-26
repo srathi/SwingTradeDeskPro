@@ -75,6 +75,7 @@ export default function App() {
               onSelectTicker={handleSelectTicker}
               onOpenRisk={handleOpenRisk}
               onOpenBacktest={handleOpenBacktest}
+              onOpenSectorPulse={() => setActiveTab('sectors')}
               presetUniverse={presetUniverse}
               presetCustomTickers={presetCustomTickers}
             />

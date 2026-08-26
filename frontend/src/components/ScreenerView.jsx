@@ -10,7 +10,8 @@ import {
   Sparkles, 
   Target, 
   AlertCircle,
-  Bookmark
+  Bookmark,
+  Compass
 } from 'lucide-react';
 import { fetchUniverses, fetchStrategies, fetchWatchlists, runScanSync } from '../services/api';
 
@@ -24,6 +25,7 @@ export default function ScreenerView({
   onSelectTicker, 
   onOpenRisk, 
   onOpenBacktest,
+  onOpenSectorPulse,
   presetUniverse = null,
   presetCustomTickers = null
 }) {
@@ -211,7 +213,17 @@ export default function ScreenerView({
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-y-2">
+            {onOpenSectorPulse && (
+              <button
+                onClick={onOpenSectorPulse}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all shadow-sm shadow-cyan-500/10"
+                title="View Sector Rotation & Relative Strength Matrix"
+              >
+                <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Sector Pulse</span>
+              </button>
+            )}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-medium border transition-colors ${
