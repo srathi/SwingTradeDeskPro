@@ -174,3 +174,16 @@
   * Identified and fixed navigation tab truncation in [`Navbar.jsx`](file:///Users/sandesh/antigravity/SwingTrades/frontend/src/components/Navbar.jsx) so all 7 tabs (including the 7th **Strategy Matrix** tab) fit cleanly without overflow or being pushed off-screen across any device size.
   * Added distinct highlighted badge styling to the **Strategy Matrix** tab button.
   * Rebuilt frontend bundle and pushed commits (`8faae81`, `b562384`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Implemented SectorPulse Quantitative Sector Regime & Forecaster Package:**
+  * Created `sectorpulse/` modular package with:
+    - `data_ingestion.py`: Ingests and aligns multi-sector historical OHLCV data against benchmark (`^NSEI`, `SPY`).
+    - `indicators.py`: Vectorized Mansfield RS, Moving Average Hierarchy, ADX(14) +DI/-DI, and ATR(14).
+    - `persistence.py`: Vectorized Hurst Exponent ($R/S$ analysis) and Discrete Markov State Transition Matrix modeling ($E[\text{Duration}] = 1 / (1 - P_{00})$).
+    - `foundation_forecaster.py`: Amazon Chronos (Chronos-Bolt / Chronos-T5) integration with Monte Carlo geometric drift-diffusion fallback.
+    - `engine.py`: Multi-sector orchestrator, trend classifier (`STRONG_UPTREND`, `EARLY_UPTREND`, `NEUTRAL_RANGE`, `EARLY_DOWNTREND`, `STRONG_DOWNTREND`), exhaustion alert detector, and trade recommendation generator.
+    - `cli.py` & `main.py`: Interactive CLI with Rich tables and JSON output.
+  * Added test suite `tests/test_sectorpulse.py` with 100% pass rate across all 5 unit tests.
+  * Added REST endpoint `/api/sectors/pulse` in `backend/app/api/sector_routes.py`.
+  * Added interactive UI dashboard `SectorPulseView.jsx` in frontend navigation.
+  * Pushed commit (`7c8e4a7`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
