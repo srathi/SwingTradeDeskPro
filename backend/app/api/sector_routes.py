@@ -36,8 +36,10 @@ def get_sector_pulse(
             sectors = list(DEFAULT_NSE_SECTORS.keys())
 
         results = engine.run_pulse(sector_tickers=sectors, period=period)
+        if isinstance(results, dict):
+            return results
 
-        # Compute market summary metrics
+        # Compute market summary metrics if results is a list
         uptrend_count = sum(1 for r in results if "UPTREND" in r["regime"]["trend_classification"])
         downtrend_count = sum(1 for r in results if "DOWNTREND" in r["regime"]["trend_classification"])
         total_sectors = len(results)

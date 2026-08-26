@@ -25,7 +25,8 @@ def format_table(results: List[dict]):
     print(header)
     print(sep)
 
-    for r in results:
+    sector_items = results.get("sectors", results) if isinstance(results, dict) else results
+    for r in sector_items:
         sec = r.get("name", r.get("sector"))[:15]
         regime = r["regime"]["trend_classification"]
         mrs = f"{r['regime']['mrs_score']:+.2f}%"

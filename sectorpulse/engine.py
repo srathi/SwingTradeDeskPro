@@ -61,19 +61,19 @@ class SectorPulseEngine:
         # 3. Foundation / Monte Carlo Probabilistic Forecasting
         fc_result = self.forecaster.forecast_relative_strength(df["MRS"])
 
-        # 4. Regime Classification
-        # STRONG_UPTREND: MRS > 0, MA Hierarchy == 3 (Close > 20 > 50 > 200), ADX > 20
-        # EARLY_UPTREND: MRS > 0 or MRS Slope > 0, MA Hierarchy >= 2
-        # NEUTRAL_RANGE: -2.0 <= MRS <= 2.0 and ADX < 20
-        # EARLY_DOWNTREND: MRS < 0, MA Hierarchy <= 1
-        # STRONG_DOWNTREND: MRS < -2.0, Close < 50 EMA < 200 EMA
-        if mrs_score > 1.5 and ma_hierarchy == 3 and adx_14 >= 20.0:
+        # 4. Institutional Trend & Relative Strength Regime Classification
+        # STRONG_UPTREND: Close > EMA50 > EMA200 (Hier >= 2), MRS > 0, ADX >= 18
+        # EARLY_UPTREND: Close > EMA50 and (MRS >= -0.5 or MRS Slope > 0)
+        # STRONG_DOWNTREND: Close < EMA50 < EMA200 (Hier == 0) and MRS < -1.5
+        # EARLY_DOWNTREND: Close < EMA50 and MRS < 0
+        # NEUTRAL_RANGE: Consolidation / transition range
+        if close > ema_50 > ema_200 and mrs_score > 0.0 and adx_14 >= 18.0:
             classification = "STRONG_UPTREND"
-        elif (mrs_score > 0.0 or mrs_slope_5d > 0.5) and ma_hierarchy >= 2:
+        elif close > ema_50 and (mrs_score >= -0.5 or mrs_slope_5d > 0.0):
             classification = "EARLY_UPTREND"
-        elif mrs_score < -2.5 and ma_hierarchy == 0:
+        elif close < ema_50 < ema_200 and mrs_score < -1.5:
             classification = "STRONG_DOWNTREND"
-        elif mrs_score < 0.0 or ma_hierarchy <= 1:
+        elif close < ema_50 and mrs_score < 0.0:
             classification = "EARLY_DOWNTREND"
         else:
             classification = "NEUTRAL_RANGE"
@@ -98,23 +98,25 @@ class SectorPulseEngine:
                 action = "BUY_ON_PULLBACK"
                 multiplier = 1.25
         elif classification == "EARLY_UPTREND":
-            action = "ACCUMULATE_BREAKOUT"
-            multiplier = 1.15
+            if is_overextended:
+                action = "ACCUMULATE_BREAKOUT"
+                multiplier = 1.15
+            else:
+                action = "ACCUMULATE_BREAKOUT"
+                multiplier = 1.15
         elif classification == "NEUTRAL_RANGE":
-            action = "SELECTIVE_RANGE_TRADE"
-            multiplier = 0.75
+            action = "NEUTRAL_HOLD"
+            multiplier = 1.0
         elif classification == "EARLY_DOWNTREND":
             action = "REDUCE_EXPOSURE"
-            multiplier = 0.50
+            multiplier = 0.5
         else:  # STRONG_DOWNTREND
-            action = "AVOID_DOWNTREND"
+            action = "AVOID_UNDERWEIGHT"
             multiplier = 0.0
 
-        # Construct strictly typed JSON response schema
-        now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        return {
-            "timestamp": now_iso,
+        # Strict JSON contract assembly
+        report = {
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "sector": sector_ticker,
             "name": sector_name or DEFAULT_NSE_SECTORS.get(sector_ticker, sector_ticker),
             "regime": {
@@ -125,11 +127,11 @@ class SectorPulseEngine:
                 "hurst_exponent": hurst_exponent
             },
             "duration_forecast": {
-                "current_regime_age_days": markov_stats["current_regime_age_days"],
-                "expected_total_duration_days": markov_stats["expected_total_duration_days"],
-                "estimated_remaining_days": markov_stats["estimated_remaining_days"],
-                "chronos_median_peak_horizon_days": fc_result.median_peak_horizon_days,
-                "exhaustion_probability": fc_result.exhaustion_probability
+                "current_regime_age_days": markov_stats.get("current_regime_age_days", 1) if isinstance(markov_stats, dict) else markov_stats.current_regime_age_days,
+                "expected_total_duration_days": markov_stats.get("expected_total_duration_days", 20) if isinstance(markov_stats, dict) else markov_stats.expected_total_duration_days,
+                "estimated_remaining_days": markov_stats.get("estimated_remaining_days", 19) if isinstance(markov_stats, dict) else markov_stats.estimated_remaining_days,
+                "chronos_median_peak_horizon_days": getattr(fc_result, "median_peak_horizon_days", 10),
+                "exhaustion_probability": getattr(fc_result, "exhaustion_probability", 0.15)
             },
             "risk_parameters": {
                 "atr_14": atr_14,
@@ -138,39 +140,63 @@ class SectorPulseEngine:
             },
             "trade_recommendation": {
                 "action": action,
-                "sector_weight_multiplier": round(float(multiplier), 2)
+                "sector_weight_multiplier": multiplier
             },
             "metadata": {
                 "close": round(close, 2),
                 "ema_20": round(ema_20, 2),
                 "ema_50": round(ema_50, 2),
                 "ema_200": round(ema_200, 2),
-                "forecaster_model": fc_result.model_name
+                "forecaster_model": getattr(fc_result, "model_name", "Vectorized_MonteCarlo_OU")
             }
         }
+        return report
 
-    def run_pulse(
+    def run_multi_sector_pipeline(
         self,
         sector_tickers: Optional[List[str]] = None,
         period: str = "2y"
-    ) -> List[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
-        Executes pipeline across all sectors in the universe.
+        Executes full pipeline across all requested sector indices against benchmark.
         """
-        bench_df, sector_dfs = self.ingestion.ingest_sector_universe(
+        benchmark_df, sector_dfs = self.ingestion.ingest_sector_universe(
             benchmark_ticker=self.benchmark_ticker,
             sector_tickers=sector_tickers,
             period=period
         )
 
         results = []
-        for sec, df in sector_dfs.items():
+        for sec_ticker, sec_df in sector_dfs.items():
             try:
-                res = self.analyze_sector(sec, df, bench_df)
-                results.append(res)
+                name = DEFAULT_NSE_SECTORS.get(sec_ticker, sec_ticker)
+                rep = self.analyze_sector(
+                    sector_ticker=sec_ticker,
+                    sector_df=sec_df,
+                    benchmark_df=benchmark_df,
+                    sector_name=name
+                )
+                results.append(rep)
             except Exception as e:
                 continue
 
-        # Sort by Mansfield Relative Strength (descending)
+        # Sort by MRS score descending (relative leaders at the top)
         results.sort(key=lambda x: x["regime"]["mrs_score"], reverse=True)
-        return results
+
+        uptrend_count = sum(1 for r in results if "UPTREND" in r["regime"]["trend_classification"])
+        downtrend_count = sum(1 for r in results if "DOWNTREND" in r["regime"]["trend_classification"])
+        total = len(results)
+        breadth_score = round((uptrend_count / total * 100.0), 1) if total > 0 else 0.0
+
+        return {
+            "market": "NSE" if "^NSE" in self.benchmark_ticker else "US",
+            "benchmark": self.benchmark_ticker,
+            "total_sectors": total,
+            "market_breadth_score": breadth_score,
+            "uptrend_sectors": uptrend_count,
+            "downtrend_sectors": downtrend_count,
+            "sectors": results
+        }
+
+    # Alias for CLI and API consumers
+    run_pulse = run_multi_sector_pipeline
