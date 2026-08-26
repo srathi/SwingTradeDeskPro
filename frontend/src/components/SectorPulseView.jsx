@@ -74,7 +74,7 @@ export default function SectorPulseView({ onScanSector }) {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-gray-400 mt-1">
-                Top-Down Macro Rotation, Mansfield RS, Hurst Persistence ($H$), and Markov Regime Duration Modeling by <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong>.
+                Top-Down Macro Rotation, Mansfield RS, Hurst Persistence ($H$), and Markov Regime Duration Modeling by <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" className="text-cyan-400 font-medium hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a>.
               </p>
             </div>
           </div>

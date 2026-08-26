@@ -89,7 +89,15 @@ export default function Sidebar({
                   <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">PRO</span>
                 </div>
                 <p className="text-[9px] text-cyan-400/90 font-mono font-medium tracking-wide mt-0.5">
-                  rupeemap.in labs
+                  <a 
+                    href="https://www.rupeemap.in" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    onClick={(e) => e.stopPropagation()} 
+                    className="hover:underline hover:text-cyan-300 transition-colors"
+                  >
+                    rupeemap.in labs
+                  </a>
                 </p>
               </div>
             )}
@@ -213,7 +221,14 @@ export default function Sidebar({
           {/* Attribution */}
           {!isCollapsed && (
             <div className="px-2 pt-1 text-[9px] text-gray-400 font-mono text-center">
-              by <strong className="text-gray-400 font-medium">Sandesh Rathi</strong>
+              <a 
+                href="https://www.rupeemap.in" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hover:underline hover:text-cyan-400 transition-colors"
+              >
+                rupeemap.in labs
+              </a> • by <strong className="text-gray-400 font-medium">Sandesh Rathi</strong>
             </div>
           )}
 

@@ -141,7 +141,7 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
                   </span>
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
-                  Academic foundations, mathematical rules, statistical win rates, and holding parameters by <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by Sandesh Rathi).
+                  Academic foundations, mathematical rules, statistical win rates, and holding parameters by <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" className="text-cyan-400 font-medium hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a> (by <strong className="text-gray-300 font-medium">Sandesh Rathi</strong>).
                 </p>
               </div>
             </div>

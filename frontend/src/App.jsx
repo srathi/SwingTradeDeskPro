@@ -162,7 +162,7 @@ export default function App() {
                 <div className="flex items-center space-x-2 flex-wrap">
                   <span className="font-semibold text-gray-300">SwingDesk Pro</span>
                   <span className="text-gray-700">|</span>
-                  <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by <strong className="text-gray-300 font-medium">Sandesh Rathi</strong>). All rights reserved.</span>
+                  <span>© 2026 <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" className="text-cyan-400 font-medium hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a> (by <strong className="text-gray-300 font-medium">Sandesh Rathi</strong>). All rights reserved.</span>
                 </div>
                 <div className="flex items-center space-x-4 text-[11px] text-gray-400 font-mono">
                   <span>Quantitative Terminal</span>

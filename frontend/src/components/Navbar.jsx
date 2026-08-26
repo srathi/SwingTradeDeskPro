@@ -39,7 +39,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <span className="text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">PRO</span>
               </div>
               <p className="text-[8px] sm:text-[9px] text-cyan-400/90 tracking-wide font-mono font-medium truncate max-w-[130px] sm:max-w-none">
-                rupeemap.in labs <span className="text-gray-500 font-sans hidden sm:inline">• by Sandesh Rathi</span>
+                <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a> <span className="text-gray-500 font-sans hidden sm:inline">• by Sandesh Rathi</span>
               </p>
             </div>
           </div>
