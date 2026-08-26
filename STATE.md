@@ -187,3 +187,12 @@
   * Added REST endpoint `/api/sectors/pulse` in `backend/app/api/sector_routes.py`.
   * Added interactive UI dashboard `SectorPulseView.jsx` in frontend navigation.
   * Pushed commit (`7c8e4a7`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Fixed Render Docker Build & Navbar Truncation in Chrome:**
+  * **Root Cause 1 (Render Build)**: `Dockerfile` was only copying `backend/` and `frontend/dist`, but omitted `COPY sectorpulse/ ./sectorpulse/`. This caused Render's container build to fail importing `sectorpulse` and prevented live deployment of new features.
+  * **Root Cause 2 (Chrome Truncation)**: The navbar's flex alignment on medium/standard laptop screens was pushing right-side tabs off-screen with hidden scrollbars.
+  * **Fix Applied**: 
+    1. Added `COPY sectorpulse/ ./sectorpulse/` to `Dockerfile`.
+    2. Added responsive short/full label breakpoints and clean horizontal touch scrolling with no clipping across Chrome, Safari, and mobile viewports.
+    3. Added a direct `"🧭 Sector Pulse"` button inside the Live Screener header.
+  * Pushed commit (`a80eb18`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

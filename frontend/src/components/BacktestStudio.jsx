@@ -21,11 +21,11 @@ import {
 import { runBacktest, fetchStrategies, fetchUniverses } from '../services/api';
 import StockSearchInput from './StockSearchInput';
 
-export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialStrategy = "trend_pullback" }) {
+export default function BacktestStudio({ initialTicker = "", initialStrategy = "trend_pullback" }) {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
 
-  const [ticker, setTicker] = useState(initialTicker || "RELIANCE.NS");
+  const [ticker, setTicker] = useState(initialTicker || "");
   const [strategyId, setStrategyId] = useState(initialStrategy || "trend_pullback");
   const [period, setPeriod] = useState("2y");
   const [initialCapital, setInitialCapital] = useState(500000);
@@ -322,6 +322,19 @@ export default function BacktestStudio({ initialTicker = "RELIANCE.NS", initialS
           </div>
         )}
       </div>
+
+      {/* Blank Initial State Prompt */}
+      {!metrics && !loading && (
+        <div className="bg-gray-900/50 border border-dashed border-gray-800 rounded-2xl p-16 text-center space-y-3 shadow-inner">
+          <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 shadow-md">
+            <TrendingUp className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-white">No Simulation Loaded</h3>
+          <p className="text-xs sm:text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
+            Search and select a target equity symbol above, choose your quantitative strategy, time horizon, and capital, then click <strong className="text-cyan-400 font-medium">Run Simulation</strong> to simulate bar-by-bar trade performance with realistic Indian market taxes and slippage.
+          </p>
+        </div>
+      )}
 
       {/* Results View */}
       {metrics && (

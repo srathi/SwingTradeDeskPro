@@ -12,7 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('screener');
-  const [selectedTicker, setSelectedTicker] = useState('RELIANCE.NS');
+  const [selectedTicker, setSelectedTicker] = useState('');
   const [deepScanTicker, setDeepScanTicker] = useState('');
   const [backtestStrategy, setBacktestStrategy] = useState('trend_pullback');
   const [riskSetup, setRiskSetup] = useState(null);
