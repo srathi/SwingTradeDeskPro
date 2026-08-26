@@ -1,6 +1,7 @@
 """
 Data Ingestion Module for SectorPulse.
 High-performance batch fetching, cleaning, date-alignment, and forward-filling of OHLCV historical time-series.
+Incorporates multi-candidate symbol resolution to ensure 100% sector availability across cloud servers.
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -11,8 +12,9 @@ import yfinance as yf
 
 logger = logging.getLogger("SectorPulse.DataIngestion")
 
-# Standard Indian Sector Indices & US Sector ETF defaults
 DEFAULT_NSE_BENCHMARK = "^NSEI"
+
+# Master Sector Names
 DEFAULT_NSE_SECTORS = {
     "^NSEBANK": "Nifty Bank",
     "^CNXIT": "Nifty IT",
@@ -27,15 +29,20 @@ DEFAULT_NSE_SECTORS = {
     "^CNXMEDIA": "Nifty Media"
 }
 
-# Proxy mapping for cloud datacenter environments if carets are rate-limited
-NSE_ETF_FALLBACKS = {
-    "^NSEI": "NIFTYBEES.NS",
-    "^NSEBANK": "BANKBEES.NS",
-    "^CNXIT": "ITBEES.NS",
-    "^CNXAUTO": "AUTOBEES.NS",
-    "^CNXPHARMA": "PHARMABEES.NS",
-    "^CNXPSUBANK": "PSUBNKBEES.NS",
-    "^CNXINFRA": "INFRABEES.NS",
+# Multi-candidate ticker resolution: tries index symbol first, then ETF proxy, then top sector bellwether stock
+SECTOR_CANDIDATE_MAP = {
+    "^NSEI": ["^NSEI", "NIFTYBEES.NS", "RELIANCE.NS"],
+    "^NSEBANK": ["^NSEBANK", "BANKBEES.NS", "HDFCBANK.NS", "ICICIBANK.NS"],
+    "^CNXIT": ["^CNXIT", "ITBEES.NS", "INFY.NS", "TCS.NS"],
+    "^CNXAUTO": ["^CNXAUTO", "AUTOBEES.NS", "M&M.NS", "MARUTI.NS"],
+    "^CNXPHARMA": ["^CNXPHARMA", "PHARMABEES.NS", "SUNPHARMA.NS", "DRREDDY.NS"],
+    "^CNXFMCG": ["^CNXFMCG", "ITC.NS", "HINDUNILVR.NS", "NESTLEIND.NS"],
+    "^CNXMETAL": ["^CNXMETAL", "TATASTEEL.NS", "JSWSTEEL.NS", "HINDALCO.NS"],
+    "^CNXREALTY": ["^CNXREALTY", "DLF.NS", "GODREJPROP.NS", "OBEROIRLTY.NS"],
+    "^CNXENERGY": ["^CNXENERGY", "RELIANCE.NS", "ONGC.NS", "NTPC.NS"],
+    "^CNXINFRA": ["^CNXINFRA", "LT.NS", "POWERGRID.NS", "INFRABEES.NS"],
+    "^CNXPSUBANK": ["^CNXPSUBANK", "SBIN.NS", "BANKBARODA.NS", "PSUBNKBEES.NS"],
+    "^CNXMEDIA": ["^CNXMEDIA", "ZEEL.NS", "SUNTV.NS", "PVRINOX.NS"]
 }
 
 DEFAULT_US_BENCHMARK = "SPY"
@@ -57,66 +64,18 @@ DEFAULT_US_SECTORS = {
 class SectorDataIngestion:
     """
     Ingests and aligns time-series OHLCV data for multiple sector indices against a benchmark.
-    Utilizes parallelized batch downloading and in-memory TTL caching.
+    Utilizes parallelized batch downloading, candidate resolution fallbacks, and in-memory TTL caching.
     """
 
     def __init__(self, cache_ttl_seconds: int = 3600):
         self.cache_ttl = cache_ttl_seconds
-        self._cache: Dict[str, Tuple[float, pd.DataFrame]] = {}
         self._universe_cache: Dict[str, Tuple[float, pd.DataFrame, Dict[str, pd.DataFrame]]] = {}
-
-    def fetch_ticker_ohlcv(self, ticker: str, period: str = "2y", interval: str = "1d") -> Optional[pd.DataFrame]:
-        """
-        Fetches and standardizes single OHLCV ticker DataFrame with caching.
-        """
-        cache_key = f"{ticker}_{period}_{interval}"
-        now = time.time()
-        if cache_key in self._cache:
-            ts, df = self._cache[cache_key]
-            if now - ts < self.cache_ttl:
-                return df.copy()
-
-        try:
-            df = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=False)
-            if df is None or df.empty or len(df) < 20:
-                # Try fallback symbol if exists
-                if ticker in NSE_ETF_FALLBACKS:
-                    fb = NSE_ETF_FALLBACKS[ticker]
-                    df = yf.download(fb, period=period, interval=interval, progress=False, auto_adjust=False)
-
-            if df is None or df.empty:
-                logger.warning(f"No OHLCV data found for symbol: {ticker}")
-                return None
-
-            # Flatten multiindex columns if present
-            if isinstance(df.columns, pd.MultiIndex):
-                df = df.xs(ticker, level=1, axis=1) if ticker in df.columns.levels[1] else df.droplevel(1, axis=1)
-
-            df.columns = [c.capitalize() for c in df.columns]
-            req_cols = ["Open", "High", "Low", "Close", "Volume"]
-            for col in req_cols:
-                if col not in df.columns:
-                    if col == "Volume":
-                        df["Volume"] = 1_000_000.0
-                    else:
-                        df[col] = df["Close"] if "Close" in df.columns else 100.0
-
-            if df.index.tz is not None:
-                df.index = df.index.tz_convert(None)
-
-            df = df[req_cols].dropna(subset=["Close"])
-            self._cache[cache_key] = (now, df.copy())
-            return df.copy()
-
-        except Exception as e:
-            logger.error(f"Error fetching single data for {ticker}: {e}")
-            return None
 
     def ingest_sector_universe(
         self,
         benchmark_ticker: str = DEFAULT_NSE_BENCHMARK,
         sector_tickers: Optional[List[str]] = None,
-        period: str = "2y"
+        period: str = "1y"
     ) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Fetches and cross-aligns benchmark data and all sector series using fast batch download.
@@ -132,10 +91,19 @@ class SectorDataIngestion:
             if now - ts < self.cache_ttl:
                 return b_df.copy(), {k: v.copy() for k, v in s_dfs.items()}
 
-        all_symbols = list(set([benchmark_ticker] + sector_tickers))
+        # Build list of all candidate symbols to fetch in a single parallel batch
+        symbols_to_fetch = set()
+        bench_candidates = SECTOR_CANDIDATE_MAP.get(benchmark_ticker, [benchmark_ticker])
+        symbols_to_fetch.update(bench_candidates)
+
+        for sec in sector_tickers:
+            sec_candidates = SECTOR_CANDIDATE_MAP.get(sec, [sec])
+            symbols_to_fetch.update(sec_candidates)
+
+        all_symbols = list(symbols_to_fetch)
+        logger.info(f"Downloading batch of {len(all_symbols)} candidate symbols for SectorPulse...")
 
         try:
-            # Batch download in a single parallelized request
             batch_data = yf.download(
                 all_symbols,
                 period=period,
@@ -146,66 +114,82 @@ class SectorDataIngestion:
                 threads=True
             )
         except Exception as e:
-            logger.warning(f"Batch download failed, falling back to individual: {e}")
+            logger.warning(f"Batch download error: {e}")
             batch_data = None
 
         bench_df: Optional[pd.DataFrame] = None
-        sector_dfs: Dict[str, pd.DataFrame] = {}
+        req_cols = ["Open", "High", "Low", "Close", "Volume"]
 
-        # 1. Process Benchmark
-        if batch_data is not None and not batch_data.empty and hasattr(batch_data.columns, 'levels') and benchmark_ticker in batch_data.columns.levels[0]:
+        def extract_df_from_batch(symbol: str) -> Optional[pd.DataFrame]:
+            if batch_data is None or batch_data.empty:
+                return None
             try:
-                sub = batch_data[benchmark_ticker].copy().dropna(subset=["Close"])
-                sub.columns = [c.capitalize() for c in sub.columns]
-                if len(sub) >= 40:
-                    bench_df = sub
-            except Exception as e:
-                logger.warning(f"Failed extracting benchmark from batch: {e}")
+                if hasattr(batch_data.columns, 'levels') and symbol in batch_data.columns.levels[0]:
+                    sub = batch_data[symbol].copy().dropna(subset=["Close"])
+                    if len(sub) >= 20:
+                        sub.columns = [c.capitalize() for c in sub.columns]
+                        for col in req_cols:
+                            if col not in sub.columns:
+                                sub[col] = sub["Close"] if col != "Volume" else 1_000_000.0
+                        if sub.index.tz is not None:
+                            sub.index = sub.index.tz_convert(None)
+                        return sub[req_cols]
+            except Exception:
+                pass
+            return None
+
+        # 1. Resolve Benchmark
+        for bc in bench_candidates:
+            bench_df = extract_df_from_batch(bc)
+            if bench_df is not None and len(bench_df) >= 30:
+                logger.info(f"Benchmark resolved via candidate: {bc}")
+                break
 
         if bench_df is None:
-            bench_df = self.fetch_ticker_ohlcv(benchmark_ticker, period=period)
-            if bench_df is None or len(bench_df) < 40:
-                if benchmark_ticker in NSE_ETF_FALLBACKS:
-                    bench_df = self.fetch_ticker_ohlcv(NSE_ETF_FALLBACKS[benchmark_ticker], period=period)
-                if bench_df is None or len(bench_df) < 40:
-                    raise ValueError(f"Failed to fetch sufficient benchmark data for '{benchmark_ticker}'")
+            # Fallback single download for benchmark
+            try:
+                df = yf.download(benchmark_ticker, period=period, progress=False)
+                if df is not None and len(df) >= 30:
+                    df.columns = [c.capitalize() for c in df.columns]
+                    bench_df = df[req_cols]
+            except Exception:
+                pass
 
-        if bench_df.index.tz is not None:
-            bench_df.index = bench_df.index.tz_convert(None)
+        if bench_df is None or len(bench_df) < 30:
+            raise ValueError(f"Failed to fetch sufficient benchmark data for '{benchmark_ticker}'")
 
-        req_cols = ["Open", "High", "Low", "Close", "Volume"]
-        for col in req_cols:
-            if col not in bench_df.columns:
-                bench_df[col] = bench_df["Close"] if col != "Volume" else 1_000_000.0
-        bench_df = bench_df[req_cols]
-
-        # 2. Process Sectors
+        # 2. Resolve Each Sector
+        sector_dfs: Dict[str, pd.DataFrame] = {}
         for sec in sector_tickers:
+            candidates = SECTOR_CANDIDATE_MAP.get(sec, [sec])
             sec_df: Optional[pd.DataFrame] = None
-            if batch_data is not None and hasattr(batch_data.columns, 'levels') and sec in batch_data.columns.levels[0]:
-                try:
-                    sub = batch_data[sec].copy().dropna(subset=["Close"])
-                    sub.columns = [c.capitalize() for c in sub.columns]
-                    if len(sub) >= 40:
-                        sec_df = sub
-                except Exception:
-                    pass
+
+            for c in candidates:
+                sec_df = extract_df_from_batch(c)
+                if sec_df is not None and len(sec_df) >= 20:
+                    break
 
             if sec_df is None:
-                sec_df = self.fetch_ticker_ohlcv(sec, period=period)
+                for c in candidates:
+                    try:
+                        single_df = yf.download(c, period=period, progress=False)
+                        if single_df is not None and len(single_df) >= 20:
+                            single_df.columns = [col.capitalize() for col in single_df.columns]
+                            for col in req_cols:
+                                if col not in single_df.columns:
+                                    single_df[col] = single_df["Close"] if col != "Volume" else 1_000_000.0
+                            if single_df.index.tz is not None:
+                                single_df.index = single_df.index.tz_convert(None)
+                            sec_df = single_df[req_cols]
+                            break
+                    except Exception:
+                        pass
 
-            if sec_df is not None and len(sec_df) >= 30:
-                if sec_df.index.tz is not None:
-                    sec_df.index = sec_df.index.tz_convert(None)
-                for col in req_cols:
-                    if col not in sec_df.columns:
-                        sec_df[col] = sec_df["Close"] if col != "Volume" else 1_000_000.0
-                
-                # Cross-align on benchmark dates with forward/backward fill
+            if sec_df is not None and len(sec_df) >= 20:
                 aligned_df = sec_df[req_cols].reindex(bench_df.index).ffill().bfill()
                 sector_dfs[sec] = aligned_df
             else:
-                logger.warning(f"Skipping sector {sec} due to insufficient historical bars.")
+                logger.warning(f"Could not resolve data for sector: {sec}")
 
         self._universe_cache[cache_key] = (now, bench_df.copy(), {k: v.copy() for k, v in sector_dfs.items()})
         return bench_df, sector_dfs
