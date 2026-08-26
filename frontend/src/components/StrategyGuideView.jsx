@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { 
   BookOpen, 
-  ExternalLink, 
-  TrendingUp, 
   Layers, 
   Award, 
   ShieldCheck, 
@@ -11,7 +9,8 @@ import {
   Target,
   BarChart3,
   CheckCircle2,
-  Info
+  TrendingUp,
+  Sparkles
 } from 'lucide-react';
 
 const STRATEGIES_DATA = [
@@ -19,7 +18,7 @@ const STRATEGIES_DATA = [
     id: "connors_rsi2",
     name: "Connors RSI(2) Ultra-Mean Reversion",
     research_basis: "Larry Connors & Cesar Alvarez (2009) — Short Term Trading Strategies That Work",
-    empirical_edge: "Exploits short-term 2-day panic pullbacks (RSI_2 < 10) in verified >200 SMA macro uptrends for sharp, high-probability snapbacks.",
+    empirical_edge: "Short-term 2-day panic pullbacks (RSI_2 < 10) in verified >200 SMA macro uptrends deliver sharp statistical snapbacks.",
     win_rate: "74% – 81%",
     win_rate_val: 78,
     sharpe: "1.5 – 1.9",
@@ -36,7 +35,7 @@ const STRATEGIES_DATA = [
     id: "volatility_squeeze",
     name: "TTM Volatility Squeeze Expansion",
     research_basis: "John Carter (2007) — Mastering the Trade / Volatility Regime Models",
-    empirical_edge: "Bollinger Bands contract inside Keltner Channels (coiled spring) before explosive directional momentum expansion with accelerating MACD.",
+    empirical_edge: "Bollinger Bands contract inside Keltner Channels before explosive momentum releases with accelerating MACD histogram.",
     win_rate: "65% – 72%",
     win_rate_val: 68,
     sharpe: "1.4 – 1.8",
@@ -53,7 +52,7 @@ const STRATEGIES_DATA = [
     id: "mean_reversion",
     name: "Mean Reversion (Bollinger + RSI)",
     research_basis: "John Bollinger (2001) / Statistical Arbitrage Literature",
-    empirical_edge: "Extreme 2-sigma statistical price deviation beyond lower Bollinger Band snaps back to historical moving average equilibrium.",
+    empirical_edge: "Captures extreme oversold bounces when price touches Lower Bollinger Band with RSI(14) <= 35 and a bullish rejection candle.",
     win_rate: "60% – 68%",
     win_rate_val: 64,
     sharpe: "1.2 – 1.4",
@@ -68,9 +67,9 @@ const STRATEGIES_DATA = [
   },
   {
     id: "relative_strength_leader",
-    name: "Mansfield Relative Strength Stage-2 Leader",
+    name: "Mansfield Relative Strength (Stage 2)",
     research_basis: "Stan Weinstein (1988) — Stage Analysis / Gary Antonacci — Dual Momentum (2014)",
-    empirical_edge: "Institutional capital concentration in market leaders outperforming the Nifty 50 benchmark breaking out to new 20D/52W highs.",
+    empirical_edge: "Institutional capital accumulation in market leaders outperforming the Nifty 50 benchmark (MRS > 0) breaking out to new 20D/52W highs.",
     win_rate: "58% – 66%",
     win_rate_val: 62,
     sharpe: "1.6 – 2.1",
@@ -86,8 +85,8 @@ const STRATEGIES_DATA = [
   {
     id: "trend_pullback",
     name: "Trend-Pullback (20/50 EMA)",
-    research_basis: "Moving Average Envelopes & Trend Following (Fama-French, Moskowitz)",
-    empirical_edge: "Entering high-momentum macro uptrends during temporary low-volume pullbacks to rising 20 EMA offers low risk entries with 1:2+ payout.",
+    research_basis: "Academic Trend Following & Moving Average Envelopes (Fama-French, Moskowitz)",
+    empirical_edge: "Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure (Price > 200 EMA) with favorable asymmetric reward.",
     win_rate: "48% – 56%",
     win_rate_val: 52,
     sharpe: "1.2 – 1.5",
@@ -104,7 +103,7 @@ const STRATEGIES_DATA = [
     id: "vcp_breakout",
     name: "VCP & Base Breakout",
     research_basis: "Mark Minervini — Trade Like a Stock Market Wizard (SEPA Model)",
-    empirical_edge: "Progressive reduction in volatility dries up overhead supply float before institutional demand creates explosive upward re-rating.",
+    empirical_edge: "Progressive volatility contraction cycles followed by a 20-day high breakout backed by 1.4x+ institutional volume expansion.",
     win_rate: "38% – 46%",
     win_rate_val: 42,
     sharpe: "1.3 – 1.6",
@@ -124,61 +123,62 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
 
   return (
     <div className="space-y-6">
+      
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-[#0e172a] via-[#0b1324] to-[#080d1a] border border-cyan-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-md">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-md">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                   Quantitative Strategy Matrix
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono font-semibold uppercase">
-                    Research Lab
-                  </span>
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
-                  Academic foundations, mathematical rules, statistical win rates, and holding parameters by <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by Sandesh Rathi).
-                </p>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono font-semibold uppercase">
+                  Research Reference
+                </span>
               </div>
+              <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+                Academic foundations, empirical alpha edges, statistical win rates, and holding parameters by <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by Sandesh Rathi).
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-gray-900/80 border border-gray-800 rounded-xl px-4 py-2 text-right">
-              <div className="text-[10px] text-gray-400 uppercase font-mono tracking-wider">Implemented Models</div>
+            <div className="bg-gray-900/90 border border-gray-800 rounded-xl px-4 py-2.5 text-right">
+              <div className="text-[10px] text-gray-400 uppercase font-mono tracking-wider">Models Integrated</div>
               <div className="text-lg font-bold text-cyan-400 font-mono">6 Strategies Active</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Research Comparison Table Card */}
-      <div className="bg-gray-900/70 border border-gray-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
-        <div className="px-6 py-4 border-b border-gray-800 bg-gray-950/60 flex items-center justify-between">
+      {/* Main Quantitative Research Table */}
+      <div className="bg-gray-900/80 border border-gray-800 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
+        <div className="px-6 py-4 border-b border-gray-800 bg-gray-950/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center space-x-2">
             <Award className="w-4 h-4 text-cyan-400" />
             <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-mono">
-              Academic & Empirical Performance Comparison
+              Strategy Research Matrix & Empirical Edge
             </h2>
           </div>
-          <span className="text-xs text-gray-500 hidden sm:inline font-mono">Click any row to view deep rules</span>
+          <span className="text-xs text-gray-400 font-mono">Click any row below to view full setup rules & formulas</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-gray-950/80 text-[11px] text-gray-400 uppercase font-mono border-b border-gray-800 tracking-wider">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead className="bg-gray-950 text-gray-400 uppercase font-mono border-b border-gray-800 tracking-wider text-[11px]">
               <tr>
-                <th className="py-3.5 px-5 font-semibold">Strategy</th>
-                <th className="py-3.5 px-5 font-semibold">Research Basis</th>
-                <th className="py-3.5 px-5 font-semibold hidden md:table-cell">Empirical Edge</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Win Rate</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Sharpe</th>
-                <th className="py-3.5 px-5 font-semibold text-center">Holding</th>
-                <th className="py-3.5 px-5 font-semibold text-right">Actions</th>
+                <th className="py-4 px-4 font-semibold w-1/5 min-w-[200px]">Strategy</th>
+                <th className="py-4 px-4 font-semibold w-1/4 min-w-[220px]">Research Basis</th>
+                <th className="py-4 px-4 font-semibold w-1/3 min-w-[260px]">Empirical Edge</th>
+                <th className="py-4 px-3 font-semibold text-center whitespace-nowrap">Win Rate</th>
+                <th className="py-4 px-3 font-semibold text-center whitespace-nowrap">Sharpe</th>
+                <th className="py-4 px-3 font-semibold text-center whitespace-nowrap">Holding</th>
+                <th className="py-4 px-4 font-semibold text-right whitespace-nowrap">Quick Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/60 text-gray-300">
@@ -194,51 +194,51 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
                         : 'hover:bg-gray-800/40 hover:text-gray-100'
                     }`}
                   >
-                    <td className="py-4 px-5">
-                      <div className="font-semibold text-gray-100 flex items-center gap-2">
+                    <td className="py-4 px-4 align-top">
+                      <div className="font-bold text-gray-100 text-sm flex items-center gap-1.5 flex-wrap">
                         <span>{item.name}</span>
                         {item.id === "connors_rsi2" && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                            Highest Win Rate
+                            Top Win Rate
                           </span>
                         )}
                         {item.id === "relative_strength_leader" && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-                            Highest Sharpe
+                            Top Sharpe
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-gray-400 font-mono mt-0.5">{item.id}</div>
+                      <div className="text-[11px] text-cyan-400/80 font-mono mt-1">{item.id}</div>
                     </td>
 
-                    <td className="py-4 px-5 text-xs text-gray-300 max-w-xs">
+                    <td className="py-4 px-4 align-top text-xs text-gray-300 leading-relaxed font-sans">
                       {item.research_basis}
                     </td>
 
-                    <td className="py-4 px-5 text-xs text-gray-400 max-w-sm hidden md:table-cell leading-relaxed">
+                    <td className="py-4 px-4 align-top text-xs text-gray-400 leading-relaxed font-sans">
                       {item.empirical_edge}
                     </td>
 
-                    <td className="py-4 px-5 text-center font-mono">
-                      <span className="inline-block px-2 py-0.5 rounded-md font-bold text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <td className="py-4 px-3 align-top text-center font-mono whitespace-nowrap">
+                      <span className="inline-block px-2.5 py-1 rounded-md font-bold text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm">
                         {item.win_rate}
                       </span>
                     </td>
 
-                    <td className="py-4 px-5 text-center font-mono font-bold text-cyan-400">
+                    <td className="py-4 px-3 align-top text-center font-mono font-bold text-cyan-400 text-sm whitespace-nowrap">
                       {item.sharpe}
                     </td>
 
-                    <td className="py-4 px-5 text-center font-mono text-xs text-gray-300 whitespace-nowrap">
+                    <td className="py-4 px-3 align-top text-center font-mono text-xs text-gray-300 whitespace-nowrap">
                       {item.holding}
                     </td>
 
-                    <td className="py-4 px-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-4 px-4 align-top text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => onLaunchScreener && onLaunchScreener(item.id)}
                           title="Scan market with this strategy"
-                          className="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-cyan-500/20 hover:text-cyan-300 text-gray-300 border border-gray-700 text-xs font-mono transition-colors flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-cyan-500/20 hover:text-cyan-300 text-gray-200 border border-gray-700 text-xs font-mono transition-colors flex items-center gap-1"
                         >
                           <Layers className="w-3.5 h-3.5 text-cyan-400" />
                           <span>Scan</span>
@@ -246,7 +246,7 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
                         <button
                           onClick={() => onLaunchBacktest && onLaunchBacktest(item.id)}
                           title="Backtest this strategy"
-                          className="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-indigo-500/20 hover:text-indigo-300 text-gray-300 border border-gray-700 text-xs font-mono transition-colors flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg bg-gray-800 hover:bg-indigo-500/20 hover:text-indigo-300 text-gray-200 border border-gray-700 text-xs font-mono transition-colors flex items-center gap-1"
                         >
                           <BarChart3 className="w-3.5 h-3.5 text-indigo-400" />
                           <span>Backtest</span>
@@ -261,32 +261,32 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
         </div>
       </div>
 
-      {/* Selected Strategy Deep-Dive Details Card */}
+      {/* Selected Strategy Detail Card */}
       {selectedStrategy && (
-        <div className="bg-gray-900/80 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl space-y-6">
+        <div className="bg-gray-900/90 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-800">
             <div>
               <div className="flex items-center space-x-2">
                 <span className={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-bold uppercase ${selectedStrategy.badge_color}`}>
-                  Selected Strategy Profile
+                  Strategy Specification
                 </span>
-                <span className="text-xs text-gray-400 font-mono">{selectedStrategy.id}</span>
+                <span className="text-xs text-gray-400 font-mono">ID: {selectedStrategy.id}</span>
               </div>
-              <h3 className="text-xl font-bold text-white mt-1">{selectedStrategy.name}</h3>
+              <h3 className="text-xl font-bold text-white mt-1.5">{selectedStrategy.name}</h3>
               <p className="text-xs sm:text-sm text-gray-300 mt-1">{selectedStrategy.research_basis}</p>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onLaunchScreener && onLaunchScreener(selectedStrategy.id)}
-                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-cyan-600/20 transition-all"
+                className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-cyan-600/20 transition-all active:scale-95"
               >
                 <Zap className="w-4 h-4" />
                 <span>⚡ Run Live Screener</span>
               </button>
               <button
                 onClick={() => onLaunchBacktest && onLaunchBacktest(selectedStrategy.id)}
-                className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-medium text-xs sm:text-sm flex items-center gap-2 transition-all"
+                className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-medium text-xs sm:text-sm flex items-center gap-2 transition-all active:scale-95"
               >
                 <TrendingUp className="w-4 h-4 text-cyan-400" />
                 <span>Simulate in Backtester</span>
@@ -294,12 +294,12 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
             </div>
           </div>
 
-          {/* Quick Metrics Grid */}
+          {/* Key Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5">
               <div className="text-[11px] text-gray-400 uppercase font-mono">Statistical Win Rate</div>
               <div className="text-lg font-bold text-emerald-400 font-mono mt-0.5">{selectedStrategy.win_rate}</div>
-              <div className="text-[10px] text-gray-500 mt-0.5">Empirical historical tests</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Empirical equity backtests</div>
             </div>
 
             <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5">
@@ -317,7 +317,7 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
             <div className="bg-gray-950/70 border border-gray-800 rounded-xl p-3.5">
               <div className="text-[11px] text-gray-400 uppercase font-mono">Average Holding</div>
               <div className="text-lg font-bold text-amber-400 font-mono mt-0.5">{selectedStrategy.holding}</div>
-              <div className="text-[10px] text-gray-500 mt-0.5">Swing trade lifecycle</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Swing holding duration</div>
             </div>
           </div>
 
@@ -363,7 +363,7 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
                 <div>
                   <span className="text-gray-400 font-mono block text-[11px] uppercase">Execution Note:</span>
                   <p className="text-gray-400 mt-0.5 leading-relaxed">
-                    Positions are automatically sized using Fixed Fractional 1.0% equity risk per trade.
+                    Positions are automatically sized using Fixed Fractional 1.0% equity risk per trade with Indian STT and slippage accounted for.
                   </p>
                 </div>
               </div>
