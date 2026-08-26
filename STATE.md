@@ -207,3 +207,7 @@
   * Created `TopHeader.jsx` with dynamic breadcrumb navigation, quick stock search jumper, and live market indicator.
   * Preserved 100% of functional capabilities, drilldowns, and sub-actions across all 8 modules with zero regressions.
   * Pushed commit (`f494859`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Wrapped `rupeemap.in` UI mentions in clickable hyperlinks:**
+  * Updated `Sidebar.jsx`, `App.jsx`, `SectorPulseView.jsx`, `StrategyGuideView.jsx`, and `Navbar.jsx` so that all occurrences of `rupeemap.in` / `rupeemap.in labs` link directly to `https://www.rupeemap.in` with `target="_blank"` and `rel="noopener noreferrer"`.
+  * Pushed commit (`fdd008c`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
