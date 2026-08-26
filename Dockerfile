@@ -19,8 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Backend Code and Frontend Build
+# Copy Backend Code, SectorPulse Package, and Frontend Build
 COPY backend/ ./backend/
+COPY sectorpulse/ ./sectorpulse/
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 ENV PORT=8888

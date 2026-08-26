@@ -25,8 +25,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   return (
     <header className="border-b border-gray-800 bg-[#0B0F19]/95 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-1 sm:gap-2">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-16 gap-1 sm:gap-3">
           
           {/* Brand Logo */}
           <div className="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer flex-shrink-0" onClick={() => setActiveTab('screener')}>
@@ -38,14 +38,14 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <span className="font-bold text-sm sm:text-base md:text-lg text-white tracking-tight">SwingDesk</span>
                 <span className="text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">PRO</span>
               </div>
-              <p className="text-[8px] sm:text-[9px] md:text-[10px] text-cyan-400/90 tracking-wide font-mono font-medium truncate max-w-[140px] sm:max-w-none">
+              <p className="text-[8px] sm:text-[9px] text-cyan-400/90 tracking-wide font-mono font-medium truncate max-w-[130px] sm:max-w-none">
                 rupeemap.in labs <span className="text-gray-500 font-sans hidden sm:inline">• by Sandesh Rathi</span>
               </p>
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex items-center space-x-0.5 sm:space-x-1 overflow-x-auto py-1 flex-1 justify-end">
+          {/* Navigation Links with smooth touch scrolling and no truncation */}
+          <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1 flex-1 justify-start md:justify-end no-scrollbar">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -53,9 +53,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs md:text-sm font-medium whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
+                  className={`flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs sm:text-xs md:text-sm font-medium whitespace-nowrap transition-all duration-150 flex-shrink-0 ${
                     isActive
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20 font-semibold scale-105'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20 font-semibold'
                       : item.isSectorBadge
                       ? 'text-cyan-400 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 font-semibold'
                       : item.isHighlight
@@ -64,8 +64,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? 'text-cyan-400' : item.isSectorBadge ? 'text-cyan-300' : 'text-gray-400'}`} />
-                  <span className="hidden md:inline">{item.fullLabel}</span>
-                  <span className="inline md:hidden">{item.label}</span>
+                  <span className="hidden xl:inline">{item.fullLabel}</span>
+                  <span className="inline xl:hidden">{item.label}</span>
                 </button>
               );
             })}
