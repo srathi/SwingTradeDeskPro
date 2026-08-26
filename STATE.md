@@ -223,3 +223,8 @@
   * **Root Cause 3 (API Route)**: Fixed JSON format handling in `sector_routes.py`.
   * Verified 11 / 11 sectors returned with realistic macro rotation distribution (5 Uptrends, 2 Neutral, 4 Downtrends).
   * Pushed commit (`cd89b9f`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Unified Sector Ingestion with Backend DataEngine:**
+  * Replaced custom ingestion in `sectorpulse/data_ingestion.py` with direct integration to `backend.app.core.data_engine.DataEngine`.
+  * Guarantees persistent SQLite caching, automatic multi-symbol resolution, and 100% cloud resilience for all 11 Indian sector indices on both Localhost and Render.
+  * Pushed commit (`76bd5c1`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
