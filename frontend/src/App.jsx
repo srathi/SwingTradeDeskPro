@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import TopHeader from './components/TopHeader';
 import ScreenerView from './components/ScreenerView';
 import SingleStockScanner from './components/SingleStockScanner';
 import SectorPulseView from './components/SectorPulseView';
@@ -18,6 +19,10 @@ export default function App() {
   const [riskSetup, setRiskSetup] = useState(null);
   const [presetUniverse, setPresetUniverse] = useState(null);
   const [presetCustomTickers, setPresetCustomTickers] = useState(null);
+
+  // Sidebar responsive states
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleSelectTicker = (ticker) => {
     setSelectedTicker(ticker);
@@ -44,7 +49,6 @@ export default function App() {
   };
 
   const handleScanSector = (sectorName) => {
-    // Map sector to appropriate universe or custom tickers
     if (sectorName.includes('Bank')) {
       setPresetUniverse('NIFTY_BANK');
     } else if (sectorName.includes('IT')) {
@@ -65,88 +69,114 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-gray-100 flex flex-col">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="flex h-screen bg-[#0B0F19] text-gray-100 overflow-hidden select-none sm:select-auto">
       
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <ErrorBoundary>
-          {activeTab === 'screener' && (
-            <ScreenerView
-              onSelectTicker={handleSelectTicker}
-              onOpenRisk={handleOpenRisk}
-              onOpenBacktest={handleOpenBacktest}
-              onOpenSectorPulse={() => setActiveTab('sectors')}
-              presetUniverse={presetUniverse}
-              presetCustomTickers={presetCustomTickers}
-            />
-          )}
+      {/* Institutional Vertical Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        mobileOpen={mobileSidebarOpen}
+        setMobileOpen={setMobileSidebarOpen}
+      />
 
-          {activeTab === 'deepscan' && (
-            <SingleStockScanner
-              initialTicker={deepScanTicker}
-              onOpenChart={handleSelectTicker}
-              onOpenBacktest={handleOpenBacktest}
-              onOpenRisk={handleOpenRisk}
-            />
-          )}
+      {/* Main Workspace Column */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        
+        {/* Top Minimal Header */}
+        <TopHeader
+          activeTab={activeTab}
+          onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          onSelectTicker={handleSelectTicker}
+        />
 
-          {activeTab === 'sectors' && (
-            <SectorPulseView
-              onScanSector={handleScanSector}
-            />
-          )}
+        {/* Scrollable Canvas View */}
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-5">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <ErrorBoundary>
+              {activeTab === 'screener' && (
+                <ScreenerView
+                  onSelectTicker={handleSelectTicker}
+                  onOpenRisk={handleOpenRisk}
+                  onOpenBacktest={handleOpenBacktest}
+                  onOpenSectorPulse={() => setActiveTab('sectors')}
+                  presetUniverse={presetUniverse}
+                  presetCustomTickers={presetCustomTickers}
+                />
+              )}
 
-          {activeTab === 'chart' && (
-            <ChartStudio
-              initialTicker={selectedTicker}
-              onOpenRisk={handleOpenRisk}
-            />
-          )}
+              {activeTab === 'deepscan' && (
+                <SingleStockScanner
+                  initialTicker={deepScanTicker}
+                  onOpenChart={handleSelectTicker}
+                  onOpenBacktest={handleOpenBacktest}
+                  onOpenRisk={handleOpenRisk}
+                />
+              )}
 
-          {activeTab === 'backtest' && (
-            <BacktestStudio
-              initialTicker={selectedTicker}
-              initialStrategy={backtestStrategy}
-            />
-          )}
+              {activeTab === 'sectors' && (
+                <SectorPulseView
+                  onScanSector={handleScanSector}
+                />
+              )}
 
-          {activeTab === 'risk' && (
-            <RiskCalculator
-              prefillSetup={riskSetup}
-            />
-          )}
+              {activeTab === 'chart' && (
+                <ChartStudio
+                  initialTicker={selectedTicker}
+                  onOpenRisk={handleOpenRisk}
+                />
+              )}
 
-          {activeTab === 'watchlists' && (
-            <WatchlistView
-              onSelectTicker={handleSelectTicker}
-              onScanWatchlist={handleScanWatchlist}
-            />
-          )}
+              {activeTab === 'backtest' && (
+                <BacktestStudio
+                  initialTicker={selectedTicker}
+                  initialStrategy={backtestStrategy}
+                />
+              )}
 
-          {activeTab === 'matrix' && (
-            <StrategyGuideView
-              onLaunchScreener={handleLaunchScreenerWithStrategy}
-              onLaunchBacktest={handleLaunchBacktestWithStrategy}
-            />
-          )}
-        </ErrorBoundary>
-      </main>
+              {activeTab === 'risk' && (
+                <RiskCalculator
+                  prefillSetup={riskSetup}
+                />
+              )}
 
-      {/* Institutional Footer with Sandesh Rathi & rupeemap.in labs Copyright */}
-      <footer className="border-t border-gray-900/90 py-5 bg-[#080C14] text-xs text-gray-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center space-x-2 flex-wrap">
-            <span className="font-semibold text-gray-200">SwingDesk Pro</span>
-            <span className="text-gray-600">|</span>
-            <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by <strong className="text-gray-200 font-medium">Sandesh Rathi</strong>). All rights reserved.</span>
+              {activeTab === 'watchlists' && (
+                <WatchlistView
+                  onSelectTicker={handleSelectTicker}
+                  onScanWatchlist={handleScanWatchlist}
+                />
+              )}
+
+              {activeTab === 'matrix' && (
+                <StrategyGuideView
+                  onLaunchScreener={handleLaunchScreenerWithStrategy}
+                  onLaunchBacktest={handleLaunchBacktestWithStrategy}
+                />
+              )}
+            </ErrorBoundary>
+
+            {/* Institutional Footer */}
+            <footer className="border-t border-gray-900/90 py-5 text-xs text-gray-500">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center space-x-2 flex-wrap">
+                  <span className="font-semibold text-gray-300">SwingDesk Pro</span>
+                  <span className="text-gray-700">|</span>
+                  <span>© 2026 <strong className="text-cyan-400 font-medium">rupeemap.in labs</strong> (by <strong className="text-gray-300 font-medium">Sandesh Rathi</strong>). All rights reserved.</span>
+                </div>
+                <div className="flex items-center space-x-4 text-[11px] text-gray-400 font-mono">
+                  <span>Quantitative Terminal</span>
+                  <span className="text-gray-700">•</span>
+                  <span>NSE & BSE Indian Equities</span>
+                </div>
+              </div>
+            </footer>
+
           </div>
-          <div className="flex items-center space-x-4 text-[11px] text-gray-400 font-mono">
-            <span>Quantitative Market Intelligence</span>
-            <span className="text-gray-700">•</span>
-            <span>NSE & BSE Indian Equities</span>
-          </div>
-        </div>
-      </footer>
+        </main>
+
+      </div>
+
     </div>
   );
 }
