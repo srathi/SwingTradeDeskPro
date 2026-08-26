@@ -196,3 +196,8 @@
     2. Added responsive short/full label breakpoints and clean horizontal touch scrolling with no clipping across Chrome, Safari, and mobile viewports.
     3. Added a direct `"🧭 Sector Pulse"` button inside the Live Screener header.
   * Pushed commit (`a80eb18`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Removed Default Stocks in Chart Studio & Backtest Studio:**
+  * Modified `App.jsx`, `ChartStudio.jsx`, and `BacktestStudio.jsx` so that no default stock (e.g. `RELIANCE.NS`) is preselected upon initial tab load.
+  * Added clean placeholder states in both tabs prompting the user to search and select their desired equity symbol.
+  * Pushed commit (`872799f`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
