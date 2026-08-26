@@ -168,10 +168,3 @@
     1. Upgraded `backtest_routes.py` to use `fetch_ticker_data_with_resolved_sym()`.
     2. Added date map deduplication and ascending sort in `BacktestStudio.jsx` before rendering the equity curve series.
   * Pushed commit (`881ac0e`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
-
-* **Fix toLocaleString Nullish Evaluation Bug:**
-  * **Root Cause**: In production JavaScript execution (especially Safari / iOS / mobile or when 0 trades / flat equity is returned), `metrics.max_drawdown_amount`, `max_drawdown_val`, `net_profit`, or `capital_required` were undefined, which caused JavaScript to throw `TypeError: undefined is not an object (evaluating 'N.max_drawdown_amount.toLocaleString')`.
-  * **Fix Applied**: 
-    1. Added `max_drawdown_amount` and `max_drawdown_val` with default `0.0` explicitly to `compute_performance_metrics()` in `backend/app/backtester/analytics.py`.
-    2. Wrapped all numeric currency `.toLocaleString()` invocations across `BacktestStudio.jsx`, `SingleStockScanner.jsx`, and `RiskCalculator.jsx` with safe nullish coalescing guards (e.g. `(metrics.max_drawdown_val ?? metrics.max_drawdown_amount ?? 0).toLocaleString()`).
-  * Pushed commit (`7ced5b2`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
