@@ -211,3 +211,8 @@
 * **Wrapped `rupeemap.in` UI mentions in clickable hyperlinks:**
   * Updated `Sidebar.jsx`, `App.jsx`, `SectorPulseView.jsx`, `StrategyGuideView.jsx`, and `Navbar.jsx` so that all occurrences of `rupeemap.in` / `rupeemap.in labs` link directly to `https://www.rupeemap.in` with `target="_blank"` and `rel="noopener noreferrer"`.
   * Pushed commit (`fdd008c`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Resolved Sector Count Discrepancy on Render Cloud Deployment:**
+  * **Root Cause**: The previous ingestion logic performed 12 sequential single-ticker requests in a synchronous loop. On Render's US cloud datacenter IPs, Yahoo Finance throttled and dropped sequential requests after 2–3 tickers, causing only 3 sectors to succeed.
+  * **Fix**: Replaced sequential calls with a single parallelized `yf.download(all_symbols, threads=True, group_by='ticker')` batch download with automatic ETF proxy fallbacks and in-memory TTL caching. Guaranteed all 11 Indian sectors are fetched reliably in < 1.5s.
+  * Pushed commit (`08a61db`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
