@@ -144,6 +144,14 @@ export default function SingleStockScanner({
                   </button>
 
                   <button
+                    onClick={() => onOpenAIForecast && onOpenAIForecast(data.ticker)}
+                    className="flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>🔮 AI Forecast</span>
+                  </button>
+
+                  <button
                     onClick={() => onOpenBacktest && onOpenBacktest(data.ticker, data.active_setup?.strategy_id || 'trend_pullback')}
                     className="flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all"
                   >
