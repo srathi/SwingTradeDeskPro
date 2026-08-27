@@ -1,28 +1,27 @@
 """
-Guppy Multiple Moving Average (GMMA) Weekly Breakout Strategy.
-Combines Weekly institutional investor ribbon (30-60 EMA) expansion with daily volume-backed breakouts.
-Captures high-probability multi-week Stage 2 markup runners with asymmetric 2.5R - 4.0R payoff targets.
+Guppy Multiple Moving Average (GMMA) Breakout & Trend Expansion Strategy.
+Identifies high-probability Stage 2 trend expansions by entering equities where the fast trader ribbon (3-15 EMA)
+is actively expanding above the fanning slow investor ribbon (30-60 EMA) with breakout/trend momentum.
 """
 
 from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from backend.app.strategies.base import BaseStrategy
-from backend.app.core.indicator_engine import compute_all_indicators, gmma_ribbons, resample_weekly
+from backend.app.core.indicator_engine import compute_all_indicators, gmma_ribbons
 
 
 class GMMABreakoutStrategy(BaseStrategy):
     name: str = "GMMA Weekly Breakout"
     strategy_id: str = "gmma_breakout"
-    description: str = "Captures explosive multi-week Stage 2 trend expansions by entering daily breakouts aligned with weekly Guppy institutional ribbon divergence."
+    description: str = "Captures high-velocity Stage 2 trend expansions where the fast trader ribbon (3-15 EMA) fans outward above an expanding slow investor ribbon (30-60 EMA)."
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
-        "min_volume": 300_000,
-        "vol_surge_mult": 1.3,
-        "min_weekly_spread_pct": 1.8,
+        "min_volume": 100_000,
+        "min_slow_spread_pct": 1.5,
         "rr_target_1": 2.5,
         "rr_target_2": 4.0,
-        "max_risk_pct": 9.0
+        "max_risk_pct": 8.5
     }
 
     def evaluate_setup(
@@ -32,73 +31,67 @@ class GMMABreakoutStrategy(BaseStrategy):
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         p = {**self.default_params, **(params or {})}
-        if df is None or len(df) < 120:
+        if df is None or len(df) < 80:
             return None
 
-        # 1. Daily indicators
-        daily_data = compute_all_indicators(df)
-        latest_daily = daily_data.iloc[-1]
-        prev_daily = daily_data.iloc[-2] if len(daily_data) >= 2 else latest_daily
+        # 1. Compute indicators
+        data = compute_all_indicators(df)
+        latest = data.iloc[-1]
+        prev = data.iloc[-2] if len(data) >= 2 else latest
 
-        close = float(latest_daily['Close'])
-        open_price = float(latest_daily['Open'])
-        high = float(latest_daily['High'])
-        low = float(latest_daily['Low'])
-        vol_sma = float(latest_daily['Vol_SMA20'])
-        vol_ratio = float(latest_daily['Vol_Ratio'])
-        atr_val = float(latest_daily['ATR_14'])
-        ema50_d = float(latest_daily['EMA_50'])
-        ema200_d = float(latest_daily['EMA_200']) if 'EMA_200' in latest_daily else ema50_d
+        close = float(latest['Close'])
+        open_price = float(latest['Open'])
+        high = float(latest['High'])
+        low = float(latest['Low'])
+        vol_sma = float(latest.get('Vol_SMA20', 0))
+        vol_ratio = float(latest.get('Vol_Ratio', 1.0))
+        atr_val = float(latest.get('ATR_14', close * 0.02))
+        ema20 = float(latest.get('EMA_20', close))
+        ema50 = float(latest.get('EMA_50', close * 0.95))
+        ema200 = float(latest.get('EMA_200', ema50))
 
-        # 2. Liquidity & Baseline Filter
-        if close < p["min_price"] or vol_sma < p["min_volume"]:
+        # 2. Baseline Filter
+        if close < p["min_price"]:
             return None
 
-        # Daily price must be in Stage 2 structure (Close > 50 EMA)
-        if close < ema50_d:
+        # Price must be in Stage 2 structure (Close > 50 EMA)
+        if close < ema50 * 0.98:
             return None
 
-        # 3. Weekly GMMA Computation
-        weekly_df = resample_weekly(df)
-        if weekly_df is None or len(weekly_df) < 30:
-            weekly_close = df['Close']
-        else:
-            weekly_close = weekly_df['Close']
+        # 3. GMMA Ribbons Evaluation
+        fast_ribbon, slow_ribbon = gmma_ribbons(data['Close'])
+        f_vals = [float(s.iloc[-1]) for s in fast_ribbon.values() if len(s) > 0 and not np.isnan(s.iloc[-1])]
+        s_vals = [float(s.iloc[-1]) for s in slow_ribbon.values() if len(s) > 0 and not np.isnan(s.iloc[-1])]
 
-        fast_ribbon, slow_ribbon = gmma_ribbons(weekly_close)
-        
-        # Get latest weekly values
-        fast_vals = [float(s.iloc[-1]) for s in fast_ribbon.values() if len(s) > 0 and not np.isnan(s.iloc[-1])]
-        slow_vals = [float(s.iloc[-1]) for s in slow_ribbon.values() if len(s) > 0 and not np.isnan(s.iloc[-1])]
-
-        if not fast_vals or not slow_vals:
+        if not f_vals or not s_vals:
             return None
 
-        min_fast = min(fast_vals)
-        max_slow = max(slow_vals)
+        min_fast = min(f_vals)
+        max_slow = max(s_vals)
         slow_30 = float(slow_ribbon['EMA_30'].iloc[-1])
         slow_60 = float(slow_ribbon['EMA_60'].iloc[-1])
 
-        # 4. Weekly GMMA Alignment & Expansion Rules
-        is_ribbon_bullish = min_fast >= max_slow * 0.99
+        # 4. Ribbon Alignment & Expansion Rules
+        # Fast ribbon is aligned above or touching the slow ribbon
+        is_ribbon_bullish = min_fast >= max_slow * 0.985
+        
+        # Slow investor ribbon is expanding upward (30 EMA > 60 EMA)
         is_slow_expanding = slow_30 > slow_60
         slow_spread_pct = ((slow_30 - slow_60) / slow_60) * 100.0 if slow_60 > 0 else 0.0
 
-        if not (is_ribbon_bullish and is_slow_expanding and slow_spread_pct >= p["min_weekly_spread_pct"]):
+        if not (is_ribbon_bullish and is_slow_expanding and slow_spread_pct >= p["min_slow_spread_pct"]):
             return None
 
-        # 5. Daily Breakout & Momentum Trigger
-        prev_20d_high = float(daily_data['High'].iloc[-21:-1].max()) if len(daily_data) >= 22 else float(daily_data['High'].max())
-        is_daily_breakout = (close >= prev_20d_high * 0.995) and (close >= open_price)
-        is_vol_confirmed = vol_ratio >= p["vol_surge_mult"] or vol_ratio >= 1.25
+        # 5. Breakout or Trend Continuation Condition
+        prev_20_high = float(data['High'].iloc[-21:-1].max()) if len(data) >= 22 else close
+        is_trend_leader = (close >= prev_20_high * 0.97) and (close >= open_price * 0.99)
 
-        if not (is_daily_breakout and is_vol_confirmed):
+        if not is_trend_leader:
             return None
 
         # 6. Stop Loss & Target Geometry
-        slow_support = max_slow
-        swing_low_10 = float(daily_data['Low'].iloc[-10:].min())
-        stop_loss = round(max(swing_low_10 - (atr_val * 0.5), slow_support * 0.98), 2)
+        swing_low_10 = float(data['Low'].iloc[-11:-1].min())
+        stop_loss = round(max(swing_low_10 - (atr_val * 0.5), max_slow * 0.98, ema20 * 0.97), 2)
 
         risk = round(close - stop_loss, 2)
         risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
@@ -118,15 +111,18 @@ class GMMABreakoutStrategy(BaseStrategy):
 
         # 7. Setup Score (60 - 100)
         score = 65
-        if slow_spread_pct >= 3.0:
-            score += 10
-        if vol_ratio >= 1.8:
+        if slow_spread_pct >= 4.0:
             score += 15
-        elif vol_ratio >= 1.4:
+        elif slow_spread_pct >= 2.5:
             score += 10
-        if close > prev_20d_high:
+        if close >= prev_20_high * 0.995:
+            score += 10 # Active 20D breakout
+        if vol_ratio >= 1.3:
             score += 10
         score = min(score, 100)
+
+        is_breaking = close >= prev_20_high * 0.995
+        status_label = "GMMA Ribbon Expansion Breakout" if is_breaking else f"GMMA Trend Runner (+{round(slow_spread_pct, 1)}% Spread)"
 
         return {
             "ticker": ticker,
@@ -137,7 +133,7 @@ class GMMABreakoutStrategy(BaseStrategy):
             "open": round(open_price, 2),
             "high": round(high, 2),
             "low": round(low, 2),
-            "volume": int(latest_daily['Volume']),
+            "volume": int(latest['Volume']),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
@@ -145,19 +141,21 @@ class GMMABreakoutStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
-            "setup_date": str(latest_daily.name)[:10] if hasattr(latest_daily, 'name') else "",
+            "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
-                "rsi": round(float(latest_daily.get('RSI_14', 50.0)), 1),
+                "slow_spread_pct": round(slow_spread_pct, 1),
+                "fast_min_ema": round(min_fast, 2),
+                "slow_max_ema": round(max_slow, 2),
+                "rsi": round(float(latest.get('RSI_14', 50.0)), 1),
                 "atr": round(atr_val, 2),
                 "vol_ratio": round(vol_ratio, 2),
-                "weekly_slow_spread_pct": round(slow_spread_pct, 2),
-                "ema_50": round(ema50_d, 2),
-                "ema_200": round(ema200_d, 2)
+                "ema_50": round(ema50, 2),
+                "ema_200": round(ema200, 2)
             },
             "reasons": [
-                f"Weekly GMMA slow investor ribbon expanding (+{round(slow_spread_pct, 1)}% spread)",
-                f"Fast trader ribbon aligned above slow investor ribbon",
-                f"Daily breakout with {round(vol_ratio, 1)}x volume surge",
+                f"{status_label} (Slow Ribbon Spread: +{round(slow_spread_pct, 1)}%)",
+                f"Fast Trader Ribbon (3-15 EMA) aligned above Slow Investor Ribbon",
+                f"Stage 2 Bullish momentum (Price > 50 EMA)",
                 f"Asymmetric risk profile ({p['rr_target_1']}R / {p['rr_target_2']}R targets)"
             ]
         }
@@ -175,31 +173,28 @@ class GMMABreakoutStrategy(BaseStrategy):
         data['Target_1'] = np.nan
         data['Target_2'] = np.nan
 
-        if len(data) < 120:
+        if len(data) < 80:
             return data
 
-        # Precompute GMMA ribbons on daily/weekly approximation for rolling backtest speed
         fast_ribbon, slow_ribbon = gmma_ribbons(data['Close'])
         slow_30 = slow_ribbon['EMA_30']
         slow_60 = slow_ribbon['EMA_60']
         fast_15 = fast_ribbon['EMA_15']
 
-        for i in range(60, len(data)):
+        for i in range(50, len(data)):
             curr = data.iloc[i]
             close = curr['Close']
             open_p = curr['Open']
-            vol_sma = curr['Vol_SMA20']
-            vol_ratio = curr['Vol_Ratio']
             atr_val = curr['ATR_14']
+            ema20 = curr['EMA_20']
             ema50 = curr['EMA_50']
 
-            if close < p["min_price"] or vol_sma < p["min_volume"]:
+            if close < p["min_price"]:
                 continue
 
-            if close < ema50:
+            if close < ema50 * 0.98:
                 continue
 
-            # Ribbon expansion check
             s30 = slow_30.iat[i]
             s60 = slow_60.iat[i]
             f15 = fast_15.iat[i]
@@ -207,21 +202,19 @@ class GMMABreakoutStrategy(BaseStrategy):
             if np.isnan(s30) or np.isnan(s60) or np.isnan(f15):
                 continue
 
-            is_ribbon_bullish = f15 >= s30 * 0.99
+            is_ribbon_bullish = f15 >= s30 * 0.985
             is_slow_expanding = s30 > s60
             spread_pct = ((s30 - s60) / s60) * 100.0 if s60 > 0 else 0.0
 
-            if not (is_ribbon_bullish and is_slow_expanding and spread_pct >= p["min_weekly_spread_pct"]):
+            if not (is_ribbon_bullish and is_slow_expanding and spread_pct >= p["min_slow_spread_pct"]):
                 continue
 
-            # Breakout check
             prev_20_high = data['High'].iloc[max(0, i - 20):i].max() if i >= 20 else close
-            is_breakout = close >= prev_20_high * 0.995 and close >= open_p
-            is_vol_confirmed = vol_ratio >= p["vol_surge_mult"] or vol_ratio >= 1.25
+            is_breakout = close >= prev_20_high * 0.97
 
-            if is_breakout and is_vol_confirmed:
+            if is_breakout:
                 swing_low_10 = data['Low'].iloc[max(0, i - 10):i + 1].min()
-                sl = round(max(swing_low_10 - (atr_val * 0.5), s30 * 0.98), 2)
+                sl = round(max(swing_low_10 - (atr_val * 0.5), s30 * 0.98, ema20 * 0.97), 2)
                 risk = close - sl
                 risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
 
