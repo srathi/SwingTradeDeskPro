@@ -143,6 +143,7 @@ class GMMABreakoutStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"{status_label} with expanding Guppy investor ribbons (+{round(slow_spread_pct, 1)}% spread).",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "slow_spread_pct": round(slow_spread_pct, 1),

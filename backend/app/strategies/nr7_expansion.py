@@ -133,6 +133,7 @@ class NR7ExpansionStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"Toby Crabel NR7 narrow range compression ({round(float(compression_ratio) * 100, 0)}% ATR) in Stage 2 trend.",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "nr7_range": round(float(active_range), 2),

@@ -176,9 +176,14 @@ export default function ScreenerView({
   const exportCSV = () => {
     if (results.length === 0) return;
     const headers = ["Ticker", "Strategy", "Score", "Close", "20 EMA", "RSI", "Stop Loss", "Target 1 (2R)", "Target 2 (3R)", "Risk (₹)", "Risk %", "Summary"];
-    const rows = results.map(r => [
-      r.ticker, r.strategy, r.score, r.close, r.ema_20, r.rsi, r.stop_loss, r.target_1, r.target_2, r.risk_per_share, `${r.risk_pct}%`, `"${r.setup_summary}"`
-    ]);
+    const rows = results.map(r => {
+      const ema20 = r.ema_20 ?? r.indicators?.ema_20 ?? r.indicators?.ema20 ?? "—";
+      const rsiVal = r.rsi ?? r.indicators?.rsi ?? r.indicators?.rsi_14 ?? r.indicators?.rsi_28 ?? "—";
+      const summary = r.setup_summary || (r.reasons && r.reasons.length > 0 ? r.reasons[0] : "") || `${r.strategy} Triggered`;
+      return [
+        r.ticker, r.strategy, r.score, r.close, ema20, rsiVal, r.stop_loss, r.target_1, r.target_2, r.risk_per_share, `${r.risk_pct}%`, `"${summary.replace(/"/g, '""')}"`
+      ];
+    });
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -446,7 +451,7 @@ export default function ScreenerView({
                         ₹{fmt(setup.close)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{setup.setup_summary}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{setup.setup_summary || (setup.reasons && setup.reasons.length > 0 ? setup.reasons[0] : "") || `${setup.strategy} Setup`}</p>
                   </div>
                 </div>
 

@@ -174,6 +174,7 @@ class RSI28DivergenceStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"RSI(28) Bullish Divergence (+{round(rsi_delta, 1)} RSI pts) bouncing off ₹{round(p_low2, 1)} support.",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "rsi_28": round(rsi28_curr, 1),

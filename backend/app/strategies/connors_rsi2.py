@@ -43,6 +43,9 @@ class ConnorsRSI2Strategy(BaseStrategy):
         prev2 = data.iloc[-3] if len(data) >= 3 else prev1
 
         close = float(curr['Close'])
+        open_p = float(curr['Open'])
+        high = float(curr['High'])
+        low = float(curr['Low'])
         vol = float(curr['Volume'])
         vol_sma = float(curr.get('Vol_SMA20', vol))
         vol_ratio = float(curr.get('Vol_Ratio', 1.0))
@@ -90,18 +93,43 @@ class ConnorsRSI2Strategy(BaseStrategy):
             "strategy_id": self.strategy_id,
             "score": score,
             "close": round(close, 2),
-            "ema_20": round(float(curr.get('EMA_20', 0)), 2),
+            "open": round(open_p, 2),
+            "high": round(high, 2),
+            "low": round(low, 2),
+            "volume": int(curr.get('Volume', 0)),
+            "ema_20": round(float(curr.get('EMA_20', close)), 2),
+            "ema_50": round(float(curr.get('EMA_50', close)), 2),
+            "ema_200": round(float(sma200), 2),
             "rsi": round(rsi2_val, 1),
+            "atr": round(float(curr.get('ATR_14', close * 0.02)), 2),
+            "vol_ratio": round(vol_ratio, 2),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
             "risk_per_share": risk_per_share,
             "risk_pct": risk_pct,
+            "r_multiple_t1": p["rr_target_1"],
+            "r_multiple_t2": p["rr_target_2"],
             "reward_pct_t1": round(((target_1 - close) / close) * 100.0, 2),
             "reward_pct_t2": round(((target_2 - close) / close) * 100.0, 2),
-            "rr_ratio": "1:1.5",
+            "rr_ratio": f"1:{p['rr_target_1']}",
             "volume_ratio": round(vol_ratio, 2),
-            "setup_summary": f"Extreme 2-day oversold panic (RSI-2 = {rsi2_val:.1f}) in confirmed >200 SMA macro uptrend."
+            "setup_summary": f"Extreme 2-day oversold panic (RSI-2 = {rsi2_val:.1f}) in confirmed >200 SMA macro uptrend.",
+            "setup_date": str(curr.name)[:10] if hasattr(curr, 'name') else "",
+            "indicators": {
+                "rsi_2": round(rsi2_val, 1),
+                "rsi": round(rsi2_val, 1),
+                "ema_20": round(float(curr.get('EMA_20', close)), 2),
+                "ema_50": round(float(curr.get('EMA_50', close)), 2),
+                "sma_200": round(float(sma200), 2),
+                "atr": round(float(curr.get('ATR_14', close * 0.02)), 2),
+                "vol_ratio": round(vol_ratio, 2)
+            },
+            "reasons": [
+                f"Extreme 2-day panic oversold dip (RSI-2: {rsi2_val:.1f} < 10)",
+                f"Strict macro bull trend filter (>200 SMA)",
+                f"Statistical mean reversion bounce with fast 1:{p['rr_target_1']} payout"
+            ]
         }
 
     def generate_signals(

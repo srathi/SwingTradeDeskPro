@@ -99,20 +99,37 @@ class TrendPullbackStrategy(BaseStrategy):
             "open": round(open_price, 2),
             "high": round(high, 2),
             "low": round(low, 2),
-            "ema_20": round(ema20, 2),
-            "ema_50": round(ema50, 2),
-            "ema_200": round(ema200, 2),
-            "rsi": round(rsi_val, 1),
-            "atr": round(atr_val, 2),
-            "vol_ratio": round(vol_ratio, 2),
+            "volume": int(latest.get('Volume', 0)),
+            "ema_20": round(float(ema20), 2),
+            "ema_50": round(float(ema50), 2),
+            "ema_200": round(float(ema200), 2),
+            "rsi": round(float(rsi_val), 1),
+            "atr": round(float(atr_val), 2),
+            "vol_ratio": round(float(vol_ratio), 2),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
             "risk_per_share": risk,
             "risk_pct": round((risk / close) * 100.0, 2),
             "reward_pct_t1": round(((target_1 - close) / close) * 100.0, 2),
+            "r_multiple_t1": p["rr_target_1"],
+            "r_multiple_t2": p["rr_target_2"],
             "rr_ratio": f"1:{p['rr_target_1']}",
-            "setup_summary": f"Pullback at ₹{round(ema20, 1)} with RSI {round(rsi_val, 1)} in macro uptrend."
+            "setup_summary": f"Pullback at ₹{round(ema20, 1)} with RSI {round(rsi_val, 1)} in Stage 2 uptrend.",
+            "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
+            "indicators": {
+                "ema_20": round(float(ema20), 2),
+                "ema_50": round(float(ema50), 2),
+                "ema_200": round(float(ema200), 2),
+                "rsi": round(float(rsi_val), 1),
+                "atr": round(float(atr_val), 2),
+                "vol_ratio": round(float(vol_ratio), 2)
+            },
+            "reasons": [
+                f"Pullback to 20 EMA (₹{round(ema20, 1)}) support in verified Stage 2 trend",
+                f"Momentum RSI(14) in optimal entry zone ({round(rsi_val, 1)})",
+                f"Bullish confirmation close with 1:{p['rr_target_1']} risk-to-reward"
+            ]
         }
 
     def generate_signals(

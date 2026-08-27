@@ -159,6 +159,7 @@ class PocketPivotStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"Pocket Pivot volume surge ({round(vol_down_ratio, 2)}x vs 10D max down-vol) bouncing off 10/20 EMA support.",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "max_down_vol_10d": int(max_down_vol),

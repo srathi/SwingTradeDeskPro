@@ -132,6 +132,7 @@ class WyckoffSpringStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"Wyckoff Spring shakeout below ₹{round(support_level, 1)} support with {round(close_location_pct, 1)}% absorption hammer tail.",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "support_level": round(support_level, 2),

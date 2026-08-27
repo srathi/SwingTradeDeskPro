@@ -139,6 +139,7 @@ class High52WBreakoutStrategy(BaseStrategy):
             "risk_pct": round((risk / close) * 100.0, 2),
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
+            "setup_summary": f"{status_label} vs prior ₹{round(prior_52w_high, 1)} resistance with tight {round(base_depth_pct, 1)}% base.",
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "prior_52w_high": round(prior_52w_high, 2),

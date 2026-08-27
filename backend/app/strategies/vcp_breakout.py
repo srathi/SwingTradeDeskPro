@@ -109,6 +109,7 @@ class VCPBreakoutStrategy(BaseStrategy):
                 "open": round(open_price, 2),
                 "high": round(high, 2),
                 "low": round(low, 2),
+                "volume": int(latest.get('Volume', 0)),
                 "ema_20": round(float(latest['EMA_20']), 2),
                 "ema_50": round(ema50, 2),
                 "ema_200": round(ema200, 2),
@@ -120,9 +121,25 @@ class VCPBreakoutStrategy(BaseStrategy):
                 "target_2": target_2,
                 "risk_per_share": risk,
                 "risk_pct": round((risk / close) * 100.0, 2),
+                "r_multiple_t1": p["rr_target_1"],
+                "r_multiple_t2": p["rr_target_2"],
                 "reward_pct_t1": round(((target_1 - close) / close) * 100.0, 2),
                 "rr_ratio": f"1:{p['rr_target_1']}",
-                "setup_summary": f"20D High breakout at ₹{round(close, 1)} with {round(vol_ratio, 1)}x volume expansion."
+                "setup_summary": f"20D High breakout at ₹{round(close, 1)} with {round(vol_ratio, 1)}x volume expansion.",
+                "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
+                "indicators": {
+                    "rsi": round(rsi_val, 1),
+                    "ema_20": round(float(latest['EMA_20']), 2),
+                    "ema_50": round(ema50, 2),
+                    "ema_200": round(ema200, 2),
+                    "atr": round(float(latest['ATR_14']), 2),
+                    "vol_ratio": round(vol_ratio, 2)
+                },
+                "reasons": [
+                    f"20-Day Pivot Breakout at ₹{round(close, 1)} on {round(vol_ratio, 1)}x volume surge",
+                    f"Minervini SEPA base contraction completed",
+                    f"Stage 2 Bullish trend alignment (Price > 50 EMA > 200 EMA)"
+                ]
             }
 
         return None

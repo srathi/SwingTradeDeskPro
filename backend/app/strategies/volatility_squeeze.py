@@ -112,18 +112,43 @@ class VolatilitySqueezeStrategy(BaseStrategy):
             "strategy_id": self.strategy_id,
             "score": score,
             "close": round(close, 2),
+            "open": round(open_p, 2),
+            "high": round(high, 2),
+            "low": round(low, 2),
+            "volume": int(curr.get('Volume', 0)),
             "ema_20": round(ema20, 2),
-            "rsi": round(float(curr.get('RSI_14', 50)), 1),
+            "ema_50": round(ema50, 2),
+            "ema_200": round(ema200, 2),
+            "rsi": round(float(curr.get('RSI_14', 50.0)), 1),
+            "atr": round(float(curr.get('ATR_14', close * 0.02)), 2),
+            "vol_ratio": round(vol_ratio, 2),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
             "risk_per_share": risk_per_share,
             "risk_pct": risk_pct,
+            "r_multiple_t1": p["rr_target_1"],
+            "r_multiple_t2": p["rr_target_2"],
             "reward_pct_t1": round(((target_1 - close) / close) * 100.0, 2),
             "reward_pct_t2": round(((target_2 - close) / close) * 100.0, 2),
             "rr_ratio": f"1:{p['rr_target_1']}",
             "volume_ratio": round(vol_ratio, 2),
-            "setup_summary": f"Volatility squeeze breakout from {lookback}-bar compression with accelerating MACD momentum."
+            "setup_summary": f"TTM Volatility Squeeze breakout from {lookback}-bar compression with accelerating MACD momentum.",
+            "setup_date": str(curr.name)[:10] if hasattr(curr, 'name') else "",
+            "indicators": {
+                "rsi": round(float(curr.get('RSI_14', 50.0)), 1),
+                "ema_20": round(ema20, 2),
+                "ema_50": round(ema50, 2),
+                "ema_200": round(ema200, 2),
+                "macd_hist": round(macd_h_curr, 3),
+                "atr": round(float(curr.get('ATR_14', close * 0.02)), 2),
+                "vol_ratio": round(vol_ratio, 2)
+            },
+            "reasons": [
+                f"TTM Volatility Squeeze expansion out of Keltner Channel compression",
+                f"Accelerating MACD histogram momentum ({macd_h_curr:.2f} > {macd_h_prev:.2f})",
+                f"Stage 2 Bullish alignment (Price > 200 EMA & 20 EMA > 50 EMA)"
+            ]
         }
 
     def generate_signals(
