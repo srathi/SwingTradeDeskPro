@@ -228,3 +228,9 @@
   * Replaced custom ingestion in `sectorpulse/data_ingestion.py` with direct integration to `backend.app.core.data_engine.DataEngine`.
   * Guarantees persistent SQLite caching, automatic multi-symbol resolution, and 100% cloud resilience for all 11 Indian sector indices on both Localhost and Render.
   * Pushed commit (`76bd5c1`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Restored EMA 20, 50, 200 and RSI Overlays in Chart Studio:**
+  * **Root Cause**: In [`chart_routes.py`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/api/chart_routes.py), the API returned top-level keys (`ema20`, `ema50`, `ema200`, `rsi`, `active_setup`) while the frontend component [`ChartStudio.jsx`](file:///Users/sandesh/antigravity/SwingTrades/frontend/src/components/ChartStudio.jsx) expected nested objects (`indicators.ema_20`, `indicators.ema_50`, `indicators.ema_200`, `indicators.rsi_14`, `setup`).
+  * **Fix**: Synchronized both backend and frontend: `chart_routes.py` now populates both top-level and `indicators` objects, and `ChartStudio.jsx` includes resilient fallback checks for both formats.
+  * Tested and verified 251 bars of EMA 20 (Cyan), EMA 50 (Amber), EMA 200 (Purple), and RSI 14 in TradingView Lightweight Charts.
+  * Pushed commit (`1a14dfc`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
