@@ -234,3 +234,8 @@
   * **Fix**: Synchronized both backend and frontend: `chart_routes.py` now populates both top-level and `indicators` objects, and `ChartStudio.jsx` includes resilient fallback checks for both formats.
   * Tested and verified 251 bars of EMA 20 (Cyan), EMA 50 (Amber), EMA 200 (Purple), and RSI 14 in TradingView Lightweight Charts.
   * Pushed commit (`1a14dfc`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Removed Inline EMA Text Overlays on Chart Canvas:**
+  * **Enhancement**: Removed embedded text titles (`title: ''`) from the TradingView `addLineSeries` configurations for 20 EMA, 50 EMA, and 200 EMA lines.
+  * Prevents graph labels from overlapping with the candlesticks and future price action, relying on the top indicator legend buttons for color mapping (**Cyan** for 20 EMA, **Amber** for 50 EMA, **Purple** for 200 EMA).
+  * Pushed commit (`f077ad1`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
