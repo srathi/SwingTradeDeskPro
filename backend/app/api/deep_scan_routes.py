@@ -42,7 +42,7 @@ def run_single_stock_deep_scan(
             }
         )
 
-    clean_ticker = resolved_sym or ticker.strip().toUpperCase()
+    clean_ticker = resolved_sym or ticker.strip().upper()
     company_name = SearchEngine.get_company_name(clean_ticker)
 
     df = df[~df.index.duplicated(keep='first')].sort_index()
