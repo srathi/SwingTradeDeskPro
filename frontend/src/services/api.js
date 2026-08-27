@@ -128,3 +128,12 @@ export async function fetchSectorPulse(market = "NSE", period = "2y") {
   }
   return res.json();
 }
+
+export async function fetchSectorConstituents(sectorTicker) {
+  const res = await fetch(`${API_BASE}/sectors/constituents?sector=${encodeURIComponent(sectorTicker)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to load constituents for ${sectorTicker}`);
+  }
+  return res.json();
+}

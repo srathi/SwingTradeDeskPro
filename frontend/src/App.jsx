@@ -118,6 +118,9 @@ export default function App() {
               {activeTab === 'sectors' && (
                 <SectorPulseView
                   onScanSector={handleScanSector}
+                  onSelectTicker={handleSelectTicker}
+                  onOpenRisk={handleOpenRisk}
+                  onOpenBacktest={handleOpenBacktest}
                 />
               )}
 

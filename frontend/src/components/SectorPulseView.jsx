@@ -15,11 +15,19 @@ import {
   AlertTriangle,
   Layers,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  SlidersHorizontal,
+  LineChart,
+  DollarSign,
+  ExternalLink,
+  Flame
 } from 'lucide-react';
-import { fetchSectorPulse } from '../services/api';
+import { fetchSectorPulse, fetchSectorConstituents } from '../services/api';
 
-export default function SectorPulseView({ onScanSector }) {
+export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenRisk, onOpenBacktest }) {
   const [market, setMarket] = useState('NSE');
   const [period, setPeriod] = useState('2y');
   const [data, setData] = useState(null);
@@ -27,6 +35,9 @@ export default function SectorPulseView({ onScanSector }) {
   const [errorMsg, setErrorMsg] = useState(null);
   const [selectedSector, setSelectedSector] = useState(null);
   const [filterRegime, setFilterRegime] = useState('ALL'); // ALL, UPTREND, DOWNTREND
+  const [expandedSectors, setExpandedSectors] = useState(new Set());
+  const [constituentsMap, setConstituentsMap] = useState({});
+  const [loadingConstituents, setLoadingConstituents] = useState({});
 
   const loadPulse = async () => {
     setLoading(true);
@@ -36,6 +47,8 @@ export default function SectorPulseView({ onScanSector }) {
       setData(res);
       if (res && res.sectors && res.sectors.length > 0) {
         setSelectedSector(res.sectors[0]);
+        // Prefetch constituents for top sector
+        loadConstituentsForSector(res.sectors[0].sector);
       }
     } catch (err) {
       setErrorMsg(err.message || "Failed to load sector pulse data");
@@ -44,15 +57,53 @@ export default function SectorPulseView({ onScanSector }) {
     }
   };
 
+  const loadConstituentsForSector = async (sectorCode) => {
+    if (!sectorCode || constituentsMap[sectorCode] || loadingConstituents[sectorCode]) return;
+    setLoadingConstituents(prev => ({ ...prev, [sectorCode]: true }));
+    try {
+      const res = await fetchSectorConstituents(sectorCode);
+      if (res && res.constituents) {
+        setConstituentsMap(prev => ({ ...prev, [sectorCode]: res.constituents }));
+      }
+    } catch (e) {
+      console.warn(`Could not load constituents for ${sectorCode}:`, e);
+    } finally {
+      setLoadingConstituents(prev => ({ ...prev, [sectorCode]: false }));
+    }
+  };
+
   useEffect(() => {
     loadPulse();
   }, [market, period]);
+
+  useEffect(() => {
+    if (selectedSector && selectedSector.sector) {
+      loadConstituentsForSector(selectedSector.sector);
+    }
+  }, [selectedSector]);
+
+  const toggleExpandSector = (sectorCode, e) => {
+    e.stopPropagation();
+    loadConstituentsForSector(sectorCode);
+    setExpandedSectors(prev => {
+      const next = new Set(prev);
+      if (next.has(sectorCode)) {
+        next.delete(sectorCode);
+      } else {
+        next.add(sectorCode);
+      }
+      return next;
+    });
+  };
 
   const filteredSectors = data && data.sectors ? data.sectors.filter(s => {
     if (filterRegime === 'UPTREND') return s.regime.trend_classification.includes('UPTREND');
     if (filterRegime === 'DOWNTREND') return s.regime.trend_classification.includes('DOWNTREND');
     return true;
   }) : [];
+
+  const selectedConstituents = selectedSector ? (constituentsMap[selectedSector.sector] || selectedSector.top_constituents || []) : [];
+  const isSelectedLoadingConstituents = selectedSector ? loadingConstituents[selectedSector.sector] : false;
 
   return (
     <div className="space-y-6">
@@ -74,7 +125,7 @@ export default function SectorPulseView({ onScanSector }) {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-gray-400 mt-1">
-                Top-Down Macro Rotation, Mansfield RS, Hurst Persistence ($H$), and Markov Regime Duration Modeling by <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" className="text-cyan-400 font-medium hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a>.
+                Top-Down Macro Rotation, Mansfield RS, Hurst Persistence ($H$), and Ranked Constituent Leaders by <a href="https://www.rupeemap.in" target="_blank" rel="noopener noreferrer" className="text-cyan-400 font-medium hover:underline hover:text-cyan-300 transition-colors">rupeemap.in labs</a>.
               </p>
             </div>
           </div>
@@ -147,7 +198,7 @@ export default function SectorPulseView({ onScanSector }) {
             <div className="text-2xl font-bold text-cyan-400 font-mono mt-1">
               {data.benchmark}
             </div>
-            <div className="text-[11px] text-gray-500 mt-0.5">Nifty 50 Equal Anchor</div>
+            <div className="text-[11px] text-gray-500 mt-0.5">Anchor Index</div>
           </div>
         </div>
       )}
@@ -207,6 +258,7 @@ export default function SectorPulseView({ onScanSector }) {
               <table className="w-full text-left text-xs">
                 <thead className="bg-gray-950 text-gray-400 uppercase font-mono border-b border-gray-800">
                   <tr>
+                    <th className="py-3 px-2 w-8 text-center"></th>
                     <th className="py-3 px-3">Sector</th>
                     <th className="py-3 px-3">Regime</th>
                     <th className="py-3 px-3 text-right">MRS Score</th>
@@ -219,72 +271,147 @@ export default function SectorPulseView({ onScanSector }) {
                 <tbody className="divide-y divide-gray-800/60 font-mono">
                   {filteredSectors.map((s) => {
                     const isSelected = selectedSector && selectedSector.sector === s.sector;
+                    const isExpanded = expandedSectors.has(s.sector);
                     const regime = s.regime.trend_classification;
-                    const isUptrend = regime.includes('UPTREND');
-                    const isDowntrend = regime.includes('DOWNTREND');
+                    const cList = constituentsMap[s.sector] || s.top_constituents || [];
+                    const isRowLoading = loadingConstituents[s.sector];
 
                     return (
-                      <tr
-                        key={s.sector}
-                        onClick={() => setSelectedSector(s)}
-                        className={`cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-cyan-500/15 text-white font-medium border-l-4 border-l-cyan-400'
-                            : 'hover:bg-gray-800/40 text-gray-300'
-                        }`}
-                      >
-                        <td className="py-3 px-3">
-                          <div className="font-bold text-white font-sans">{s.name}</div>
-                          <div className="text-[10px] text-gray-500 font-mono">{s.sector}</div>
-                        </td>
+                      <React.Fragment key={s.sector}>
+                        <tr
+                          onClick={() => setSelectedSector(s)}
+                          className={`cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-cyan-500/15 text-white font-medium border-l-4 border-l-cyan-400'
+                              : 'hover:bg-gray-800/40 text-gray-300'
+                          }`}
+                        >
+                          <td className="py-3 px-2 text-center" onClick={(e) => toggleExpandSector(s.sector, e)}>
+                            <button
+                              className={`p-1 rounded hover:bg-gray-700/60 text-gray-400 hover:text-cyan-300 transition-transform ${isExpanded ? 'rotate-180 text-cyan-400' : ''}`}
+                              title={isExpanded ? "Collapse constituents" : "Expand top constituents"}
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
 
-                        <td className="py-3 px-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            regime === 'STRONG_UPTREND'
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : regime === 'EARLY_UPTREND'
-                              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                              : regime === 'STRONG_DOWNTREND'
-                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                              : regime === 'EARLY_DOWNTREND'
-                              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-                              : 'bg-gray-800 text-gray-400'
-                          }`}>
-                            {regime.replace('_', ' ')}
-                          </span>
-                        </td>
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-white font-sans flex items-center gap-1.5">
+                              <span>{s.name}</span>
+                            </div>
+                            <div className="text-[10px] text-gray-500 font-mono">{s.sector}</div>
+                          </td>
 
-                        <td className={`py-3 px-3 text-right font-bold text-sm ${s.regime.mrs_score >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {s.regime.mrs_score >= 0 ? '+' : ''}{s.regime.mrs_score}%
-                        </td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              regime === 'STRONG_UPTREND'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : regime === 'EARLY_UPTREND'
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                : regime === 'STRONG_DOWNTREND'
+                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                : regime === 'EARLY_DOWNTREND'
+                                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                                : 'bg-gray-800 text-gray-400'
+                            }`}>
+                              {regime.replace('_', ' ')}
+                            </span>
+                          </td>
 
-                        <td className={`py-3 px-3 text-right ${s.regime.mrs_slope_5d >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          <div className="flex items-center justify-end space-x-0.5">
-                            {s.regime.mrs_slope_5d >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                            <span>{s.regime.mrs_slope_5d >= 0 ? '+' : ''}{s.regime.mrs_slope_5d}</span>
-                          </div>
-                        </td>
+                          <td className={`py-3 px-3 text-right font-bold text-sm ${s.regime.mrs_score >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {s.regime.mrs_score >= 0 ? '+' : ''}{s.regime.mrs_score}%
+                          </td>
 
-                        <td className="py-3 px-3 text-center">
-                          <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
-                            s.regime.hurst_exponent > 0.55 ? 'text-purple-300 bg-purple-500/10' : 'text-gray-400'
-                          }`}>
-                            {s.regime.hurst_exponent}
-                          </span>
-                        </td>
+                          <td className={`py-3 px-3 text-right ${s.regime.mrs_slope_5d >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="flex items-center justify-end space-x-0.5">
+                              {s.regime.mrs_slope_5d >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                              <span>{s.regime.mrs_slope_5d >= 0 ? '+' : ''}{s.regime.mrs_slope_5d}</span>
+                            </div>
+                          </td>
 
-                        <td className="py-3 px-3 text-center text-gray-200">
-                          {s.duration_forecast.estimated_remaining_days}d
-                        </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
+                              s.regime.hurst_exponent > 0.55 ? 'text-purple-300 bg-purple-500/10' : 'text-gray-400'
+                            }`}>
+                              {s.regime.hurst_exponent}
+                            </span>
+                          </td>
 
-                        <td className="py-3 px-3 text-right">
-                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                            s.trade_recommendation.sector_weight_multiplier >= 1.0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-400 bg-gray-900'
-                          }`}>
-                            {s.trade_recommendation.sector_weight_multiplier}x
-                          </span>
-                        </td>
-                      </tr>
+                          <td className="py-3 px-3 text-center text-gray-200">
+                            {s.duration_forecast.estimated_remaining_days}d
+                          </td>
+
+                          <td className="py-3 px-3 text-right">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                              s.trade_recommendation.sector_weight_multiplier >= 1.0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-400 bg-gray-900'
+                            }`}>
+                              {s.trade_recommendation.sector_weight_multiplier}x
+                            </span>
+                          </td>
+                        </tr>
+
+                        {/* Inline Expandable Constituent Drawer */}
+                        {isExpanded && (
+                          <tr className="bg-gray-950/90 border-b border-gray-800/80">
+                            <td colSpan={8} className="p-3 pl-8">
+                              <div className="space-y-2">
+                                <div className="text-[11px] text-gray-400 font-sans font-semibold flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5 text-cyan-400">
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Top {s.name} Constituent Leaders (Ranked by Merit):
+                                  </span>
+                                  <span className="text-[10px] text-gray-500">Click any stock to open in Chart Studio</span>
+                                </div>
+
+                                {isRowLoading && (
+                                  <div className="py-3 text-center text-gray-400 text-xs flex items-center justify-center gap-2 font-mono">
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                                    <span>Ranking {s.name} stocks...</span>
+                                  </div>
+                                )}
+
+                                {!isRowLoading && cList.length > 0 && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {cList.map(c => (
+                                      <div
+                                        key={c.symbol}
+                                        onClick={() => onSelectTicker && onSelectTicker(c.symbol)}
+                                        className="bg-gray-900/90 border border-gray-800 hover:border-cyan-500/50 p-2.5 rounded-xl transition-all cursor-pointer group flex items-center justify-between shadow-sm"
+                                      >
+                                        <div>
+                                          <div className="font-bold text-gray-200 group-hover:text-cyan-300 transition-colors font-sans text-xs flex items-center gap-1.5">
+                                            <span>{c.name}</span>
+                                            <span className="text-[10px] text-gray-500 font-mono">({c.weight})</span>
+                                          </div>
+                                          <div className="text-[11px] font-mono text-gray-400 flex items-center gap-2 mt-0.5">
+                                            <span>₹{c.close.toLocaleString()}</span>
+                                            <span className={c.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                              {c.change_pct >= 0 ? '+' : ''}{c.change_pct}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end gap-1">
+                                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold font-sans ${
+                                            c.stage_type === 'bull'
+                                              ? 'bg-emerald-500/20 text-emerald-300'
+                                              : c.stage_type === 'early'
+                                              ? 'bg-cyan-500/20 text-cyan-300'
+                                              : 'bg-gray-800 text-gray-400'
+                                          }`}>
+                                            {c.stage}
+                                          </span>
+                                          <span className="text-[10px] text-purple-300 font-mono font-bold">
+                                            Merit {c.merit_score}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -293,7 +420,7 @@ export default function SectorPulseView({ onScanSector }) {
           )}
         </div>
 
-        {/* Right 1 Col: Selected Sector Deep Inspection Card */}
+        {/* Right 1 Col: Selected Sector Deep Inspection & Ranked Leaders Card */}
         {selectedSector && (
           <div className="bg-gray-900/90 border border-cyan-500/30 rounded-2xl p-5 shadow-2xl space-y-5">
             
@@ -318,6 +445,106 @@ export default function SectorPulseView({ onScanSector }) {
                 <span className="text-gray-400 uppercase font-mono">Allocation Weight</span>
                 <span className="font-bold text-emerald-400 font-mono">{selectedSector.trade_recommendation.sector_weight_multiplier}x Multiplier</span>
               </div>
+            </div>
+
+            {/* Top Constituents & Leaders (Ranked by Merit) */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">
+                <div className="text-[11px] text-cyan-400 uppercase font-bold tracking-wider font-mono flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-amber-400" />
+                  <span>Top {selectedSector.name} Stocks (by Merit)</span>
+                </div>
+                <span className="text-[10px] text-gray-500 font-mono">Top Leaders</span>
+              </div>
+
+              {isSelectedLoadingConstituents && (
+                <div className="py-6 text-center text-gray-400 text-xs flex items-center justify-center gap-2 font-mono">
+                  <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
+                  <span>Loading {selectedSector.name} constituents...</span>
+                </div>
+              )}
+
+              {!isSelectedLoadingConstituents && selectedConstituents.length === 0 && (
+                <div className="py-4 text-center text-gray-500 text-xs font-mono">
+                  Constituent profiling available on selection.
+                </div>
+              )}
+
+              {!isSelectedLoadingConstituents && selectedConstituents.length > 0 && (
+                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                  {selectedConstituents.map((c, idx) => (
+                    <div 
+                      key={c.symbol}
+                      className="bg-gray-950/90 border border-gray-800/80 hover:border-cyan-500/40 rounded-xl p-2.5 transition-all space-y-1.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-5 h-5 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center text-[10px] font-mono font-bold text-cyan-400">
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                              <span>{c.name}</span>
+                              <span className="text-[10px] text-gray-500 font-mono">({c.weight})</span>
+                            </div>
+                            <div className="text-[10px] text-gray-400 font-mono">
+                              ₹{c.close.toLocaleString()} • <span className={c.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{c.change_pct >= 0 ? '+' : ''}{c.change_pct}%</span> • RSI: {c.rsi}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                            c.stage_type === 'bull'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : c.stage_type === 'early'
+                              ? 'bg-cyan-500/20 text-cyan-300'
+                              : 'bg-gray-800 text-gray-400'
+                          }`}>
+                            {c.stage}
+                          </div>
+                          <div className="text-[10px] font-mono text-purple-300 mt-0.5">
+                            Merit: {c.merit_score}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Active setup banner if present */}
+                      {c.active_setup && (
+                        <div className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center justify-between font-mono">
+                          <span>⭐ Active Setup: {c.active_setup}</span>
+                          <span>Score {c.setup_score}</span>
+                        </div>
+                      )}
+
+                      {/* 1-Click Action Buttons */}
+                      <div className="flex items-center gap-1.5 pt-1 border-t border-gray-900">
+                        <button
+                          onClick={() => onSelectTicker && onSelectTicker(c.symbol)}
+                          className="flex-1 py-1 rounded bg-gray-900 hover:bg-cyan-600/20 border border-gray-800 hover:border-cyan-500/40 text-gray-300 hover:text-cyan-300 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                          title="Open Chart in Chart Studio"
+                        >
+                          <LineChart className="w-3 h-3" /> Chart
+                        </button>
+                        <button
+                          onClick={() => onOpenBacktest && onOpenBacktest(c.symbol)}
+                          className="flex-1 py-1 rounded bg-gray-900 hover:bg-indigo-600/20 border border-gray-800 hover:border-indigo-500/40 text-gray-300 hover:text-indigo-300 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                          title="Run Walk-Forward Backtest"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" /> Backtest
+                        </button>
+                        <button
+                          onClick={() => onOpenRisk && onOpenRisk({ close: c.close, stop_loss: Math.round(c.close * 0.95), target_1: Math.round(c.close * 1.10) })}
+                          className="flex-1 py-1 rounded bg-gray-900 hover:bg-emerald-600/20 border border-gray-800 hover:border-emerald-500/40 text-gray-300 hover:text-emerald-300 text-[10px] font-medium flex items-center justify-center gap-1 transition-all"
+                          title="Calculate Exact Position Sizing"
+                        >
+                          <DollarSign className="w-3 h-3" /> Risk
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Persistence & Regime Duration */}
@@ -382,7 +609,7 @@ export default function SectorPulseView({ onScanSector }) {
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/25 transition-all active:scale-95"
             >
               <Zap className="w-4 h-4" />
-              <span>Screen {selectedSector.name} Stocks</span>
+              <span>Screen All {selectedSector.name} Stocks</span>
             </button>
 
           </div>

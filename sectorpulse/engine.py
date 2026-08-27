@@ -13,6 +13,7 @@ from sectorpulse.data_ingestion import SectorDataIngestion, DEFAULT_NSE_BENCHMAR
 from sectorpulse.indicators import compute_sector_indicators
 from sectorpulse.persistence import calculate_hurst_exponent, compute_markov_regime_duration
 from sectorpulse.foundation_forecaster import ChronosForecaster
+from sectorpulse.constituents import get_sector_top_constituents
 
 
 class SectorPulseEngine:
@@ -148,7 +149,8 @@ class SectorPulseEngine:
                 "ema_50": round(ema_50, 2),
                 "ema_200": round(ema_200, 2),
                 "forecaster_model": getattr(fc_result, "model_name", "Vectorized_MonteCarlo_OU")
-            }
+            },
+            "top_constituents": get_sector_top_constituents(sector_ticker, limit=5)
         }
         return report
 

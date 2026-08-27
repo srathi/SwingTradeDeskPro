@@ -8,12 +8,32 @@ from fastapi import APIRouter, Query, HTTPException
 
 from sectorpulse.engine import SectorPulseEngine
 from sectorpulse.data_ingestion import DEFAULT_NSE_BENCHMARK, DEFAULT_NSE_SECTORS, DEFAULT_US_BENCHMARK, DEFAULT_US_SECTORS
+from sectorpulse.constituents import get_sector_top_constituents
 
 router = APIRouter(prefix="/api/sectors", tags=["SectorPulse"])
 
 # Cached engine instances
 _nse_engine = SectorPulseEngine(benchmark_ticker=DEFAULT_NSE_BENCHMARK)
 _us_engine = SectorPulseEngine(benchmark_ticker=DEFAULT_US_BENCHMARK)
+
+
+@router.get("/constituents")
+def get_constituents_by_sector(
+    sector: str = Query(..., description="Sector index ticker e.g. ^CNXIT or XLK"),
+    limit: int = Query(6, description="Max constituents to return")
+) -> Dict[str, Any]:
+    """
+    Returns ranked top liquid constituents of a sector with real-time technical metrics, stage, and active setups.
+    """
+    try:
+        ranked = get_sector_top_constituents(sector, limit=limit)
+        return {
+            "sector": sector,
+            "count": len(ranked),
+            "constituents": ranked
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error computing sector constituents: {str(e)}")
 
 
 @router.get("/pulse")
