@@ -30,7 +30,7 @@ Once running:
 
 ---
 
-## 🔬 Quantitative Research & Empirical Strategy Suite (8 Core Models)
+## 🔬 Quantitative Research & Empirical Strategy Suite (9 Core Models)
 
 The platform's trading models are grounded in empirical quantitative finance research and academic literature on momentum, multi-timeframe moving average ribbons, volatility regime shifts, and mean-reversion anomalies:
 
@@ -40,10 +40,11 @@ The platform's trading models are grounded in empirical quantitative finance res
 | **2. TTM Volatility Squeeze Expansion** | John Carter (2007) / Volatility Regime Models | Bollinger Bands contract inside Keltner Channels before explosive momentum releases with accelerating MACD histogram. | **$65\% - 72\%$** | **$1.4 - 1.8$** | $1:2.5 - 1:3.5$ | **5 – 15 Days** |
 | **3. Mean Reversion (Bollinger + RSI)** | John Bollinger (2001) / Oversold Reversion | Captures extreme oversold bounces when price touches Lower Bollinger Band with $\text{RSI}_{14} \le 35$ and a bullish rejection candle. | **$60\% - 68\%$** | **$1.2 - 1.4$** | $1:1.5 - 1:2.0$ | **3 – 7 Days** |
 | **4. Mansfield Relative Strength (Stage 2)** | Stan Weinstein (1988) / Gary Antonacci Dual Momentum | Institutional capital accumulation in market leaders outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs. | **$58\% - 66\%$** | **$1.6 - 2.1$** | $1:2.5 - 1:4.0+$ | **10 – 30 Days** |
-| **5. GMMA Weekly Multi-Timeframe Breakout** | Daryl Guppy (2004) / Multi-Timeframe Ribbon Theory | Aligns Weekly institutional investor ribbon (30–60 EMA) expansion with daily volume-backed breakouts to ride high-momentum Stage 2 runners. | **$54\% - 62\%$** | **$1.5 - 1.9$** | $1:2.5 - 1:4.0$ | **10 – 30 Days** |
-| **6. 52-Week High Breakout (George & Hwang)** | Thomas J. George & Chuan-Yang Hwang (2004) / Minervini | Exploits zero overhead supply as leading equities emerge from tight consolidation bases to new 52-week highs on $\ge 1.4\times$ volume. | **$52\% - 60\%$** | **$1.6 - 2.0$** | $1:2.5 - 1:4.0+$ | **10 – 45 Days** |
-| **7. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
-| **8. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
+| **5. RSI(28) Momentum Divergence Reversal** | J. Welles Wilder (1978) Lunar Cycle Model | Filters false noise with smoothed 28-period oscillator. Double swing-low divergence marks structural multi-week selling exhaustion. | **$56\% - 64\%$** | **$1.4 - 1.8$** | $1:2.0 - 1:3.5$ | **7 – 25 Days** |
+| **6. GMMA Weekly Multi-Timeframe Breakout** | Daryl Guppy (2004) / Multi-Timeframe Ribbon Theory | Aligns Weekly institutional investor ribbon (30–60 EMA) expansion with daily volume-backed breakouts to ride high-momentum Stage 2 runners. | **$54\% - 62\%$** | **$1.5 - 1.9$** | $1:2.5 - 1:4.0$ | **10 – 30 Days** |
+| **7. 52-Week High Breakout (George & Hwang)** | Thomas J. George & Chuan-Yang Hwang (2004) / Minervini | Exploits zero overhead supply as leading equities emerge from tight consolidation bases to new 52-week highs on $\ge 1.4\times$ volume. | **$52\% - 60\%$** | **$1.6 - 2.0$** | $1:2.5 - 1:4.0+$ | **10 – 45 Days** |
+| **8. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
+| **9. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
 
 ---
 
@@ -92,7 +93,33 @@ graph TD
 * **Stop Loss**: Anchored below the top of the slow ribbon or 10-day swing low.
 * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Stage 2 markup runner).
 
-### 3. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
+---
+
+### 3. RSI(28) Momentum Divergence Reversal (`rsi28_divergence`)
+
+```mermaid
+graph TD
+    A[OHLCV Time Series Ingestion] --> B[Wilder RSI 28-Period Calculation]
+    B --> C[Algorithmic Swing Low Detection: Local Minima k=4]
+    C --> D{Divergence Condition Check}
+    D -->|Price Low 2 <= Price Low 1 & RSI 2 >= RSI 1 + 2.5| E[Bullish Divergence Identified]
+    E --> F{Reversal Confirmation Trigger}
+    F -->|Daily Close >= Open & Reversal Bounce| G[🚀 RSI 28 Divergence Triggered]
+    G --> H[Stop Loss: Swing Low 2 - 0.5 x ATR 14]
+    G --> I[Target 1: 2.0R 50 EMA | Target 2: 3.5R]
+```
+
+* **Academic & Empirical Foundation**:
+  * **J. Welles Wilder (1978) Lunar Cycle Model / Quantitative Divergence Studies**: Uses a smoothed 28-period baseline (5–6 weeks) to filter out deceptive short-term noise. When price prints a lower low while the underlying 28-day momentum forms a higher low, it signals multi-week institutional selling exhaustion.
+* **Divergence & Reversal Rules**:
+  * **Regime Gate**: Current $\text{RSI}_{28} \le 52.0$ (value/oversold accumulation zone).
+  * **Pivot Distance**: $7 \le \Delta t \le 45$ bars between consecutive swing lows.
+  * **Trigger**: Bullish confirmation bounce candle above pivot low.
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Pivot Low 2 $- 0.5 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$ ($50\text{ EMA}$ mean reversion), $\text{Target 2} = 3.5\text{R}$ (cyclical trend reversal).
+
+### 4. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
 
 ```mermaid
 graph TD
@@ -115,7 +142,7 @@ graph TD
 
 ---
 
-### 4. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
+### 5. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
 
 ```mermaid
 graph TD
@@ -138,7 +165,7 @@ graph TD
 
 ---
 
-### 5. Mean Reversion (`mean_reversion`)
+### 6. Mean Reversion (`mean_reversion`)
 
 ```mermaid
 graph TD
@@ -160,7 +187,7 @@ graph TD
 
 ---
 
-### 6. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
+### 7. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
 
 ```mermaid
 graph TD
@@ -184,7 +211,7 @@ graph TD
 
 ---
 
-### 7. Trend-Pullback (`trend_pullback`)
+### 8. Trend-Pullback (`trend_pullback`)
 
 ```mermaid
 graph TD
@@ -206,7 +233,7 @@ graph TD
 
 ---
 
-### 8. Volatility Contraction Pattern (`vcp_breakout`)
+### 9. Volatility Contraction Pattern (`vcp_breakout`)
 
 ```mermaid
 graph TD

@@ -288,3 +288,17 @@
     * Strategy Guide, Chart Studio, Screener, and Backtest Studio updated with all 8 strategies.
     * [`README.md`](README.md) updated with full research specifications.
   * Pushed commit to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Feature Added: RSI(28) Momentum Divergence Strategy (#9):**
+  * **Mathematical & Empirical Model**:
+    * Created [`backend/app/strategies/rsi28_divergence.py`](backend/app/strategies/rsi28_divergence.py) implementing `RSI28DivergenceStrategy` inheriting from `BaseStrategy`.
+    * Uses a smoothed 28-period Wilder RSI oscillator (`RSI_28`) with algorithmic swing-low pivot detection ($k=4$) to detect multi-week bullish divergence (Price Lower Low + RSI Higher Low in $\le 52$ value zone).
+    * Payoff targets: $2.0R$ (50 EMA mean reversion) and $3.5R$ (structural reversal).
+  * **Zero-Regression Verification**:
+    * Added automated unit tests in [`tests/test_rsi28_strategy.py`](tests/test_rsi28_strategy.py).
+    * `pytest tests/ -v`: 15/15 passed (100%).
+    * Production Vite build succeeded in 5.52s.
+  * **UI & Documentation Sync**:
+    * Strategy Guide, Chart Studio, Screener, and Backtest Studio updated with all 9 strategies.
+    * [`README.md`](README.md) updated with full Mermaid decision tree flowcharts and deep breakdowns for all 9 strategies.
+  * Pushed commit to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

@@ -130,6 +130,7 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     # Wilder Oscillators & Volatility
     data['RSI_14'] = rsi(data['Close'], 14)
     data['RSI_2'] = rsi(data['Close'], 2)
+    data['RSI_28'] = rsi(data['Close'], 28)
     data['ATR_14'] = atr(data['High'], data['Low'], data['Close'], 14)
 
     # Bollinger Bands (20, 2.0)

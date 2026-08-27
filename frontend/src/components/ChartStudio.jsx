@@ -375,6 +375,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
               <option value="vcp_breakout">VCP & Base Breakout</option>
               <option value="high_52w_breakout">52-Week High Breakout</option>
               <option value="gmma_breakout">GMMA Weekly Multi-Timeframe Breakout</option>
+              <option value="rsi28_divergence">RSI(28) Momentum Divergence</option>
               <option value="mean_reversion">Mean Reversion (Bollinger + RSI)</option>
               <option value="volatility_squeeze">TTM Volatility Squeeze</option>
               <option value="connors_rsi2">Connors RSI(2) Mean Reversion</option>
