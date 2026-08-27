@@ -293,17 +293,18 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
           title: '10% Lower'
         });
 
+        const validForecastCandles = (aiForecastData.forecast_candles || []).filter(c => c.date > lastHistCandle.time);
         const meanData = [
           { time: lastHistCandle.time, value: lastHistCandle.close },
-          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.close }))
+          ...validForecastCandles.map(c => ({ time: c.date, value: c.close }))
         ];
         const upperData = [
           { time: lastHistCandle.time, value: lastHistCandle.close },
-          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.band_high }))
+          ...validForecastCandles.map(c => ({ time: c.date, value: c.band_high }))
         ];
         const lowerData = [
           { time: lastHistCandle.time, value: lastHistCandle.close },
-          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.band_low }))
+          ...validForecastCandles.map(c => ({ time: c.date, value: c.band_low }))
         ];
 
         aiTrajectorySeries.setData(meanData);
