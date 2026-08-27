@@ -454,13 +454,20 @@ export default function ScreenerView({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-950/60 px-4 py-2.5 rounded-lg border border-gray-800/80 text-xs">
                   <div>
                     <span className="text-gray-500 block text-[10px] uppercase font-semibold">20 EMA</span>
-                    <span className="font-mono text-cyan-300 font-medium">₹{fmt(setup.ema_20)}</span>
+                    <span className="font-mono text-cyan-300 font-medium">₹{fmt(setup.ema_20 ?? setup.indicators?.ema_20 ?? setup.indicators?.ema20)}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">RSI (14)</span>
-                    <span className={`font-mono font-medium ${setup.rsi <= 45 ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                      {fmt(setup.rsi, 1)}
+                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">
+                      {setup.strategy_id === 'rsi28_divergence' ? 'RSI (28)' : 'RSI (14)'}
                     </span>
+                    {(() => {
+                      const rsiVal = setup.rsi ?? setup.indicators?.rsi ?? setup.indicators?.rsi_14 ?? setup.indicators?.rsi_28;
+                      return (
+                        <span className={`font-mono font-medium ${rsiVal <= 45 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                          {fmt(rsiVal, 1)}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div>
                     <span className="text-gray-500 block text-[10px] uppercase font-semibold">Stop Loss</span>

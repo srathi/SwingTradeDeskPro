@@ -150,6 +150,8 @@ class PocketPivotStrategy(BaseStrategy):
             "high": round(high, 2),
             "low": round(low, 2),
             "volume": int(latest['Volume']),
+            "ema_20": round(float(ema20), 2),
+            "rsi": round(float(latest.get('RSI_14', 50.0)), 1),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
