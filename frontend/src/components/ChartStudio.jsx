@@ -409,20 +409,25 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
             </div>
           </div>
 
-          {chartData && (
-            <div className="flex items-center space-x-3 bg-gray-950 px-4 py-2 rounded-xl border border-gray-800">
-              <div>
-                <span className="text-[10px] text-gray-500 uppercase font-mono block">Latest Close</span>
-                <span className="font-mono text-base font-bold text-white">₹{fmt(chartData.latest_close)}</span>
+          {chartData && (() => {
+            const rsiVal = chartData.latest_rsi !== undefined && chartData.latest_rsi !== null
+              ? chartData.latest_rsi
+              : (chartData.rsi && chartData.rsi.length > 0 ? chartData.rsi[chartData.rsi.length - 1]?.value : null);
+            return (
+              <div className="flex items-center space-x-3 bg-gray-950 px-4 py-2 rounded-xl border border-gray-800">
+                <div>
+                  <span className="text-[10px] text-gray-500 uppercase font-mono block">Latest Close</span>
+                  <span className="font-mono text-base font-bold text-white">₹{fmt(chartData.latest_close)}</span>
+                </div>
+                <div className="border-l border-gray-800 pl-3">
+                  <span className="text-[10px] text-gray-500 uppercase font-mono block">RSI(14)</span>
+                  <span className={`font-mono text-base font-bold ${rsiVal !== null && rsiVal <= 40 ? 'text-emerald-400' : rsiVal !== null && rsiVal >= 70 ? 'text-rose-400' : 'text-yellow-400'}`}>
+                    {fmt(rsiVal, 1)}
+                  </span>
+                </div>
               </div>
-              <div className="border-l border-gray-800 pl-3">
-                <span className="text-[10px] text-gray-500 uppercase font-mono block">RSI(14)</span>
-                <span className={`font-mono text-base font-bold ${chartData.latest_rsi <= 40 ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                  {fmt(chartData.latest_rsi, 1)}
-                </span>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Input Bar */}

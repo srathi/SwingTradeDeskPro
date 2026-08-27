@@ -97,11 +97,17 @@ def get_chart_data(
     latest_close = round(float(latest_bar['Close']), 2)
     prev_close = round(float(data.iloc[-2]['Close']), 2) if len(data) >= 2 else latest_close
     change_pct = round(((latest_close - prev_close) / prev_close) * 100.0, 2) if prev_close != 0 else 0.0
+    latest_rsi = round(float(latest_bar['RSI_14']), 1) if ('RSI_14' in latest_bar and not pd.isna(latest_bar['RSI_14']) and not math.isnan(float(latest_bar['RSI_14']))) else (rsi_series[-1]['value'] if rsi_series else None)
+    latest_volume = float(latest_bar['Volume']) if ('Volume' in latest_bar and not pd.isna(latest_bar['Volume']) and not math.isnan(float(latest_bar['Volume']))) else 0
+    latest_atr = round(float(latest_bar['ATR_14']), 2) if ('ATR_14' in latest_bar and not pd.isna(latest_bar['ATR_14']) and not math.isnan(float(latest_bar['ATR_14']))) else None
 
     return {
         "ticker": ticker,
         "latest_close": latest_close,
         "change_pct": change_pct,
+        "latest_rsi": latest_rsi,
+        "latest_volume": latest_volume,
+        "latest_atr": latest_atr,
         "candles": candles,
         "volume": volumes,
         "ema20": ema20_series,
