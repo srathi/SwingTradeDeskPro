@@ -50,15 +50,44 @@ The platform's trading models are grounded in empirical quantitative finance res
 ## 🎯 Detailed Strategy Breakdowns & Specifications
 
 ### 1. 52-Week High Breakout (`high_52w_breakout`)
-* **Research Basis**: Thomas J. George & Chuan-Yang Hwang (2004) — *The Journal of Finance* / Mark Minervini SEPA Model.
-* **Empirical Edge**: Exploits the 52-week high anomaly where zero overhead supply allows leading equities emerging from tight consolidation bases to enter unconstrained price discovery.
-* **Entry Trigger**: Daily close breaking prior 52-week high resistance on $\ge 1.4\times$ institutional volume surge with $\text{Price} > 50\text{ EMA} > 200\text{ EMA}$.
-* **Stop Loss**: Consolidation base low or $20\text{ EMA} - 0.5\times\text{ATR}_{14}$.
-* **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Trailing 20/50 EMA).
+
+```mermaid
+graph TD
+    A[52-Week High Lookback: Max High over 250 Bars] --> B[Base Consolidation: <= 15% Base Depth]
+    B --> C[Macro Trend: Close > 50 EMA > 200 EMA]
+    C --> D{Breakout & Volume Trigger}
+    D -->|Daily Close >= 52W High & Vol >= 1.4x 20D SMA| E[🚀 52W High Breakout Triggered]
+    E --> F[Stop Loss: Base Pivot Low or 20 EMA - 0.5 ATR]
+    E --> G[Target 1: 2.5R | Target 2: 4.0R+]
+```
+
+* **Academic & Empirical Foundation**:
+  * **George & Hwang (2004, *Journal of Finance*) / Mark Minervini SEPA**: Eliminates the anchoring bias by entering equities as they break free into **zero overhead supply** territory where 100% of shareholders are in profit.
+  * **Base Tightness Filter**: Requires price to have formed a tight consolidation base ($\le 15\%$ depth) rather than an overextended V-shape.
+  * **Institutional Volume Surge**: Requires $\ge 1.4\times$ 20-day average volume accumulation.
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Anchored below the pivot consolidation low or $20\text{ EMA} - 0.5\times\text{ATR}_{14}$.
+  * **Asymmetric Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}+$ (riding Stage 2 price discovery).
+
+---
 
 ### 2. GMMA Weekly Multi-Timeframe Breakout (`gmma_breakout`)
+
+```mermaid
+graph TD
+    A[Weekly OHLCV Resampling] --> B[Fast Ribbon: 3, 5, 8, 10, 12, 15 EMA]
+    A --> C[Slow Ribbon: 30, 35, 40, 45, 50, 60 EMA]
+    B & C --> D{Weekly Ribbon Condition}
+    D -->|Slow Ribbon Expanding & Min(Fast) > Max(Slow)| E[Weekly Bullish Alignment]
+    E --> F[Daily Breakout & Volume Trigger]
+    F --> G{Entry Qualification}
+    G -->|Volume > 1.3x 20D SMA & Price > Weekly Pivot| H[🚀 GMMA Setup Triggered]
+    H --> I[Stop Loss: Top of Slow Ribbon or 10D Low]
+    H --> J[Target 1: 2.5R | Target 2: 4.0R]
+```
+
 * **Research Basis**: Daryl Guppy (2004) — *Trend Trading* / Guppy Multiple Moving Averages.
-* **Empirical Edge**: Eliminates daily false breakout traps by requiring the **Weekly Investor Ribbon (30, 35, 40, 45, 50, 60 EMAs)** to be fanning outward in parallel upward expansion with the **Fast Trader Ribbon (3, 5, 8, 10, 12, 15 EMAs)** strictly aligned above.
+* **Empirical Edge**: Eliminates daily false breakout traps by requiring the **Weekly Investor Ribbon (30, 35, 40, 45, 50, 60 EMAs)** to be fanning outward in parallel upward expansion ($\ge 1.8\%$ spread) with the **Fast Trader Ribbon (3, 5, 8, 10, 12, 15 EMAs)** strictly aligned above.
 * **Entry Trigger**: Daily close breaking above 20D pivot on $\ge 1.3\times$ institutional volume surge.
 * **Stop Loss**: Anchored below the top of the slow ribbon or 10-day swing low.
 * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Stage 2 markup runner).
