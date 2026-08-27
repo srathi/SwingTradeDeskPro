@@ -110,5 +110,14 @@ def get_chart_data(
         "bb_upper": bb_upper_series,
         "bb_lower": bb_lower_series,
         "rsi": rsi_series,
-        "active_setup": active_setup
+        "active_setup": active_setup,
+        "setup": active_setup,
+        "indicators": {
+            "ema_20": ema20_series,
+            "ema_50": ema50_series,
+            "ema_200": ema200_series,
+            "bb_upper": bb_upper_series,
+            "bb_lower": bb_lower_series,
+            "rsi_14": rsi_series
+        }
     }

@@ -164,39 +164,41 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         value: c.volume || 1000,
         color: c.close >= c.open ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'
       }));
-      volumeSeries.setData(volumeData);
-
-      // EMAs
-      if (showEMA20 && chartData.indicators?.ema_20) {
+      volumeSeries.setData(volumeData);      // EMAs
+      const ema20Data = chartData.indicators?.ema_20 || chartData.ema20;
+      if (showEMA20 && ema20Data && ema20Data.length > 0) {
         const ema20Series = chart.addLineSeries({
           color: '#06B6D4',
           lineWidth: 1.5,
           title: '20 EMA'
         });
-        ema20Series.setData(chartData.indicators.ema_20.filter(p => p.value !== null));
+        ema20Series.setData(ema20Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
 
-      if (showEMA50 && chartData.indicators?.ema_50) {
+      const ema50Data = chartData.indicators?.ema_50 || chartData.ema50;
+      if (showEMA50 && ema50Data && ema50Data.length > 0) {
         const ema50Series = chart.addLineSeries({
           color: '#F59E0B',
           lineWidth: 1.5,
           title: '50 EMA'
         });
-        ema50Series.setData(chartData.indicators.ema_50.filter(p => p.value !== null));
+        ema50Series.setData(ema50Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
 
-      if (showEMA200 && chartData.indicators?.ema_200) {
+      const ema200Data = chartData.indicators?.ema_200 || chartData.ema200;
+      if (showEMA200 && ema200Data && ema200Data.length > 0) {
         const ema200Series = chart.addLineSeries({
           color: '#A855F7',
           lineWidth: 1.5,
           title: '200 EMA'
         });
-        ema200Series.setData(chartData.indicators.ema_200.filter(p => p.value !== null));
+        ema200Series.setData(ema200Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
 
       // Setup Price Lines (Entry, Stop Loss, Target 1, Target 2)
-      if (showSetupLines && chartData.setup) {
-        const s = chartData.setup;
+      const currentSetup = chartData.setup || chartData.active_setup;
+      if (showSetupLines && currentSetup) {
+        const s = currentSetup;
         if (s.close) {
           candleSeries.createPriceLine({
             price: s.close,
@@ -236,7 +238,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
       }
 
       // RSI Subchart
-      if (rsiContainer && chartData.indicators?.rsi_14) {
+      const rsiData = chartData.indicators?.rsi_14 || chartData.rsi;
+      if (rsiContainer && rsiData && rsiData.length > 0) {
         rsiChart = createChart(rsiContainer, {
           width: initialWidth,
           height: 120,
@@ -266,7 +269,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
           lineWidth: 1.5,
           title: 'RSI(14)'
         });
-        rsiSeries.setData(chartData.indicators.rsi_14.filter(p => p.value !== null));
+        rsiSeries.setData(rsiData.filter(p => p.value !== null && !isNaN(p.value)));
 
         rsiSeries.createPriceLine({ price: 70, color: '#EF4444', lineWidth: 1, lineStyle: 2, title: '70' });
         rsiSeries.createPriceLine({ price: 30, color: '#10B981', lineWidth: 1, lineStyle: 2, title: '30' });
@@ -312,7 +315,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     };
   }, [chartData, showEMA20, showEMA50, showEMA200, showSetupLines]);
 
-  const setup = chartData ? chartData.setup : null;
+  const setup = chartData ? (chartData.setup || chartData.active_setup) : null;
 
   return (
     <div className="space-y-6">
