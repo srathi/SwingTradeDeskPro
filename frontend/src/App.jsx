@@ -164,6 +164,7 @@ export default function App() {
               {activeTab === 'watchlists' && (
                 <WatchlistView
                   onSelectTicker={handleSelectTicker}
+                  onOpenAIForecast={handleOpenAIForecast}
                   onScanWatchlist={handleScanWatchlist}
                 />
               )}

@@ -14,7 +14,7 @@ import {
 import { fetchWatchlists, createWatchlist, updateWatchlist, deleteWatchlist } from '../services/api';
 import StockSearchInput from './StockSearchInput';
 
-export default function WatchlistView({ onSelectTicker, onScanWatchlist }) {
+export default function WatchlistView({ onSelectTicker, onOpenAIForecast, onScanWatchlist }) {
   const [watchlists, setWatchlists] = useState([]);
   const [activeWlId, setActiveWlId] = useState(null);
   const [newWlName, setNewWlName] = useState("");
@@ -207,18 +207,25 @@ export default function WatchlistView({ onSelectTicker, onScanWatchlist }) {
                             {sym}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1.5">
                           <button
                             onClick={() => onSelectTicker(sym)}
-                            className="p-1 text-gray-500 hover:text-cyan-400 transition-colors"
-                            title="Open Chart"
+                            className="p-1.5 text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-all"
+                            title="Open in Chart Studio"
                           >
                             <BarChart2 className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            onClick={() => onOpenAIForecast && onOpenAIForecast(sym)}
+                            className="p-1.5 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-all"
+                            title="Run Kronos AI Forecast"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => handleRemoveTicker(sym)}
-                            className="p-1 text-gray-500 hover:text-red-400 transition-colors"
-                            title="Remove"
+                            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Remove from Watchlist"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>

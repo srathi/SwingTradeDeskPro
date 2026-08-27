@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { fetchSectorPulse, fetchSectorConstituents } from '../services/api';
 
-export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenRisk, onOpenBacktest }) {
+export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAIForecast, onOpenRisk, onOpenBacktest }) {
   const [market, setMarket] = useState('NSE');
   const [period, setPeriod] = useState('2y');
   const [data, setData] = useState(null);
@@ -374,34 +374,56 @@ export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenRi
                                     {cList.map(c => (
                                       <div
                                         key={c.symbol}
-                                        onClick={() => onSelectTicker && onSelectTicker(c.symbol)}
-                                        className="bg-gray-900/90 border border-gray-800 hover:border-cyan-500/50 p-2.5 rounded-xl transition-all cursor-pointer group flex items-center justify-between shadow-sm"
+                                        className="bg-gray-900/90 border border-gray-800 hover:border-cyan-500/50 p-2.5 rounded-xl transition-all group flex flex-col justify-between space-y-2 shadow-sm"
                                       >
-                                        <div>
-                                          <div className="font-bold text-gray-200 group-hover:text-cyan-300 transition-colors font-sans text-xs flex items-center gap-1.5">
-                                            <span>{c.name}</span>
-                                            <span className="text-[10px] text-gray-500 font-mono">({c.weight})</span>
+                                        <div className="flex items-start justify-between">
+                                          <div>
+                                            <div className="font-bold text-gray-200 group-hover:text-cyan-300 transition-colors font-sans text-xs flex items-center gap-1.5">
+                                              <span>{c.name}</span>
+                                              <span className="text-[10px] text-gray-500 font-mono">({c.weight})</span>
+                                            </div>
+                                            <div className="text-[11px] font-mono text-gray-400 flex items-center gap-2 mt-0.5">
+                                              <span>₹{c.close.toLocaleString()}</span>
+                                              <span className={c.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                                {c.change_pct >= 0 ? '+' : ''}{c.change_pct}%
+                                              </span>
+                                            </div>
                                           </div>
-                                          <div className="text-[11px] font-mono text-gray-400 flex items-center gap-2 mt-0.5">
-                                            <span>₹{c.close.toLocaleString()}</span>
-                                            <span className={c.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                                              {c.change_pct >= 0 ? '+' : ''}{c.change_pct}%
+                                          <div className="text-right flex flex-col items-end gap-1">
+                                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold font-sans ${
+                                              c.stage_type === 'bull'
+                                                ? 'bg-emerald-500/20 text-emerald-300'
+                                                : c.stage_type === 'early'
+                                                ? 'bg-cyan-500/20 text-cyan-300'
+                                                : 'bg-gray-800 text-gray-400'
+                                            }`}>
+                                              {c.stage}
+                                            </span>
+                                            <span className="text-[10px] text-purple-300 font-mono font-bold">
+                                              Merit {c.merit_score}
                                             </span>
                                           </div>
                                         </div>
-                                        <div className="text-right flex flex-col items-end gap-1">
-                                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold font-sans ${
-                                            c.stage_type === 'bull'
-                                              ? 'bg-emerald-500/20 text-emerald-300'
-                                              : c.stage_type === 'early'
-                                              ? 'bg-cyan-500/20 text-cyan-300'
-                                              : 'bg-gray-800 text-gray-400'
-                                          }`}>
-                                            {c.stage}
-                                          </span>
-                                          <span className="text-[10px] text-purple-300 font-mono font-bold">
-                                            Merit {c.merit_score}
-                                          </span>
+
+                                        <div className="flex items-center space-x-1.5 pt-1.5 border-t border-gray-800/80">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onSelectTicker && onSelectTicker(c.symbol);
+                                            }}
+                                            className="flex-1 py-1 bg-gray-800 hover:bg-gray-700 text-[10px] font-semibold text-cyan-300 rounded border border-gray-700 hover:border-cyan-500/40 flex items-center justify-center gap-1 transition-colors"
+                                          >
+                                            <BarChart3 className="w-3 h-3" /> Chart
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onOpenAIForecast && onOpenAIForecast(c.symbol);
+                                            }}
+                                            className="flex-1 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-[10px] font-bold text-white rounded flex items-center justify-center gap-1 shadow-sm transition-all"
+                                          >
+                                            <Sparkles className="w-3 h-3" /> 🔮 Forecast
+                                          </button>
                                         </div>
                                       </div>
                                     ))}
