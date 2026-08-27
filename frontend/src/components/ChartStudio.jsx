@@ -164,13 +164,15 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         value: c.volume || 1000,
         color: c.close >= c.open ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'
       }));
-      volumeSeries.setData(volumeData);      // EMAs
+      volumeSeries.setData(volumeData);
+
+      // EMAs
       const ema20Data = chartData.indicators?.ema_20 || chartData.ema20;
       if (showEMA20 && ema20Data && ema20Data.length > 0) {
         const ema20Series = chart.addLineSeries({
           color: '#06B6D4',
           lineWidth: 1.5,
-          title: '20 EMA'
+          title: ''
         });
         ema20Series.setData(ema20Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
@@ -180,7 +182,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         const ema50Series = chart.addLineSeries({
           color: '#F59E0B',
           lineWidth: 1.5,
-          title: '50 EMA'
+          title: ''
         });
         ema50Series.setData(ema50Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
@@ -190,7 +192,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         const ema200Series = chart.addLineSeries({
           color: '#A855F7',
           lineWidth: 1.5,
-          title: '200 EMA'
+          title: ''
         });
         ema200Series.setData(ema200Data.filter(p => p.value !== null && !isNaN(p.value)));
       }
