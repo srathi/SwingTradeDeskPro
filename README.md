@@ -93,46 +93,139 @@ graph TD
 * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Stage 2 markup runner).
 
 ### 3. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
-* **Research Basis**: Larry Connors & Cesar Alvarez (2009) — *Short Term Trading Strategies That Work*.
-* **Empirical Edge**: Exploits temporary liquidity dislocations caused by institutional stop hunts and retail panic in fundamentally strong equities ($\text{Price} > \text{SMA}_{200}$).
-* **Entry Trigger**: $\text{RSI}_2 < 10$ with 2+ consecutive down closes and a bullish reversal bounce.
-* **Stop Loss**: $\text{Close} - 2.0 \times \text{ATR}_{14}$ (or recent swing low).
-* **Profit Exit**: First close above the 5-period SMA ($\text{Close} > \text{SMA}_5$) or $1:2$ R:R.
+
+```mermaid
+graph TD
+    A[Macro Trend Filter: Close > 200 SMA] --> B[Consecutive Down Closes: 2+ Down Days]
+    B --> C[Wilder RSI 2-Period Calculation]
+    C --> D{Oversold Panic Trigger}
+    D -->|RSI_2 < 10 & Bullish Reversal Candle| E[🚀 Connors RSI2 Setup Triggered]
+    E --> F[Stop Loss: Close - 2.0 x ATR_14 or Swing Low]
+    E --> G[Profit Exit: First Close > 5 SMA or 1:2 R:R]
+```
+
+* **Academic & Empirical Foundation**:
+  * **Larry Connors & Cesar Alvarez (2009) — *Short Term Trading Strategies That Work***: Proved across thousands of historical equities that extreme 2-day panic dips ($\text{RSI}_2 < 10$) inside strong $>200\text{ SMA}$ macro bull markets represent high-probability statistical mispricings ripe for immediate mean reversion.
+* **Entry & Trend Filters**:
+  * **Macro Filter**: $\text{Close} > \text{SMA}_{200}$ (strict macro bull trend).
+  * **Trigger**: $\text{RSI}_2 < 10$ with at least 2 consecutive lower closes and a reversal bounce candle ($\text{Close} > \text{Open}$).
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: $\text{Close} - 2.0 \times \text{ATR}_{14}$ or recent swing low.
+  * **Profit Exit**: Fast exit on first close above the 5-period SMA ($\text{Close} > \text{SMA}_5$) or $1:2$ R:R.
+
+---
 
 ### 4. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
-* **Research Basis**: John Carter (2007) — *Mastering the Trade* / Volatility Regime Models.
-* **Empirical Edge**: Cyclical volatility compression (Bollinger Bands narrowing inside Keltner Channels) precedes explosive directional expansion with accelerating MACD histogram.
-* **Entry Trigger**: Bollinger Bands expand outside Keltner Channels with $\text{MACD Histogram} > 0$ and $\text{Volume} \ge 1.2 \times \text{SMA}_{20}(\text{Volume})$.
-* **Stop Loss**: Lowest low of the squeeze base.
-* **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.5\text{R}$.
+
+```mermaid
+graph TD
+    A[Macro Trend: Close > 200 EMA & 20 EMA > 50 EMA] --> B[Squeeze Detection: Bollinger Bands Inside Keltner Channel]
+    B --> C[Momentum Direction: MACD Histogram > 0 & Increasing]
+    C --> D{Volatility Firing Trigger}
+    D -->|BB Bands Expand Outside Keltner & Vol >= 1.2x SMA20| E[🚀 Squeeze Fired Long]
+    E --> F[Stop Loss: Lowest Low of Squeeze Base or -1.5 ATR]
+    E --> G[Target 1: 2.0R | Target 2: 3.5R]
+```
+
+* **Research Basis**:
+  * **John Carter (2007) — *Mastering the Trade***: Based on the principle that periods of extreme historical volatility compression inevitably precede violent directional expansions.
+* **Squeeze & Trigger Rules**:
+  * **Squeeze Condition**: Bollinger Bands ($20, 2\sigma$) compress completely inside Keltner Channels ($20, 1.5\text{ ATR}$) within the prior 1–5 trading sessions.
+  * **Firing Trigger**: Today's Bollinger Band expands back outside the Keltner Channel with $\text{MACD Histogram} > 0$ and accelerating ($\text{Hist}_t > \text{Hist}_{t-1}$) on $\ge 1.2\times$ volume.
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Lowest low of the consolidation base or $\text{Close} - 1.5 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$ ($1:2$ R:R), $\text{Target 2} = 3.5\text{R}$ ($1:3.5$ R:R).
+
+---
 
 ### 5. Mean Reversion (`mean_reversion`)
-* **Research Basis**: John Bollinger (2001) — *Bollinger on Bollinger Bands*.
-* **Empirical Edge**: Extreme statistical price deviation beyond $2\sigma$ lower boundary snaps back to historical moving average equilibrium.
-* **Entry Trigger**: $\text{Low} \le \text{BB}_{\text{Lower}}$ with $\text{RSI}_{14} \le 35$ and a bullish rejection candle ($\text{Close} > \text{Open}$).
-* **Stop Loss**: $\text{Candle Low} - 0.5 \times \text{ATR}_{14}$.
-* **Profit Targets**: $\text{Target 1} = 20\text{ SMA Middle Band}$, $\text{Target 2} = 2\sigma\text{ Upper Band}$.
+
+```mermaid
+graph TD
+    A[Liquid Universe & Volatility Baseline] --> B[Price Piercing: Low <= Lower Bollinger Band 20, 2-std]
+    B --> C[Wilder RSI 14 <= 35]
+    C --> D{Reversal Confirmation}
+    D -->|Bullish Rejection Candle Close > Open| E[🚀 Mean Reversion Setup Triggered]
+    E --> F[Stop Loss: Candle Low - 0.5 x ATR_14]
+    E --> G[Target 1: 20 SMA Middle Band | Target 2: 2-sigma Upper Band]
+```
+
+* **Research Basis**:
+  * **John Bollinger (2001) — *Bollinger on Bollinger Bands*** / Statistical Arbitrage literature on normal distribution deviations.
+* **Entry Trigger**:
+  * Extreme 2-standard-deviation price displacement where daily low pierces $\text{BB}_{\text{Lower}}$ with $\text{RSI}_{14} \le 35$ followed by a bullish hammer or rejection tail ($\text{Close} > \text{Open}$).
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: $\text{Candle Low} - 0.5 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = \text{BB}_{\text{Middle}}$ ($20\text{ SMA}$ equilibrium), $\text{Target 2} = \text{BB}_{\text{Upper}}$ ($2\sigma$ upper expansion).
+
+---
 
 ### 6. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
-* **Research Basis**: Stan Weinstein (1988) — *Stage Analysis* / Gary Antonacci — *Dual Momentum*.
-* **Empirical Edge**: Institutional capital concentration in top relative-strength equities outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs.
-* **Entry Trigger**: 20-Day or 52-Week High Breakout on $>1.5\times$ 20-day average volume accumulation.
-* **Stop Loss**: 20 EMA or 10-day swing low.
-* **Profit Targets**: $\text{Target 1} = +12\%$ ($1:2.5\text{R}$), $\text{Target 2} = \text{Trailing 20 EMA Exit}$.
+
+```mermaid
+graph TD
+    A[Benchmark Ingestion: NIFTY 50 / SPY Relative Ratio] --> B[Mansfield RS Calculation: MRS_50 > 0]
+    B --> C[Stage 2 Alignment: Close > 20 EMA > 50 EMA > 200 EMA]
+    C --> D{Breakout Trigger}
+    D -->|20D / 52W High Breakout & Volume >= 1.5x SMA20| E[🚀 RS Leader Setup Triggered]
+    E --> F[Stop Loss: 20 EMA or 10-Day Swing Low]
+    E --> G[Target 1: +12% 1:2.5R | Target 2: Trailing 20 EMA Exit]
+```
+
+* **Research Basis**:
+  * **Stan Weinstein (1988) — *Stage Analysis*** / **Gary Antonacci (2014) — *Dual Momentum***.
+* **Relative Strength & Trend Alignment**:
+  * **Mansfield RS**: $\text{MRS}_{50} = \left( \frac{\text{Price} / \text{NIFTY50}}{\text{SMA}_{50}(\text{Price} / \text{NIFTY50})} - 1 \right) \times 100 > 0$.
+  * **Structure**: $\text{Close} > 20\text{ EMA} > 50\text{ EMA} > 200\text{ EMA}$ (Stage-2 markup).
+* **Entry & Targets**:
+  * **Trigger**: Price breaks out to a new 20-Day or 52-Week High on $\ge 1.5\times$ institutional volume accumulation.
+  * **Stop Loss**: $20\text{ EMA}$ or 10-day swing low.
+  * **Profit Targets**: $\text{Target 1} = +12\%$ ($1:2.5\text{R}$), $\text{Target 2} = \text{Trailing 20 EMA Exit}$ ($1:4.0+\text{R}$).
+
+---
 
 ### 7. Trend-Pullback (`trend_pullback`)
-* **Research Basis**: Moving Average Envelopes & Trend Following (Fama-French, Moskowitz).
-* **Empirical Edge**: Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward.
-* **Entry Trigger**: Pullback within $1\%$ of rising 20 EMA with bullish candlestick and $40 \le \text{RSI}_{14} \le 65$.
-* **Stop Loss**: Below the 50 EMA or recent swing low ($\text{Close} - 1.5 \times \text{ATR}_{14}$).
-* **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.0\text{R}$.
+
+```mermaid
+graph TD
+    A[Macro Uptrend: Close > 200 EMA & 20 EMA > 50 EMA] --> B[Pullback Proximity: Low <= 20 EMA + 0.7%]
+    B --> C[Momentum Gate: 40 <= RSI_14 <= 65]
+    C --> D{Reversal Confirmation}
+    D -->|Bullish Candle Close >= Open at 20 EMA| E[🚀 Trend Pullback Setup Triggered]
+    E --> F[Stop Loss: Below 50 EMA or Recent Swing Low]
+    E --> G[Target 1: 2.0R | Target 2: 3.0R]
+```
+
+* **Research Basis**:
+  * Moving Average Envelopes & Classical Trend Following (Fama-French, Moskowitz).
+* **Entry Trigger**:
+  * Pullback within $0.7\%$ of rising 20 EMA in verified Stage 2 structure ($\text{Price} > 200\text{ EMA}$, $20\text{ EMA} > 50\text{ EMA}$) with $40 \le \text{RSI}_{14} \le 65$ and a bullish rejection confirmation candle.
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Below the 50 EMA or recent swing low ($\text{Close} - 1.5 \times \text{ATR}_{14}$).
+  * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$ ($1:2$ R:R), $\text{Target 2} = 3.0\text{R}$ ($1:3$ R:R).
+
+---
 
 ### 8. Volatility Contraction Pattern (`vcp_breakout`)
-* **Research Basis**: Mark Minervini — *Trade Like a Stock Market Wizard* (SEPA Model).
-* **Empirical Edge**: Progressive reduction in price swings dries up supply float before institutional demand creates explosive upward re-rating.
-* **Entry Trigger**: Daily close breaking above 20-day high resistance on $\ge 1.4\times$ volume surge.
-* **Stop Loss**: Pivot low of the final contraction wave.
-* **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 3.5\text{R}$.
+
+```mermaid
+graph TD
+    A[Stage 2 Base: Prior Uptrend of 30%+] --> B[Volatility Waves: 2 to 4 Progressive Contractions]
+    B --> C[Supply Float Drying: Volume Dries Up in Tightest Contraction]
+    C --> D{Pivot Resistance Breakout}
+    D -->|Daily Close > 20D Resistance & Volume >= 1.4x SMA20| E[🚀 VCP Breakout Triggered]
+    E --> F[Stop Loss: Low of Final Contraction Wave]
+    E --> G[Target 1: 2.5R | Target 2: 3.5R]
+```
+
+* **Research Basis**:
+  * **Mark Minervini — *Trade Like a Stock Market Wizard* (SEPA Model)**.
+* **Contraction Setup & Trigger**:
+  * **Symmetric Contraction**: Volatility contracts across 2 to 4 successive tighter price waves (e.g. $15\% \rightarrow 8\% \rightarrow 3\%$).
+  * **Volume Drying**: Volume dries up substantially at the right side of the base before breaking the 20-day high pivot on $\ge 1.4\times$ volume surge.
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Pivot low of the final contraction wave.
+  * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$ ($1:2.5$ R:R), $\text{Target 2} = 3.5\text{R}$ ($1:3.5$ R:R).
 
 ---
 
