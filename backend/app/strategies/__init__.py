@@ -9,6 +9,9 @@ from backend.app.strategies.relative_strength_leader import RelativeStrengthLead
 from backend.app.strategies.gmma_breakout import GMMABreakoutStrategy
 from backend.app.strategies.high_52w_breakout import High52WBreakoutStrategy
 from backend.app.strategies.rsi28_divergence import RSI28DivergenceStrategy
+from backend.app.strategies.pocket_pivot import PocketPivotStrategy
+from backend.app.strategies.wyckoff_spring import WyckoffSpringStrategy
+from backend.app.strategies.nr7_expansion import NR7ExpansionStrategy
 
 STRATEGY_REGISTRY: Dict[str, BaseStrategy] = {
     "trend_pullback": TrendPullbackStrategy(),
@@ -16,6 +19,9 @@ STRATEGY_REGISTRY: Dict[str, BaseStrategy] = {
     "high_52w_breakout": High52WBreakoutStrategy(),
     "gmma_breakout": GMMABreakoutStrategy(),
     "rsi28_divergence": RSI28DivergenceStrategy(),
+    "pocket_pivot": PocketPivotStrategy(),
+    "wyckoff_spring": WyckoffSpringStrategy(),
+    "nr7_expansion": NR7ExpansionStrategy(),
     "mean_reversion": MeanReversionStrategy(),
     "volatility_squeeze": VolatilitySqueezeStrategy(),
     "connors_rsi2": ConnorsRSI2Strategy(),

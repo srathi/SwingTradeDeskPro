@@ -302,3 +302,22 @@
     * Strategy Guide, Chart Studio, Screener, and Backtest Studio updated with all 9 strategies.
     * [`README.md`](README.md) updated with full Mermaid decision tree flowcharts and deep breakdowns for all 9 strategies.
   * Pushed commit to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Feature Added: 3 New Quantitative Strategies (#10, #11, #12):**
+  * **10. Institutional Pocket Pivot (`pocket_pivot`)**:
+    * Created [`backend/app/strategies/pocket_pivot.py`](backend/app/strategies/pocket_pivot.py) implementing `PocketPivotStrategy` (Gil Morales & Chris Kacher / O'Neil).
+    * Evaluates inside-the-base volume accumulation where volume exceeds the maximum down-volume of the past 10 sessions while bouncing off the 10/20/50 EMA.
+  * **11. Wyckoff Spring Shakeout (`wyckoff_spring`)**:
+    * Created [`backend/app/strategies/wyckoff_spring.py`](backend/app/strategies/wyckoff_spring.py) implementing `WyckoffSpringStrategy` (Richard Wyckoff / VPA).
+    * Exploits institutional stop hunts by capturing quick lower-shadow hammer recoveries back inside the 20-day support trading range.
+  * **12. Toby Crabel NR7 Volatility Expansion (`nr7_expansion`)**:
+    * Created [`backend/app/strategies/nr7_expansion.py`](backend/app/strategies/nr7_expansion.py) implementing `NR7ExpansionStrategy` (Toby Crabel).
+    * Captures explosive directional momentum out of extreme 7-day narrow range compression (NR7) coils in macro Stage 2 trends.
+  * **Zero-Regression Verification**:
+    * Added automated unit tests in [`tests/test_new_strategies.py`](tests/test_new_strategies.py).
+    * `pytest tests/ -v`: 19/19 passed (100%).
+    * Production Vite build succeeded in 5.57s.
+  * **UI & Documentation Sync**:
+    * Strategy Guide, Chart Studio, Screener, and Backtest Studio updated with all 12 strategies.
+    * [`README.md`](README.md) updated with full Mermaid decision tree flowcharts and deep breakdowns for all 12 strategies.
+  * Pushed commit to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

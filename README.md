@@ -256,6 +256,75 @@ graph TD
 
 ---
 
+### 10. Institutional Pocket Pivot (`pocket_pivot`)
+
+```mermaid
+graph TD
+    A[Base Consolidation: Price within 22% of Base High] --> B[Moving Average Support: Price Interacting with 10/20/50 EMA]
+    B --> C[Volume Signature Check: Volume >= Max Down-Volume of Past 10 Days]
+    C --> D{Pocket Pivot Trigger}
+    D -->|Bullish Close >= Open & Volume Signature Confirmed| E[🚀 Pocket Pivot Triggered Inside Base]
+    E --> F[Stop Loss: Low of Past 5 Days or 20 EMA - 0.4 ATR]
+    E --> G[Target 1: Base Resistance 2.5R | Target 2: Breakout Runner 4.5R+]
+```
+
+* **Academic & Empirical Foundation**:
+  * **Gil Morales & Chris Kacher (2010) — *Trade Like an O'Neil Disciple***: Developed by former William O'Neil portfolio managers. Solves the late-entry dilemma by identifying institutional accumulation *inside the consolidation base BEFORE the breakout occurs*, securing a $3\% - 8\%$ lower entry price with higher asymmetry.
+* **Volume Signature & Rules**:
+  * **Volume Test**: $\text{Volume}_t \ge \max(\text{DownVolume}_{t-1}, \dots, \text{DownVolume}_{t-10})$ on an upward bounce off the 10 EMA, 20 EMA, or 50 EMA.
+  * **Base Constructiveness**: Price is within $\le 22\%$ of the base high in a Stage 2 structure ($\text{Close} > 50\text{ EMA}$).
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Lowest low of the past 5 sessions or $20\text{ EMA} - 0.4 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$ (Base overhead resistance), $\text{Target 2} = 4.5\text{R}+$ (Stage 2 expansion runner).
+
+---
+
+### 11. Wyckoff Spring Shakeout (`wyckoff_spring`)
+
+```mermaid
+graph TD
+    A[Consolidation Range: Clear 20-Day Support Floor] --> B[Liquidity Sweep: Low Pierces Support Floor]
+    B --> C[Instant Absorption: Close Rejects Back Above Support Line]
+    C --> D{Hammer Candlestick Confirmation}
+    D -->|Close in Upper 50%+ of Candle & Volume Surge| E[🚀 Wyckoff Spring Triggered]
+    E --> F[Stop Loss: Spring Low Tail - 0.5 x ATR_14]
+    E --> G[Target 1: Range Ceiling 2.0R | Target 2: Markup Runner 3.5R]
+```
+
+* **Academic & Empirical Foundation**:
+  * **Richard D. Wyckoff (1931) / Tom Williams — *Master the Markets* (Volume Spread Analysis)**: Exploit institutional stop-loss hunts. Price briefly pierces multi-week support to trigger retail stop-loss orders, but smart money absorbs supply, driving price to close back above the support line with a long lower rejection shadow.
+* **Spring & Rejection Rules**:
+  * **Support Piercing**: $\text{Low} < \text{Support Low}_{20\text{D}}$ with instant close recovery $\text{Close} \ge \text{Support Low} \times 0.99$.
+  * **Absorption Hammer Tail**: $\frac{\text{Close} - \text{Low}}{\text{High} - \text{Low}} \ge 50.0\%$ (bullish lower shadow pin bar).
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Spring low tail $- 0.5 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$ (Trading range ceiling), $\text{Target 2} = 3.5\text{R}$ (Stage 2 markup continuation).
+
+---
+
+### 12. Toby Crabel NR7 Volatility Expansion (`nr7_expansion`)
+
+```mermaid
+graph TD
+    A[Stage 2 Trend: Close > 50 EMA & Close > 20 EMA] --> B[Range Squeeze: Daily High-Low Range is Narrowest of Last 7 Days]
+    B --> C[ATR Compression: Range <= 0.85 x ATR_14]
+    C --> D{Expansion Trigger}
+    D -->|Bullish Close >= Open & Coiled Squeeze| E[🚀 NR7 Expansion Setup Triggered]
+    E --> F[Stop Loss: Low of NR7 Consolidation - 0.35 x ATR_14]
+    E --> G[Target 1: 2.0R | Target 2: 3.0R Fast Momentum]
+```
+
+* **Academic & Empirical Foundation**:
+  * **Toby Crabel (1990) — *Day Trading with Short Term Price Patterns***: Grounded in cyclical volatility clustering. Extreme range contraction represents a coiled spring where market energy is maximally compressed before explosive multi-day directional momentum.
+* **NR7 Compression Rules**:
+  * **Narrowest Range**: $\text{Range}_t = \text{High}_t - \text{Low}_t = \min(\text{Range}_{t-1}, \dots, \text{Range}_{t-6})$.
+  * **ATR Gate**: Active range $\le 0.85 \times \text{ATR}_{14}$ inside verified Stage 2 trend ($\text{Close} > 50\text{ EMA}$).
+* **Risk & Payoff Geometry**:
+  * **Stop Loss**: Below the low of the NR7 bar $- 0.35 \times \text{ATR}_{14}$.
+  * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.0\text{R}$ (fast 3–8 day volatility expansion).
+
+---
+
 ## 🏗️ Platform Modules & Technical Architecture
 
 ```mermaid

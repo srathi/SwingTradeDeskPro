@@ -167,6 +167,57 @@ const STRATEGIES_DATA = [
     profit_exit: "Target 1 = 2.0R (50 EMA mean reversion), Target 2 = 3.5R",
     color: "from-indigo-500/20 to-teal-500/10",
     badge_color: "text-indigo-300 bg-indigo-500/10 border-indigo-500/30"
+  },
+  {
+    id: "pocket_pivot",
+    name: "Institutional Pocket Pivot (Morales & Kacher)",
+    research_basis: "Gil Morales & Chris Kacher (2010) — Trade Like an O'Neil Disciple",
+    empirical_edge: "Identifies early inside-the-base volume accumulation where volume on an upward bounce off the 10/20/50 EMA exceeds the maximum down-volume of the prior 10 sessions, entering before classical 52W/VCP breakouts.",
+    win_rate: "55% – 63%",
+    win_rate_val: 59,
+    sharpe: "1.7 – 2.2",
+    holding: "7 – 25 Days",
+    rr_target: "1:2.5 – 1:4.5+",
+    trend_filter: "Stage-2 Bull Base: Price > 50 EMA inside constructive base (<= 22% depth)",
+    entry_trigger: "Volume > max down-volume of past 10 days on bounce off 10/20/50 EMA with green candle",
+    stop_loss: "Lowest low of past 5 days or 20 EMA - 0.4 ATR",
+    profit_exit: "Target 1 = 2.5R (Base resistance), Target 2 = 4.5R (Breakout runner)",
+    color: "from-emerald-500/20 to-cyan-500/10",
+    badge_color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
+  },
+  {
+    id: "wyckoff_spring",
+    name: "Wyckoff Spring Shakeout (VPA)",
+    research_basis: "Richard D. Wyckoff (1931) / Tom Williams — Master the Markets (Volume Spread Analysis)",
+    empirical_edge: "Exploits institutional liquidity sweeps and stop hunts. Price briefly pierces 20-day support to trap bears before immediately rejecting with a hammer tail back inside the trading range.",
+    win_rate: "58% – 66%",
+    win_rate_val: 62,
+    sharpe: "1.5 – 1.9",
+    holding: "5 – 15 Days",
+    rr_target: "1:2.0 – 1:3.5",
+    trend_filter: "Consolidation trading range with clear 20-day support floor",
+    entry_trigger: "Daily low pierces support floor but closes in upper 50%+ of candle with bullish absorption",
+    stop_loss: "Spring Low tail - 0.5 x ATR(14)",
+    profit_exit: "Target 1 = 2.0R (Range ceiling), Target 2 = 3.5R (Stage 2 continuation)",
+    color: "from-amber-500/20 to-rose-500/10",
+    badge_color: "text-amber-400 bg-amber-500/10 border-amber-500/30"
+  },
+  {
+    id: "nr7_expansion",
+    name: "Toby Crabel NR7 Volatility Expansion",
+    research_basis: "Toby Crabel (1990) — Day Trading with Short Term Price Patterns",
+    empirical_edge: "Captures explosive directional momentum out of extreme 7-day narrow range compression (NR7) coils within confirmed Stage 2 uptrends.",
+    win_rate: "62% – 68%",
+    win_rate_val: 65,
+    sharpe: "1.4 – 1.8",
+    holding: "3 – 8 Days",
+    rr_target: "1:2.0 – 1:3.0",
+    trend_filter: "Stage-2 Trend: Close > 50 EMA and Close > 20 EMA",
+    entry_trigger: "Daily High-Low range is narrowest of last 7 days (<= 0.85 ATR) with bullish close",
+    stop_loss: "Below low of NR7 compression bar - 0.35 x ATR(14)",
+    profit_exit: "Target 1 = 2.0R, Target 2 = 3.0R (Rapid volatility expansion)",
+    color: "from-violet-500/20 to-blue-500/10",
+    badge_color: "text-violet-400 bg-violet-500/10 border-violet-500/30"
   }
 ];
 
