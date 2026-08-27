@@ -1,7 +1,7 @@
 """
 RSI(28) Multi-Week Momentum Divergence Strategy.
 Captures high-probability intermediate swing reversals by identifying structural bullish divergences
-between price lower-lows and smoothed 28-period Wilder RSI higher-lows.
+between price lower-lows / double-bottoms and smoothed 28-period Wilder RSI higher-lows.
 """
 
 from typing import Dict, Any, Optional, List, Tuple
@@ -11,7 +11,7 @@ from backend.app.strategies.base import BaseStrategy
 from backend.app.core.indicator_engine import compute_all_indicators
 
 
-def find_swing_lows(lows: np.ndarray, rsi_vals: np.ndarray, k: int = 4) -> List[Tuple[int, float, float]]:
+def find_swing_lows(lows: np.ndarray, rsi_vals: np.ndarray, k: int = 3) -> List[Tuple[int, float, float]]:
     """
     Identifies local swing lows using a k-bar local minimum window.
     Returns a list of tuples: (index, price_low, rsi_at_low).
@@ -19,10 +19,10 @@ def find_swing_lows(lows: np.ndarray, rsi_vals: np.ndarray, k: int = 4) -> List[
     n = len(lows)
     pivots = []
     for i in range(k, n - k):
-        is_pivot = True
         val = lows[i]
+        is_pivot = True
         for j in range(i - k, i + k + 1):
-            if j != i and lows[j] <= val:
+            if j != i and lows[j] < val:
                 is_pivot = False
                 break
         if is_pivot and not np.isnan(rsi_vals[i]):
@@ -36,11 +36,11 @@ class RSI28DivergenceStrategy(BaseStrategy):
     description: str = "Captures high-probability intermediate swing reversals by identifying structural bullish divergences between price lower-lows and 28-period RSI higher-lows."
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
-        "min_volume": 300_000,
-        "min_pivot_distance": 7,
-        "max_pivot_distance": 45,
-        "min_rsi_diff": 2.5,
-        "max_rsi28": 52.0,
+        "min_volume": 100_000,
+        "min_pivot_distance": 5,
+        "max_pivot_distance": 50,
+        "min_rsi_diff": 1.5,
+        "max_rsi28": 58.0,
         "rr_target_1": 2.0,
         "rr_target_2": 3.5,
         "max_risk_pct": 8.5
@@ -53,7 +53,7 @@ class RSI28DivergenceStrategy(BaseStrategy):
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         p = {**self.default_params, **(params or {})}
-        if df is None or len(df) < 80:
+        if df is None or len(df) < 60:
             return None
 
         data = compute_all_indicators(df)
@@ -64,57 +64,64 @@ class RSI28DivergenceStrategy(BaseStrategy):
         open_price = float(latest['Open'])
         high = float(latest['High'])
         low = float(latest['Low'])
-        vol_sma = float(latest['Vol_SMA20'])
-        vol_ratio = float(latest['Vol_Ratio'])
-        atr_val = float(latest['ATR_14'])
+        vol_sma = float(latest.get('Vol_SMA20', 0))
+        vol_ratio = float(latest.get('Vol_Ratio', 1.0))
+        atr_val = float(latest.get('ATR_14', close * 0.02))
         rsi28_curr = float(latest.get('RSI_28', 50.0))
         rsi14_curr = float(latest.get('RSI_14', 50.0))
-        ema50 = float(latest['EMA_50'])
-        ema200 = float(latest['EMA_200']) if 'EMA_200' in latest else ema50
+        ema50 = float(latest.get('EMA_50', close))
+        ema200 = float(latest.get('EMA_200', ema50))
 
-        # 1. Liquidity & Baseline Filter
-        if close < p["min_price"] or vol_sma < p["min_volume"]:
+        # 1. Baseline Filter
+        if close < p["min_price"]:
             return None
 
-        # 2. RSI Regime (Must be in oversold or value accumulation zone, not overbought)
+        # 2. RSI Regime (Must be in value accumulation / recovery zone, not overbought)
         if rsi28_curr > p["max_rsi28"]:
             return None
 
-        # 3. Swing Low & Divergence Detection
+        # 3. Swing Low Detection
         lows = data['Low'].values
         rsi_series = data['RSI_28'].values
-        pivots = find_swing_lows(lows, rsi_series, k=4)
+        pivots = find_swing_lows(lows, rsi_series, k=3)
 
         if len(pivots) < 2:
             return None
 
-        # Check latest two pivots
-        idx2, p_low2, rsi2 = pivots[-1]
-        idx1, p_low1, rsi1 = pivots[-2]
+        # Look for the most recent valid bullish divergence among the last 3 pivots
+        n = len(data)
+        best_div = None
 
-        bars_ago = len(data) - 1 - idx2
-        # Latest swing low must be recent (within past 8 bars)
-        if bars_ago > 8:
+        for p2_idx in range(len(pivots) - 1, max(-1, len(pivots) - 3), -1):
+            for p1_idx in range(p2_idx - 1, max(-1, p2_idx - 4), -1):
+                idx2, p_low2, rsi2 = pivots[p2_idx]
+                idx1, p_low1, rsi1 = pivots[p1_idx]
+
+                bars_ago = n - 1 - idx2
+                distance = idx2 - idx1
+
+                # Must be recent (pivot within past 15 bars) and well-separated
+                if not (bars_ago <= 15 and p["min_pivot_distance"] <= distance <= p["max_pivot_distance"]):
+                    continue
+
+                # Bullish Divergence Rule:
+                # Price makes lower-low or double bottom, but RSI(28) forms a distinct higher-low
+                price_lower_low = p_low2 <= p_low1 * 1.015
+                rsi_higher_low = rsi2 >= rsi1 + p["min_rsi_diff"]
+
+                if price_lower_low and rsi_higher_low and rsi2 <= p["max_rsi28"]:
+                    best_div = (idx2, idx1, p_low2, p_low1, rsi2, rsi1, bars_ago, distance)
+                    break
+            if best_div:
+                break
+
+        if not best_div:
             return None
 
-        distance = idx2 - idx1
-        if not (p["min_pivot_distance"] <= distance <= p["max_pivot_distance"]):
-            return None
+        idx2, idx1, p_low2, p_low1, rsi2, rsi1, bars_ago, distance = best_div
 
-        # Bullish Divergence Rule:
-        # Price makes a lower low (or equal low), but RSI(28) forms a distinct higher low
-        price_lower_low = p_low2 <= p_low1 * 1.005
-        rsi_higher_low = rsi2 >= rsi1 + p["min_rsi_diff"]
-
-        if not (price_lower_low and rsi_higher_low):
-            return None
-
-        # 4. Reversal Confirmation Trigger
-        # Today must be a bullish bounce candle confirming the pivot
-        is_bullish_candle = close >= open_price
-        is_bounce_confirmed = close >= p_low2 * 1.01
-
-        if not (is_bullish_candle and is_bounce_confirmed):
+        # 4. Reversal Bounce Confirmation (Price holding above pivot low)
+        if close < p_low2 * 0.99:
             return None
 
         # 5. Stop Loss & Target Geometry
@@ -138,14 +145,14 @@ class RSI28DivergenceStrategy(BaseStrategy):
         # 6. Quality Score (60 - 100)
         score = 65
         rsi_delta = rsi2 - rsi1
-        if rsi_delta >= 5.0:
+        if rsi_delta >= 4.0:
             score += 15
-        elif rsi_delta >= 3.5:
+        elif rsi_delta >= 2.5:
             score += 10
-        if vol_ratio >= 1.3:
-            score += 10
-        if rsi28_curr <= 40.0:
-            score += 10
+        if rsi28_curr <= 45.0:
+            score += 10 # Deep oversold recovery
+        if close >= open_price:
+            score += 10 # Bullish daily candle
         score = min(score, 100)
 
         return {
@@ -168,20 +175,20 @@ class RSI28DivergenceStrategy(BaseStrategy):
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
                 "rsi_28": round(rsi28_curr, 1),
-                "rsi_14": round(rsi14_curr, 1),
-                "atr": round(atr_val, 2),
-                "vol_ratio": round(vol_ratio, 2),
+                "rsi_delta": round(rsi_delta, 1),
                 "pivot1_price": round(p_low1, 2),
                 "pivot2_price": round(p_low2, 2),
                 "pivot1_rsi": round(rsi1, 1),
                 "pivot2_rsi": round(rsi2, 1),
+                "atr": round(atr_val, 2),
+                "vol_ratio": round(vol_ratio, 2),
                 "ema_50": round(ema50, 2),
                 "ema_200": round(ema200, 2)
             },
             "reasons": [
-                f"Multi-week RSI(28) Bullish Divergence (+{round(rsi_delta, 1)} RSI pts higher low)",
+                f"RSI(28) Bullish Divergence (+{round(rsi_delta, 1)} RSI pts higher low)",
                 f"Selling momentum exhaustion (Price ₹{round(p_low2, 1)} vs ₹{round(p_low1, 1)})",
-                f"Bullish reversal bounce candle confirming pivot low",
+                f"Reversal recovery from {bars_ago} bars ago pivot",
                 f"Asymmetric risk-to-reward ({p['rr_target_1']}R / {p['rr_target_2']}R targets)"
             ]
         }
@@ -199,12 +206,12 @@ class RSI28DivergenceStrategy(BaseStrategy):
         data['Target_1'] = np.nan
         data['Target_2'] = np.nan
 
-        if len(data) < 80:
+        if len(data) < 60:
             return data
 
         lows = data['Low'].values
         rsi_series = data['RSI_28'].values
-        pivots = find_swing_lows(lows, rsi_series, k=4)
+        pivots = find_swing_lows(lows, rsi_series, k=3)
 
         if len(pivots) < 2:
             return data
@@ -222,37 +229,33 @@ class RSI28DivergenceStrategy(BaseStrategy):
             if not (p["min_pivot_distance"] <= distance <= p["max_pivot_distance"]):
                 continue
 
-            price_lower_low = p_low2 <= p_low1 * 1.005
+            price_lower_low = p_low2 <= p_low1 * 1.015
             rsi_higher_low = rsi2 >= rsi1 + p["min_rsi_diff"]
 
             if price_lower_low and rsi_higher_low and rsi2 <= p["max_rsi28"]:
-                # Trigger on bounce bar right after pivot confirmation
                 trigger_idx = min(idx2 + 2, len(data) - 1)
                 curr = data.iloc[trigger_idx]
                 close = curr['Close']
-                open_p = curr['Open']
                 atr_val = curr['ATR_14']
-                vol_sma = curr['Vol_SMA20']
 
-                if close < p["min_price"] or vol_sma < p["min_volume"]:
+                if close < p["min_price"]:
                     continue
 
-                if close >= open_p:
-                    sl = round(p_low2 - (atr_val * 0.5), 2)
+                sl = round(p_low2 - (atr_val * 0.5), 2)
+                risk = close - sl
+                risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
+
+                if risk_pct > p["max_risk_pct"]:
+                    sl = round(close * (1.0 - (p["max_risk_pct"] / 100.0)), 2)
                     risk = close - sl
-                    risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
+                elif risk_pct < 2.0:
+                    sl = round(close * 0.97, 2)
+                    risk = close - sl
 
-                    if risk_pct > p["max_risk_pct"]:
-                        sl = round(close * (1.0 - (p["max_risk_pct"] / 100.0)), 2)
-                        risk = close - sl
-                    elif risk_pct < 2.0:
-                        sl = round(close * 0.97, 2)
-                        risk = close - sl
-
-                    if risk > 0:
-                        data.iat[trigger_idx, data.columns.get_loc('Signal')] = 1
-                        data.iat[trigger_idx, data.columns.get_loc('Stop_Loss')] = sl
-                        data.iat[trigger_idx, data.columns.get_loc('Target_1')] = round(close + (risk * p["rr_target_1"]), 2)
-                        data.iat[trigger_idx, data.columns.get_loc('Target_2')] = round(close + (risk * p["rr_target_2"]), 2)
+                if risk > 0:
+                    data.iat[trigger_idx, data.columns.get_loc('Signal')] = 1
+                    data.iat[trigger_idx, data.columns.get_loc('Stop_Loss')] = sl
+                    data.iat[trigger_idx, data.columns.get_loc('Target_1')] = round(close + (risk * p["rr_target_1"]), 2)
+                    data.iat[trigger_idx, data.columns.get_loc('Target_2')] = round(close + (risk * p["rr_target_2"]), 2)
 
         return data
