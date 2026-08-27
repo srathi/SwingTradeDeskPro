@@ -13,7 +13,7 @@ import {
   Sparkles,
   BarChart2
 } from 'lucide-react';
-import { fetchChartData, searchStocks } from '../services/api';
+import { fetchChartData, searchStocks, fetchAIForecast } from '../services/api';
 import StockSearchInput from './StockSearchInput';
 
 const fmt = (v, d = 2) => {
@@ -41,6 +41,32 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
   const [showEMA50, setShowEMA50] = useState(true);
   const [showEMA200, setShowEMA200] = useState(true);
   const [showSetupLines, setShowSetupLines] = useState(true);
+
+  // AI Forecast state
+  const [showAIForecast, setShowAIForecast] = useState(false);
+  const [aiForecastData, setAiForecastData] = useState(null);
+  const [aiForecastLoading, setAiForecastLoading] = useState(false);
+
+  const loadAIForecast = async (sym) => {
+    if (!sym) return;
+    setAiForecastLoading(true);
+    try {
+      const data = await fetchAIForecast(sym, 15, 20, "mini");
+      setAiForecastData(data);
+    } catch (e) {
+      console.warn("AI forecast load error:", e);
+    } finally {
+      setAiForecastLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAIForecast && ticker) {
+      loadAIForecast(ticker);
+    } else {
+      setAiForecastData(null);
+    }
+  }, [showAIForecast, ticker]);
 
   useEffect(() => {
     if (initialTicker !== undefined) {
@@ -239,6 +265,52 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         }
       }
 
+      // Kronos AI Forecast Trajectory & Confidence Bands
+      if (showAIForecast && aiForecastData?.forecast_candles?.length > 0 && candleData.length > 0) {
+        const lastHistCandle = candleData[candleData.length - 1];
+        
+        // AI Mean Trajectory Series
+        const aiTrajectorySeries = chart.addLineSeries({
+          color: '#22D3EE',
+          lineWidth: 2.5,
+          lineStyle: 0,
+          title: 'AI Forecast'
+        });
+
+        // Upper Band Series (90th percentile)
+        const aiUpperBandSeries = chart.addLineSeries({
+          color: '#0891B2',
+          lineWidth: 1.5,
+          lineStyle: 2,
+          title: '90% Upper'
+        });
+
+        // Lower Band Series (10th percentile)
+        const aiLowerBandSeries = chart.addLineSeries({
+          color: '#0891B2',
+          lineWidth: 1.5,
+          lineStyle: 2,
+          title: '10% Lower'
+        });
+
+        const meanData = [
+          { time: lastHistCandle.time, value: lastHistCandle.close },
+          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.close }))
+        ];
+        const upperData = [
+          { time: lastHistCandle.time, value: lastHistCandle.close },
+          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.band_high }))
+        ];
+        const lowerData = [
+          { time: lastHistCandle.time, value: lastHistCandle.close },
+          ...aiForecastData.forecast_candles.map(c => ({ time: c.date, value: c.band_low }))
+        ];
+
+        aiTrajectorySeries.setData(meanData);
+        aiUpperBandSeries.setData(upperData);
+        aiLowerBandSeries.setData(lowerData);
+      }
+
       // RSI Subchart
       const rsiData = chartData.indicators?.rsi_14 || chartData.rsi;
       if (rsiContainer && rsiData && rsiData.length > 0) {
@@ -421,6 +493,14 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
               >
                 200 EMA
               </button>
+              <button
+                onClick={() => setShowAIForecast(!showAIForecast)}
+                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] flex items-center space-x-1 ${showAIForecast ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                title="Toggle Kronos Neural 15-Day Forecast Funnel"
+              >
+                {aiForecastLoading ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                <span>AI Forecast</span>
+              </button>
             </div>
           </div>
         </div>
@@ -490,6 +570,30 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
               {/* Candlestick & Volume Chart */}
               <div ref={chartContainerRef} className="w-full rounded-lg overflow-hidden" />
             </div>
+
+            {/* Kronos AI Forecast Confluence Ribbon */}
+            {showAIForecast && aiForecastData && (
+              <div className="bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-gray-950 p-3 rounded-lg border border-cyan-500/30 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                <div className="flex items-center space-x-2.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                  <div>
+                    <span className="text-white font-bold">Kronos 15-Day Neural Forecast: </span>
+                    <span className="text-cyan-300 font-mono font-semibold">₹{aiForecastData.expected_close?.toFixed(2)} ({aiForecastData.expected_change_pct >= 0 ? `+${aiForecastData.expected_change_pct}%` : `${aiForecastData.expected_change_pct}%`})</span>
+                    <span className="text-gray-400 mx-2">|</span>
+                    <span className="text-gray-400">90% Corridor: </span>
+                    <span className="text-gray-200 font-mono">₹{aiForecastData.p10_close?.toFixed(2)} ~ ₹{aiForecastData.p90_close?.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold ${aiForecastData.upside_prob >= 60 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                    {aiForecastData.upside_prob}% Upside Prob
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono text-[10px] font-semibold">
+                    Vol Risk: {aiForecastData.volatility_amplification}x
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* RSI Sub-Chart */}
             <div className="border-t border-gray-800 pt-2 min-h-[140px]">

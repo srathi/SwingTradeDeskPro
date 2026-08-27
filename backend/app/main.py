@@ -17,10 +17,11 @@ from backend.app.api.watchlist_routes import router as watchlist_router
 from backend.app.api.search_routes import router as search_router
 from backend.app.api.deep_scan_routes import router as deep_scan_router
 from backend.app.api.sector_routes import router as sector_router
+from backend.app.api.ai_routes import router as ai_router
 
 app = FastAPI(
     title="SwingDesk Pro — rupeemap.in labs (by Sandesh Rathi)",
-    description="Quantitative Screener, TradingView Charting Engine, SectorPulse Rotation Matrix, and Backtest Studio for NSE/BSE and Global Equities. Developed by Sandesh Rathi at rupeemap.in labs.",
+    description="Quantitative Screener, TradingView Charting Engine, SectorPulse Rotation Matrix, Kronos Foundation Model AI Forecaster, and Backtest Studio for NSE/BSE and Global Equities. Developed by Sandesh Rathi at rupeemap.in labs.",
     version="1.0.0",
     contact={
         "name": "Sandesh Rathi (rupeemap.in labs)",
@@ -46,6 +47,7 @@ app.include_router(watchlist_router)
 app.include_router(search_router)
 app.include_router(deep_scan_router)
 app.include_router(sector_router)
+app.include_router(ai_router)
 
 
 @app.get("/api/health")

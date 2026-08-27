@@ -137,3 +137,30 @@ export async function fetchSectorConstituents(sectorTicker) {
   }
   return res.json();
 }
+
+export async function fetchAIForecast(ticker, predLen = 15, paths = 20, modelType = "mini") {
+  const res = await fetch(`${API_BASE}/ai/forecast`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ticker: ticker.trim().toUpperCase(),
+      pred_len: Number(predLen),
+      n_paths: Number(paths),
+      model_type: modelType
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to generate AI forecast for ${ticker}`);
+  }
+  return res.json();
+}
+
+export async function fetchAIModelStatus() {
+  const res = await fetch(`${API_BASE}/ai/model-status`);
+  if (!res.ok) {
+    return { is_loaded: false, device: "cpu" };
+  }
+  return res.json();
+}
+

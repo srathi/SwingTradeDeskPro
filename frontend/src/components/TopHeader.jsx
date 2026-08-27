@@ -8,10 +8,9 @@ import {
   Layers, 
   Zap, 
   BarChart2, 
-  TrendingUp, 
-  ShieldAlert, 
   Bookmark, 
-  BookOpen 
+  BookOpen,
+  Sparkles 
 } from 'lucide-react';
 import StockSearchInput from './StockSearchInput';
 
@@ -25,6 +24,7 @@ export default function TopHeader({
     deepscan: { category: "Discovery", label: "Deep Scan", icon: Zap },
     sectors: { category: "Discovery", label: "Sector Pulse", icon: Compass },
     chart: { category: "Execution", label: "Chart Studio", icon: BarChart2 },
+    aiforecast: { category: "Execution", label: "Kronos AI Forecaster", icon: Sparkles },
     backtest: { category: "Execution", label: "Backtest Studio", icon: TrendingUp },
     risk: { category: "Execution", label: "Risk Calculator", icon: ShieldAlert },
     watchlists: { category: "Research", label: "Watchlists", icon: Bookmark },

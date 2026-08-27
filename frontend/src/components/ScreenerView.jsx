@@ -13,7 +13,7 @@ import {
   Bookmark,
   Compass
 } from 'lucide-react';
-import { fetchUniverses, fetchStrategies, fetchWatchlists, runScanSync } from '../services/api';
+import { fetchUniverses, fetchStrategies, fetchWatchlists, runScanSync, fetchAIForecast } from '../services/api';
 
 const fmt = (v, d = 2) => {
   if (typeof v === 'number' && !isNaN(v)) return v.toFixed(d);
@@ -50,6 +50,27 @@ export default function ScreenerView({
   const [totalCount, setTotalCount] = useState(0);
   const [results, setResults] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  // AI Forecast Confluence Modal state
+  const [aiModalSetup, setAiModalSetup] = useState(null);
+  const [aiModalLoading, setAiModalLoading] = useState(false);
+  const [aiModalData, setAiModalData] = useState(null);
+  const [aiModalError, setAiModalError] = useState(null);
+
+  const handleOpenAIForecast = async (setup) => {
+    setAiModalSetup(setup);
+    setAiModalLoading(true);
+    setAiModalError(null);
+    setAiModalData(null);
+    try {
+      const data = await fetchAIForecast(setup.ticker, 15, 20, "mini");
+      setAiModalData(data);
+    } catch (err) {
+      setAiModalError(err.message || "Failed to generate AI forecast.");
+    } finally {
+      setAiModalLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUniverses().then(setUniverses).catch(console.error);
@@ -487,6 +508,15 @@ export default function ScreenerView({
                 {/* Right: Actions */}
                 <div className="flex items-center space-x-2 self-end lg:self-center">
                   <button
+                    onClick={() => handleOpenAIForecast(setup)}
+                    className="flex items-center space-x-1.5 px-3 py-2 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800/80 hover:border-purple-500 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    title="Run Kronos AI Foundation Forecast"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>AI Forecast</span>
+                  </button>
+
+                  <button
                     onClick={() => onSelectTicker(setup.ticker)}
                     className="flex items-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-medium transition-colors"
                     title="Open in Chart Studio"
@@ -530,6 +560,137 @@ export default function ScreenerView({
             </p>
           </div>
         )
+      )}
+
+      {/* AI Confluence Modal */}
+      {aiModalSetup && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-purple-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <span className="p-2 bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-400">
+                  <Sparkles className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>{aiModalSetup.ticker}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Kronos AI Confluence
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Strategy Setup: <span className="text-cyan-400 font-medium">{aiModalSetup.strategy}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAiModalSetup(null)}
+                className="text-gray-400 hover:text-white text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            {aiModalLoading && (
+              <div className="h-48 flex flex-col items-center justify-center space-y-2">
+                <RefreshCw className="w-6 h-6 text-purple-400 animate-spin" />
+                <p className="text-xs text-gray-400">Running Monte Carlo neural trajectory simulation...</p>
+              </div>
+            )}
+
+            {aiModalError && (
+              <div className="p-3 bg-red-950/50 border border-red-800 rounded-lg text-red-300 text-xs">
+                {aiModalError}
+              </div>
+            )}
+
+            {!aiModalLoading && aiModalData && (
+              <div className="space-y-4">
+                
+                {/* 2x2 Metric Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="bg-gray-950 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-semibold block">Upside Probability</span>
+                    <span className={`text-xl font-bold font-mono ${aiModalData.upside_prob >= 60 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                      {aiModalData.upside_prob}%
+                    </span>
+                    <div className="w-full bg-gray-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full ${aiModalData.upside_prob >= 60 ? 'bg-emerald-400' : 'bg-yellow-400'}`}
+                        style={{ width: `${aiModalData.upside_prob}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-950 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-semibold block">Expected 15D Target</span>
+                    <span className="text-xl font-bold font-mono text-cyan-300">
+                      ₹{aiModalData.expected_close?.toFixed(2)}
+                    </span>
+                    <span className={`text-[10px] font-mono block mt-0.5 ${aiModalData.expected_change_pct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {aiModalData.expected_change_pct >= 0 ? `+${aiModalData.expected_change_pct}%` : `${aiModalData.expected_change_pct}%`} vs CMP
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-950 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-semibold block">90% Corridor [p10, p90]</span>
+                    <span className="font-mono text-gray-200 font-semibold block mt-0.5">
+                      ₹{aiModalData.p10_close?.toFixed(2)} ~ ₹{aiModalData.p90_close?.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-950 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-semibold block">Volatility Risk</span>
+                    <span className="font-mono text-purple-300 font-semibold block mt-0.5">
+                      {aiModalData.volatility_amplification}x ({aiModalData.volatility_amplification <= 1.1 ? '🟢 Orderly' : '⚠️ Elevated'})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Strategy Confluence Synthesis Box */}
+                <div className="bg-gradient-to-r from-purple-950/40 to-blue-950/40 p-3.5 rounded-xl border border-purple-800/60 text-xs space-y-1.5">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="font-bold text-white">{aiModalData.confluence_badge}</span>
+                  </div>
+                  <p className="text-gray-300 text-[11px] leading-relaxed">
+                    Kronos Foundation Model indicates a <strong className="text-cyan-300">{aiModalData.regime}</strong> trajectory. 
+                    Quantitative strategy target of <strong className="text-emerald-400">₹{aiModalSetup.target_1}</strong> falls well within the 90% confidence corridor ($p_{90}$ = ₹{aiModalData.p90_close}).
+                  </p>
+                </div>
+
+                {/* Action Footer */}
+                <div className="flex items-center justify-end space-x-2 pt-2 border-t border-gray-800">
+                  <button
+                    onClick={() => {
+                      setAiModalSetup(null);
+                      onSelectTicker(aiModalSetup.ticker);
+                    }}
+                    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1"
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span>Open in Chart Studio</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAiModalSetup(null);
+                      onOpenRisk(aiModalSetup);
+                    }}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>Position Size</span>
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        </div>
       )}
 
     </div>

@@ -9,6 +9,7 @@ import {
   Zap,
   BookOpen,
   Compass,
+  Sparkles,
   ChevronLeft,
   ChevronRight,
   X
@@ -35,6 +36,7 @@ export default function Sidebar({
       title: "Execution & Analysis",
       items: [
         { id: 'chart', label: 'Chart Studio', icon: BarChart2 },
+        { id: 'aiforecast', label: 'AI Forecaster', icon: Sparkles, badge: 'Kronos' },
         { id: 'backtest', label: 'Backtest Studio', icon: TrendingUp },
         { id: 'risk', label: 'Risk Calculator', icon: ShieldAlert },
       ]

@@ -30,7 +30,7 @@ Once running:
 
 ---
 
-## 🔬 Quantitative Research & Empirical Strategy Suite (9 Core Models)
+## 🔬 Quantitative Research & Empirical Strategy Suite (12 Core Models)
 
 The platform's trading models are grounded in empirical quantitative finance research and academic literature on momentum, multi-timeframe moving average ribbons, volatility regime shifts, and mean-reversion anomalies:
 
@@ -43,8 +43,34 @@ The platform's trading models are grounded in empirical quantitative finance res
 | **5. RSI(28) Momentum Divergence Reversal** | J. Welles Wilder (1978) Lunar Cycle Model | Filters false noise with smoothed 28-period oscillator. Double swing-low divergence marks structural multi-week selling exhaustion. | **$56\% - 64\%$** | **$1.4 - 1.8$** | $1:2.0 - 1:3.5$ | **7 – 25 Days** |
 | **6. GMMA Weekly Multi-Timeframe Breakout** | Daryl Guppy (2004) / Multi-Timeframe Ribbon Theory | Aligns Weekly institutional investor ribbon (30–60 EMA) expansion with daily volume-backed breakouts to ride high-momentum Stage 2 runners. | **$54\% - 62\%$** | **$1.5 - 1.9$** | $1:2.5 - 1:4.0$ | **10 – 30 Days** |
 | **7. 52-Week High Breakout (George & Hwang)** | Thomas J. George & Chuan-Yang Hwang (2004) / Minervini | Exploits zero overhead supply as leading equities emerge from tight consolidation bases to new 52-week highs on $\ge 1.4\times$ volume. | **$52\% - 60\%$** | **$1.6 - 2.0$** | $1:2.5 - 1:4.0+$ | **10 – 45 Days** |
-| **8. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
-| **9. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
+| **8. Institutional Pocket Pivot** | Dr. Chris Kacher & Gil Morales (2011) | High-volume accumulation inside consolidation bases exceeding the 10-day max down-volume off the rising 10/20/50 EMA. | **$58\% - 67\%$** | **$1.6 - 2.2$** | $1:2.5 - 1:4.0$ | **5 – 20 Days** |
+| **9. Wyckoff Spring Shakeout** | Richard D. Wyckoff (1931) / Institutional Liquidity | False breakdown below a well-defined 20-day trading range support floor followed by an immediate high-volume hammer recovery. | **$62\% - 70\%$** | **$1.7 - 2.3$** | $1:2.5 - 1:4.0$ | **5 – 15 Days** |
+| **10. Toby Crabel NR7 Volatility Expansion** | Toby Crabel (1990) *Day Trading with Short Term Price Patterns* | 7-day narrowest range volatility coil ($\le 0.85\times\text{ATR}$) in Stage 2 trend poised for explosive directional expansion. | **$64\% - 73\%$** | **$1.5 - 2.0$** | $1:2.0 - 1:3.5$ | **3 – 10 Days** |
+| **11. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
+| **12. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
+
+---
+
+## 🔮 Kronos AI Foundation Model Financial Forecaster (AAAI 2026)
+
+SwingDesk Pro includes an integration of **Kronos**, an autoregressive foundation model for financial K-line time series trained on 12B+ candlestick tokens across 45 global exchanges (AAAI 2026). It treats continuous OHLCV data as discrete quantized tokens via **Binary Spherical Quantization (BSQuantizer)** and runs parallel Monte Carlo path simulation.
+
+```mermaid
+graph TD
+    A["Historical OHLCV (NSE/BSE)"] --> B["KronosTokenizer (BSQuantizer)"]
+    B --> C["Kronos Autoregressive Transformer"]
+    C --> D["Parallel Monte Carlo Simulation (20-30 Paths)"]
+    D --> E["Upside Probability Density P(Up)"]
+    D --> F["90% Confidence Corridor [p10, p90]"]
+    D --> G["Volatility Amplification Risk Factor"]
+    E & F & G --> H["Visual Candlestick Funnel in Chart Studio & Screener Confluence"]
+```
+
+* **Upside Probability Gauge**: Calculates the probability that $\text{Close}_{T+H} > \text{CMP}$ across 20–30 parallel Monte Carlo future paths.
+* **90% Confidence Corridor**: Displays the $p_{10}$ to $p_{90}$ price corridor on TradingView / Lightweight Charts.
+* **Strategy Confluence Engine**: Cross-verifies quantitative screener setups with neural pattern forecasting to filter out false breakouts.
+
+---
 
 ---
 

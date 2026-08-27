@@ -9,6 +9,7 @@ import BacktestStudio from './components/BacktestStudio';
 import RiskCalculator from './components/RiskCalculator';
 import WatchlistView from './components/WatchlistView';
 import StrategyGuideView from './components/StrategyGuideView';
+import AIForecastStudio from './components/AIForecastStudio';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -128,6 +129,15 @@ export default function App() {
                 <ChartStudio
                   initialTicker={selectedTicker}
                   onOpenRisk={handleOpenRisk}
+                />
+              )}
+
+              {activeTab === 'aiforecast' && (
+                <AIForecastStudio
+                  selectedTicker={selectedTicker}
+                  onSelectTicker={handleSelectTicker}
+                  onOpenRisk={handleOpenRisk}
+                  onOpenBacktest={handleOpenBacktest}
                 />
               )}
 
