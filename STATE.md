@@ -248,3 +248,14 @@
     3. Wiped old SQLite market cache and rebuilt fresh, isolated time series.
   * **Verification**: Verified distinct prices, MRS scores, Hurst values, and regime durations across all 11 sectors.
   * Pushed commit (`d761d70`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Feature Added: Ranked Sector Constituents & Relative Strength Leaders Drilldown in Sector Pulse:**
+  * **Architecture & Merit Scoring**:
+    * Created [`sectorpulse/constituents.py`](sectorpulse/constituents.py) mapping sector indices (`^NSEBANK`, `^CNXIT`, `^CNXAUTO`, `^CNXPHARMA`, `^CNXFMCG`, `^CNXMETAL`, `^CNXREALTY`, `^CNXENERGY`, `^CNXINFRA`, `^CNXPSUBANK`, `^CNXMEDIA`, `XLK`, `XLF`, etc.) to top liquid heavyweight constituents.
+    * Computes real-time CMP, 1D % Change, RSI(14), Technical Stage (`Stage 2 Bull`, `Early Trend`, `Consolidation`, `Stage 4 Bear`), and checks for active setups across all 6 strategies.
+    * Ranks constituents descending by **Merit Score (Relative Strength + Trend Quality)**.
+  * **Clutter-Free, Seamless UI**:
+    * **Inline Accordion Drawer**: Each table row has an expand arrow; clicking unfolds a sleek constituent strip under that specific sector without cluttering the high-level macro view.
+    * **Deep Inspection Pane**: Shows the top 5 ranked leaders with 1-click drilldown buttons (📈 **Chart Studio**, 🧪 **Backtest**, ⚖️ **Risk Size**).
+  * **API Route**: Added `@router.get("/api/sectors/constituents")` in [`sector_routes.py`](backend/app/api/sector_routes.py).
+  * Pushed commit (`13c7ab5`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
