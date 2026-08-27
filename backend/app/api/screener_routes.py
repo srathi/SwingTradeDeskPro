@@ -8,11 +8,31 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from pydantic import BaseModel
 
+import numpy as np
+import pandas as pd
 from backend.app.core.index_manager import IndexManager
 from backend.app.core.data_engine import data_engine
 from backend.app.strategies import get_strategy, list_strategies, STRATEGY_REGISTRY
 
 router = APIRouter(prefix="/api/screener", tags=["Screener"])
+
+
+def sanitize_for_json(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [sanitize_for_json(v) for v in obj]
+    elif isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    elif isinstance(obj, (np.bool_, bool)):
+        return bool(obj)
+    elif isinstance(obj, np.ndarray):
+        return [sanitize_for_json(v) for v in obj.tolist()]
+    elif hasattr(obj, 'item'):
+        return obj.item()
+    return obj
 
 
 class ScanRequest(BaseModel):
@@ -47,7 +67,8 @@ def run_screener_sync(req: ScanRequest):
     for ticker, df in batch_df.items():
         res = strat.evaluate_setup(df, ticker, req.params)
         if res:
-            matches.append(res)
+            clean_res = sanitize_for_json(res)
+            matches.append(clean_res)
 
     matches.sort(key=lambda x: x.get("score", 0), reverse=True)
     return {
@@ -103,10 +124,11 @@ async def screener_websocket(websocket: WebSocket):
                 if df is not None:
                     res = strat.evaluate_setup(df, ticker, params)
                     if res:
-                        matches.append(res)
+                        clean_res = sanitize_for_json(res)
+                        matches.append(clean_res)
                         await websocket.send_json({
                             "type": "MATCH",
-                            "match": res
+                            "match": clean_res
                         })
 
             progress_pct = round(((min(i + chunk_size, total)) / total) * 100.0, 1)

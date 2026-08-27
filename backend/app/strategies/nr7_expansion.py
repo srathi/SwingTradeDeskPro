@@ -133,16 +133,16 @@ class NR7ExpansionStrategy(BaseStrategy):
             "r_multiple_t2": p["rr_target_2"],
             "setup_date": str(latest.name)[:10] if hasattr(latest, 'name') else "",
             "indicators": {
-                "nr7_range": round(active_range, 2),
-                "compression_ratio": round(compression_ratio, 2),
-                "atr": round(atr_val, 2),
-                "vol_ratio": round(vol_ratio, 2),
-                "ema_20": round(ema20, 2),
-                "ema_50": round(ema50, 2),
-                "ema_200": round(ema200, 2)
+                "nr7_range": round(float(active_range), 2),
+                "compression_ratio": round(float(compression_ratio), 2),
+                "atr": round(float(atr_val), 2),
+                "vol_ratio": round(float(vol_ratio), 2),
+                "ema_20": round(float(ema20), 2),
+                "ema_50": round(float(ema50), 2),
+                "ema_200": round(float(ema200), 2)
             },
             "reasons": [
-                f"Toby Crabel NR7 range compression ({round(compression_ratio * 100, 0)}% of ATR)",
+                f"Toby Crabel NR7 range compression ({round(float(compression_ratio) * 100, 0)}% of ATR)",
                 f"Tightest volatility coil of the last 7 sessions",
                 f"Stage 2 Bullish alignment (Price > 50 EMA)",
                 f"Asymmetric risk geometry ({p['rr_target_1']}R / {p['rr_target_2']}R targets)"
