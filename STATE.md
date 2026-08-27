@@ -259,3 +259,18 @@
     * **Deep Inspection Pane**: Shows the top 5 ranked leaders with 1-click drilldown buttons (📈 **Chart Studio**, 🧪 **Backtest**, ⚖️ **Risk Size**).
   * **API Route**: Added `@router.get("/api/sectors/constituents")` in [`sector_routes.py`](backend/app/api/sector_routes.py).
   * Pushed commit (`13c7ab5`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Feature Added: GMMA (Guppy Multiple Moving Average) Weekly Breakout Strategy (#7):**
+  * **Mathematical & Multi-Timeframe Core**:
+    * Created [`backend/app/strategies/gmma_breakout.py`](backend/app/strategies/gmma_breakout.py) implementing `GMMABreakoutStrategy` inheriting from `BaseStrategy`.
+    * Uses Weekly resampled OHLCV bars (`resample_weekly`) to evaluate the 12 Guppy Moving Averages:
+      - **Fast / Trader Ribbon**: 3, 5, 8, 10, 12, 15 EMAs.
+      - **Slow / Investor Ribbon**: 30, 35, 40, 45, 50, 60 EMAs.
+    * Requires Weekly Slow Ribbon expansion (30 EMA > 60 EMA with $\ge 1.8\%$ spread) + Fast Ribbon aligned above Slow + Daily breakout of 20D pivot on $\ge 1.3\times$ volume.
+    * Asymmetric Payoff Targets: $2.5R$ (Target 1) and $4.0R$ (Target 2).
+  * **Zero Regression Verification**:
+    * Added automated unit test suite in [`tests/test_gmma_strategy.py`](tests/test_gmma_strategy.py).
+    * `pytest tests/ -v`: 9/9 passed (100%).
+    * Production Vite build succeeded in 8.20s.
+  * **UI Documentation**: Added full empirical research and cheat sheet to [`StrategyGuideView.jsx`](frontend/src/components/StrategyGuideView.jsx).
+  * Pushed commit (`1879145`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
