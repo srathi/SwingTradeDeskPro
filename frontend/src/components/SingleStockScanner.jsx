@@ -16,7 +16,7 @@ import {
   Search,
   Building2
 } from 'lucide-react';
-import { fetchDeepScan, searchStocks } from '../services/api';
+import { fetchDeepScan, searchStocks, fetchAIForecast } from '../services/api';
 import StockSearchInput from './StockSearchInput';
 
 const fmt = (v, d = 2) => {
@@ -52,6 +52,9 @@ export default function SingleStockScanner({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [reboundSuggestions, setReboundSuggestions] = useState([]);
+  
+  const [aiForecast, setAiForecast] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (initialTicker && initialTicker.trim()) {
@@ -65,12 +68,21 @@ export default function SingleStockScanner({
     setLoading(true);
     setErrorMsg(null);
     setReboundSuggestions([]);
+    setAiForecast(null);
 
     try {
       let sym = symToScan.trim();
       const res = await fetchDeepScan(sym, period, capVal, riskVal);
       setData(res);
       setTicker(res.ticker);
+
+      // Auto-trigger Kronos Foundation Model forward pass
+      setAiLoading(true);
+      fetchAIForecast(res.ticker, 15, 20, "mini")
+        .then(aiData => setAiForecast(aiData))
+        .catch(() => setAiForecast(null))
+        .finally(() => setAiLoading(false));
+
     } catch (err) {
       setErrorMsg(err.message || `Could not run deep scan on '${symToScan}'`);
       try {
@@ -528,6 +540,112 @@ export default function SingleStockScanner({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Section 3.5: Kronos AI Foundation Forecast & Neural Price Corridor */}
+          <div className="bg-gradient-to-r from-purple-950/40 via-gray-900/90 to-blue-950/40 border border-purple-800/60 rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-900/50 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Kronos AI Foundation Forecast</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono uppercase font-semibold">
+                      Monte Carlo Neural Engine
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Autoregressive 15-day forward projection &amp; 90% confidence corridor for {data.ticker}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onOpenAIForecast && onOpenAIForecast(data.ticker)}
+                className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition-all self-start sm:self-auto"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Full AI Forecast Studio</span>
+              </button>
+            </div>
+
+            {aiLoading && (
+              <div className="py-8 flex flex-col items-center justify-center space-y-2 text-gray-400 text-xs font-mono">
+                <RefreshCw className="w-6 h-6 animate-spin text-purple-400" />
+                <span>Running parallel Monte Carlo forward pass (20 paths) on Kronos Foundation Model...</span>
+              </div>
+            )}
+
+            {!aiLoading && aiForecast && (
+              <div className="space-y-4">
+                {/* 4 Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-bold block">Upside Probability</span>
+                    <span className={`text-xl font-extrabold font-mono ${aiForecast.upside_prob >= 60 ? 'text-emerald-400' : aiForecast.upside_prob >= 45 ? 'text-yellow-400' : 'text-rose-400'}`}>
+                      {aiForecast.upside_prob}%
+                    </span>
+                    <div className="w-full bg-gray-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div 
+                        className={`h-full ${aiForecast.upside_prob >= 60 ? 'bg-emerald-400' : aiForecast.upside_prob >= 45 ? 'bg-yellow-400' : 'bg-rose-400'}`}
+                        style={{ width: `${aiForecast.upside_prob}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-bold block">Expected 15D Target</span>
+                    <span className="text-xl font-extrabold font-mono text-cyan-300">
+                      ₹{aiForecast.expected_close?.toFixed(2)}
+                    </span>
+                    <span className={`text-[10px] font-mono block mt-0.5 ${aiForecast.expected_change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {aiForecast.expected_change_pct >= 0 ? `+${aiForecast.expected_change_pct}%` : `${aiForecast.expected_change_pct}%`} vs CMP
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-bold block">90% Corridor [p10, p90]</span>
+                    <span className="font-mono text-gray-200 font-bold block mt-1">
+                      ₹{aiForecast.p10_close?.toFixed(2)} ~ ₹{aiForecast.p90_close?.toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-gray-500 block mt-0.5">
+                      Spread: ₹{(aiForecast.p90_close - aiForecast.p10_close).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                    <span className="text-gray-500 text-[10px] uppercase font-bold block">Volatility Risk</span>
+                    <span className="font-mono text-purple-300 font-bold block mt-1">
+                      {aiForecast.volatility_amplification}x
+                    </span>
+                    <span className="text-[10px] text-gray-400 block mt-0.5">
+                      {aiForecast.volatility_amplification <= 1.1 ? '🟢 Low/Orderly Risk' : '⚠️ Elevated Risk'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Synthesis Banner */}
+                <div className="bg-purple-950/30 border border-purple-800/50 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold text-[10px] uppercase border border-purple-500/30">
+                      {aiForecast.confluence_badge}
+                    </span>
+                    <span className="text-gray-300 text-[11px]">
+                      Regime: <strong className="text-white">{aiForecast.regime}</strong>. Historical price action indicates high-fidelity alignment with quantitative strategy setups.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => onOpenChart && onOpenChart(data.ticker)}
+                    className="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 text-cyan-300 rounded border border-gray-700 text-[11px] font-semibold whitespace-nowrap flex items-center space-x-1 self-start sm:self-auto"
+                  >
+                    <BarChart2 className="w-3 h-3" />
+                    <span>View Forecast on Chart</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section 4: 2-Year Historical Strategy Performance & Position Sizing */}

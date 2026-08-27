@@ -130,11 +130,12 @@ class DataEngine:
         if q.upper().endswith(('.NS', '.BO')):
             candidates.append(q.upper())
 
-        # Standard suffixes fallback
+        # Standard suffixes fallback (only if not already suffixed)
         q_upper = q.upper().replace(" ", "")
-        for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
-            if fallback not in candidates:
-                candidates.append(fallback)
+        if not q_upper.endswith(('.NS', '.BO')):
+            for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
+                if fallback not in candidates:
+                    candidates.append(fallback)
 
         # Query SearchEngine for fuzzy company/ticker matches
         from backend.app.core.search_engine import SearchEngine

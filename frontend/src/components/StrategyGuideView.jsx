@@ -252,7 +252,7 @@ export default function StrategyGuideView({ onLaunchScreener, onLaunchBacktest }
           <div className="flex items-center gap-3">
             <div className="bg-gray-900/80 border border-gray-800 rounded-xl px-4 py-2 text-right">
               <div className="text-[10px] text-gray-400 uppercase font-mono tracking-wider">Implemented Models</div>
-              <div className="text-lg font-bold text-cyan-400 font-mono">6 Strategies Active</div>
+              <div className="text-lg font-bold text-cyan-400 font-mono">{STRATEGIES_DATA.length} Strategies Active</div>
             </div>
           </div>
         </div>
