@@ -120,18 +120,24 @@ class DataEngine:
         if not q:
             return []
 
+        # If index symbol with caret prefix, preserve exact ticker without fuzzy stock search
+        if q.startswith("^"):
+            clean = q.replace("^", "")
+            return [q, f"{clean}.NS", f"{clean}.BO", clean]
+
         candidates = []
         # If already formatted with suffix
         if q.upper().endswith(('.NS', '.BO')):
             candidates.append(q.upper())
 
         # If natural name or containing spaces or typos, query SearchEngine
-        from backend.app.core.search_engine import SearchEngine
-        matches = SearchEngine.search(q, limit=4)
-        for m in matches:
-            sym = m["symbol"]
-            if sym not in candidates:
-                candidates.append(sym)
+        if not q.upper().endswith(('.NS', '.BO')):
+            from backend.app.core.search_engine import SearchEngine
+            matches = SearchEngine.search(q, limit=4)
+            for m in matches:
+                sym = m["symbol"]
+                if sym not in candidates:
+                    candidates.append(sym)
 
         # Standard suffixes fallback
         q_upper = q.upper().replace(" ", "")
