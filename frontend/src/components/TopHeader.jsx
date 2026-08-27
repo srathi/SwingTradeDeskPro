@@ -8,6 +8,8 @@ import {
   Layers, 
   Zap, 
   BarChart2, 
+  TrendingUp,
+  ShieldAlert,
   Bookmark, 
   BookOpen,
   Sparkles 
