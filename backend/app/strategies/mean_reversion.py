@@ -114,7 +114,7 @@ class MeanReversionStrategy(BaseStrategy):
                 "indicators": {
                     "rsi": round(rsi_val, 1),
                     "bb_lower": round(bb_lower, 2),
-                    "bb_middle": round(float(latest.get('BB_Middle', ema20)), 2),
+                    "bb_middle": round(float(latest.get('BB_Middle', bb_mid)), 2),
                     "ema_20": round(float(latest['EMA_20']), 2),
                     "ema_50": round(float(latest['EMA_50']), 2),
                     "atr": round(atr_val, 2),

@@ -41,6 +41,9 @@ class VolatilitySqueezeStrategy(BaseStrategy):
         prev = data.iloc[-2]
 
         close = float(curr['Close'])
+        open_p = float(curr['Open'])
+        high = float(curr['High'])
+        low = float(curr['Low'])
         vol = float(curr['Volume'])
         vol_sma = float(curr.get('Vol_SMA20', vol))
         vol_ratio = float(curr.get('Vol_Ratio', 1.0))
