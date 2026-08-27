@@ -4,15 +4,16 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev)
 [![TradingView](https://img.shields.io/badge/TradingView-Lightweight%20Charts-blue?style=for-the-badge)](https://tradingview.github.io/lightweight-charts/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-An institutional-grade quantitative swing trading suite designed for Indian equities (NSE & BSE) and global markets. Features automated multi-strategy screening, high-probability research-backed models, realistic backtesting with Indian tax/slippage models, interactive TradingView charts, and exact risk-managed position sizing.
+An institutional-grade quantitative swing trading suite designed for Indian equities (NSE & BSE) and global markets by [rupeemap.in labs](https://www.rupeemap.in). Features automated multi-strategy screening across 7 research-backed models, top-down macro sector rotation, ranked sector constituent leaders, realistic walk-forward backtesting with Indian tax/slippage models, interactive TradingView charts, and exact risk-managed position sizing.
 
 🌐 **Live Web Application**: **[https://swingtradedeskpro.onrender.com](https://swingtradedeskpro.onrender.com)**  
 📖 **Interactive API Docs (Swagger)**: **[https://swingtradedeskpro.onrender.com/docs](https://swingtradedeskpro.onrender.com/docs)**
 
 ---
 
-## ⚡ Quick Start (Local)
+## ⚡ Quick Start (Local Setup)
 
 ```bash
 # 1. Clone the repository
@@ -29,9 +30,9 @@ Once running:
 
 ---
 
-## 🔬 Quantitative Research & Empirical Strategy Comparison
+## 🔬 Quantitative Research & Empirical Strategy Suite (7 Core Models)
 
-The platform's trading models are grounded in empirical quantitative finance research and academic literature on momentum, volatility regime shifts, and mean-reversion anomalies:
+The platform's trading models are grounded in empirical quantitative finance research and academic literature on momentum, multi-timeframe moving average ribbons, volatility regime shifts, and mean-reversion anomalies:
 
 | Strategy | Research Basis | Empirical Edge | Win Rate | Sharpe | R:R Target | Holding Period |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -39,314 +40,139 @@ The platform's trading models are grounded in empirical quantitative finance res
 | **2. TTM Volatility Squeeze Expansion** | John Carter (2007) / Volatility Regime Models | Bollinger Bands contract inside Keltner Channels before explosive momentum releases with accelerating MACD histogram. | **$65\% - 72\%$** | **$1.4 - 1.8$** | $1:2.5 - 1:3.5$ | **5 – 15 Days** |
 | **3. Mean Reversion (Bollinger + RSI)** | John Bollinger (2001) / Oversold Reversion | Captures extreme oversold bounces when price touches Lower Bollinger Band with $\text{RSI}_{14} \le 35$ and a bullish rejection candle. | **$60\% - 68\%$** | **$1.2 - 1.4$** | $1:1.5 - 1:2.0$ | **3 – 7 Days** |
 | **4. Mansfield Relative Strength (Stage 2)** | Stan Weinstein (1988) / Gary Antonacci Dual Momentum | Institutional capital accumulation in market leaders outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs. | **$58\% - 66\%$** | **$1.6 - 2.1$** | $1:2.5 - 1:4.0+$ | **10 – 30 Days** |
-| **5. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
-| **6. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
+| **5. GMMA Weekly Multi-Timeframe Breakout** | Daryl Guppy (2004) / Multi-Timeframe Ribbon Theory | Aligns Weekly institutional investor ribbon (30–60 EMA) expansion with daily volume-backed breakouts to ride high-momentum Stage 2 runners. | **$54\% - 62\%$** | **$1.5 - 1.9$** | $1:2.5 - 1:4.0$ | **10 – 30 Days** |
+| **6. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
+| **7. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
 
 ---
 
 ## 🎯 Detailed Strategy Breakdowns & Specifications
 
-### 1. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
+### 1. GMMA Weekly Multi-Timeframe Breakout (`gmma_breakout`)
+* **Research Basis**: Daryl Guppy (2004) — *Trend Trading* / Guppy Multiple Moving Averages.
+* **Empirical Edge**: Eliminates daily false breakout traps by requiring the **Weekly Investor Ribbon (30, 35, 40, 45, 50, 60 EMAs)** to be fanning outward in parallel upward expansion with the **Fast Trader Ribbon (3, 5, 8, 10, 12, 15 EMAs)** strictly aligned above.
+* **Entry Trigger**: Daily close breaking above 20D pivot on $\ge 1.3\times$ institutional volume surge.
+* **Stop Loss**: Anchored below the top of the slow ribbon or 10-day swing low.
+* **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Stage 2 markup runner).
 
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `connors_rsi2` |
-| **Research Basis** | Larry Connors & Cesar Alvarez (2009) — *Short Term Trading Strategies That Work* |
-| **Empirical Edge** | Exploit temporary liquidity dislocations caused by institutional stop hunts and retail panic in fundamentally strong equities. |
-| **Statistical Win Rate** | **$74\% - 81\%$** |
-| **Sharpe Ratio** | **$1.5 - 1.9$** |
-| **Average Holding** | **3 – 7 Trading Sessions** |
-| **Trend Filter** | $\text{Close} > \text{SMA}_{200}$ (Mandatory macro bull filter) |
-| **Entry Trigger** | $\text{RSI}_2 < 10$ with 2+ consecutive down closes ($\text{Close}_t < \text{Close}_{t-1} < \text{Close}_{t-2}$) and reversal bounce candle |
-| **Stop Loss** | $\text{Close} - 2.0 \times \text{ATR}_{14}$ (or recent swing low) |
-| **Profit Exit** | First daily close above the 5-period SMA ($\text{Close} > \text{SMA}_5$) or $1:2$ R:R |
+### 2. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
+* **Research Basis**: Larry Connors & Cesar Alvarez (2009) — *Short Term Trading Strategies That Work*.
+* **Empirical Edge**: Exploits temporary liquidity dislocations caused by institutional stop hunts and retail panic in fundamentally strong equities ($\text{Price} > \text{SMA}_{200}$).
+* **Entry Trigger**: $\text{RSI}_2 < 10$ with 2+ consecutive down closes and a bullish reversal bounce.
+* **Stop Loss**: $\text{Close} - 2.0 \times \text{ATR}_{14}$ (or recent swing low).
+* **Profit Exit**: First close above the 5-period SMA ($\text{Close} > \text{SMA}_5$) or $1:2$ R:R.
 
----
+### 3. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
+* **Research Basis**: John Carter (2007) — *Mastering the Trade* / Volatility Regime Models.
+* **Empirical Edge**: Cyclical volatility compression (Bollinger Bands narrowing inside Keltner Channels) precedes explosive directional expansion with accelerating MACD histogram.
+* **Entry Trigger**: Bollinger Bands expand outside Keltner Channels with $\text{MACD Histogram} > 0$ and $\text{Volume} \ge 1.2 \times \text{SMA}_{20}(\text{Volume})$.
+* **Stop Loss**: Lowest low of the squeeze base.
+* **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.5\text{R}$.
 
-### 2. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
+### 4. Mean Reversion (`mean_reversion`)
+* **Research Basis**: John Bollinger (2001) — *Bollinger on Bollinger Bands*.
+* **Empirical Edge**: Extreme statistical price deviation beyond $2\sigma$ lower boundary snaps back to historical moving average equilibrium.
+* **Entry Trigger**: $\text{Low} \le \text{BB}_{\text{Lower}}$ with $\text{RSI}_{14} \le 35$ and a bullish rejection candle ($\text{Close} > \text{Open}$).
+* **Stop Loss**: $\text{Candle Low} - 0.5 \times \text{ATR}_{14}$.
+* **Profit Targets**: $\text{Target 1} = 20\text{ SMA Middle Band}$, $\text{Target 2} = 2\sigma\text{ Upper Band}$.
 
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `volatility_squeeze` |
-| **Research Basis** | John Carter (2007) — *Mastering the Trade* / Empirical Volatility Regime Shift Papers |
-| **Empirical Edge** | Cyclical volatility compression (Bollinger Bands narrowing inside Keltner Channels) precedes explosive directional expansion. |
-| **Statistical Win Rate** | **$65\% - 72\%$** |
-| **Sharpe Ratio** | **$1.4 - 1.8$** |
-| **Average Holding** | **5 – 15 Trading Sessions** |
-| **Trend Filter** | $\text{Close} > \text{EMA}_{200}$ and $\text{EMA}_{20} > \text{EMA}_{50}$ |
-| **Squeeze Setup** | Bollinger Bands ($20, 2\sigma$) contract inside Keltner Channels ($20, 1.5\text{ ATR}$) within last 1–5 bars |
-| **Breakout Trigger** | Today's Bollinger Band expands outside Keltner Channel with $\text{MACD Histogram} > 0$ and accelerating ($\text{Hist}_t > \text{Hist}_{t-1}$) |
-| **Volume Filter** | $\text{Volume} \ge 1.2 \times \text{SMA}_{20}(\text{Volume})$ |
-| **Stop Loss** | Lowest low of the squeeze consolidation base (or $\text{Close} - 1.5 \times \text{ATR}_{14}$) |
-| **Profit Targets** | $\text{Target 1} = 2.0\text{R}$ ($1:2$ R:R), $\text{Target 2} = 3.5\text{R}$ ($1:3.5$ R:R) |
+### 5. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
+* **Research Basis**: Stan Weinstein (1988) — *Stage Analysis* / Gary Antonacci — *Dual Momentum*.
+* **Empirical Edge**: Institutional capital concentration in top relative-strength equities outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs.
+* **Entry Trigger**: 20-Day or 52-Week High Breakout on $>1.5\times$ 20-day average volume accumulation.
+* **Stop Loss**: 20 EMA or 10-day swing low.
+* **Profit Targets**: $\text{Target 1} = +12\%$ ($1:2.5\text{R}$), $\text{Target 2} = \text{Trailing 20 EMA Exit}$.
 
----
+### 6. Trend-Pullback (`trend_pullback`)
+* **Research Basis**: Moving Average Envelopes & Trend Following (Fama-French, Moskowitz).
+* **Empirical Edge**: Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward.
+* **Entry Trigger**: Pullback within $1\%$ of rising 20 EMA with bullish candlestick and $40 \le \text{RSI}_{14} \le 65$.
+* **Stop Loss**: Below the 50 EMA or recent swing low ($\text{Close} - 1.5 \times \text{ATR}_{14}$).
+* **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.0\text{R}$.
 
-### 3. Mean Reversion (`mean_reversion`)
-
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `mean_reversion` |
-| **Research Basis** | John Bollinger (2001) — *Bollinger on Bollinger Bands* / Statistical Arbitrage |
-| **Empirical Edge** | Extreme statistical price deviation beyond $2\sigma$ lower boundary snaps back to historical moving average equilibrium. |
-| **Statistical Win Rate** | **$60\% - 68\%$** |
-| **Sharpe Ratio** | **$1.2 - 1.4$** |
-| **Average Holding** | **3 – 7 Trading Sessions** |
-| **Entry Trigger** | $\text{Low} \le \text{BB}_{\text{Lower}}$ with $\text{RSI}_{14} \le 35$ and a bullish rejection confirmation candle ($\text{Close} > \text{Open}$) |
-| **Stop Loss** | $\text{Candle Low} - 0.5 \times \text{ATR}_{14}$ |
-| **Profit Targets** | $\text{Target 1} = \text{BB}_{\text{Middle}}$ (20 SMA), $\text{Target 2} = \text{BB}_{\text{Upper}}$ ($2\sigma$ Upper Band) |
-
----
-
-### 4. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
-
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `relative_strength_leader` |
-| **Research Basis** | Stan Weinstein (1988) — *Stage Analysis* / Gary Antonacci — *Dual Momentum* (2014) |
-| **Empirical Edge** | Institutional capital concentration in top relative-strength decile equities breaking out of Stage-1 bases into Stage-2 markups. |
-| **Statistical Win Rate** | **$58\% - 66\%$** |
-| **Sharpe Ratio** | **$1.6 - 2.1$** |
-| **Average Holding** | **10 – 30 Trading Sessions** |
-| **Relative Strength** | $\text{Mansfield RS}_{50} = \left( \frac{\text{Price} / \text{NIFTY50}}{\text{SMA}_{50}(\text{Price} / \text{NIFTY50})} - 1 \right) \times 100 > 0$ |
-| **Trend Alignment** | $\text{Close} > \text{EMA}_{20} > \text{EMA}_{50} > \text{EMA}_{200}$ |
-| **Breakout Trigger** | Price breaks to a new 20-Day or 52-Week High on $>1.5\times$ 20-day average volume accumulation |
-| **Stop Loss** | $\text{EMA}_{20}$ or 10-day swing low |
-| **Profit Targets** | $\text{Target 1} = +12\%$ ($1:2.5$ R:R), $\text{Target 2} = \text{Trailing 20 EMA Exit}$ ($1:4.0+$ R:R) |
+### 7. Volatility Contraction Pattern (`vcp_breakout`)
+* **Research Basis**: Mark Minervini — *Trade Like a Stock Market Wizard* (SEPA Model).
+* **Empirical Edge**: Progressive reduction in price swings dries up supply float before institutional demand creates explosive upward re-rating.
+* **Entry Trigger**: Daily close breaking above 20-day high resistance on $\ge 1.4\times$ volume surge.
+* **Stop Loss**: Pivot low of the final contraction wave.
+* **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 3.5\text{R}$.
 
 ---
 
-### 5. Trend-Pullback (`trend_pullback`)
-
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `trend_pullback` |
-| **Research Basis** | Moving Average Envelopes & Trend Following (Fama-French, Moskowitz) |
-| **Empirical Edge** | Entering high-momentum macro uptrends during temporary low-volume pullbacks offers low risk entries with $1:2+$ payout. |
-| **Statistical Win Rate** | **$48\% - 56\%$** |
-| **Sharpe Ratio** | **$1.2 - 1.5$** |
-| **Average Holding** | **5 – 12 Trading Sessions** |
-| **Trend Filter** | $\text{Price} > \text{EMA}_{200}$ and $\text{EMA}_{20} > \text{EMA}_{50}$ |
-| **Entry Trigger** | Price touches or pierces within $1\%$ of the rising 20 EMA with bullish reversal candle and $40 \le \text{RSI}_{14} \le 65$ |
-| **Stop Loss** | Below the 50 EMA or recent swing low ($\text{Close} - 1.5 \times \text{ATR}_{14}$) |
-| **Profit Targets** | $\text{Target 1} = 2.0\text{R}$ ($1:2$ R:R), $\text{Target 2} = 3.0\text{R}$ ($1:3$ R:R) |
-
----
-
-### 6. Volatility Contraction Pattern (`vcp_breakout`)
-
-| Attribute | Specification |
-| :--- | :--- |
-| **Strategy ID** | `vcp_breakout` |
-| **Research Basis** | Mark Minervini — *Trade Like a Stock Market Wizard* (SEPA Model) |
-| **Empirical Edge** | Progressive reduction in price swings dries up supply float before institutional demand creates explosive upward re-rating. |
-| **Statistical Win Rate** | **$38\% - 46\%$** |
-| **Sharpe Ratio** | **$1.3 - 1.6$** |
-| **Average Holding** | **7 – 20 Trading Sessions** |
-| **Contraction Setup** | ATR(14) contraction $\le 75\%$ of 50-day average volatility across 2 to 4 consecutive tighter price waves |
-| **Breakout Trigger** | Daily close breaking above the 20-day high resistance level on $\ge 1.4\times$ 20-day volume surge |
-| **Stop Loss** | Just below the pivot low of the final contraction wave |
-| **Profit Targets** | $\text{Target 1} = 2.5\text{R}$ ($1:2.5$ R:R), $\text{Target 2} = 3.5\text{R}$ ($1:3.5$ R:R) |
-
----
-
-## 🏗️ Architecture & Feature Modules
+## 🏗️ Platform Modules & Technical Architecture
 
 ```mermaid
 graph TD
-    A[User Interface - React SPA] -->|HTTPS / WSS| B[FastAPI Backend]
+    A[User Interface - React SPA] -->|HTTPS / REST| B[FastAPI Backend]
     subgraph Backend Core Engine
         B --> C[DataEngine & SQLite Disk Cache]
-        B --> D[Quantitative Screener & WebSocket Stream]
+        B --> D[Quantitative Screener & Strategy Registry]
         B --> E[TradingView Chart & Overlay Engine]
-        B --> F[Institutional Backtest Simulator]
-        B --> G[Single Stock Deep Scan Profiler]
-        B --> H[SearchEngine & Natural Name Resolver]
+        B --> F[SectorPulse & Constituent Merit Ranker]
+        B --> G[Walk-Forward Backtest Engine]
+        B --> H[SearchEngine & Fuzzy Resolver]
+        B --> I[Risk & Position Sizing Calculator]
     end
-    C -->|Outbound Data Ingestion| I[Yahoo Finance API & NSE India CSVs]
+    C -->|Outbound Market Feeds| J[Yahoo Finance API & Official NSE CSVs]
 ```
 
-### 1. Data Ingestion & Intelligent Caching
-* **Yahoo Finance API Integration**: Automatic live daily ingestion for NSE (`.NS`), BSE (`.BO`), and US equities.
-* **SQLite Disk Cache**: Stores 1-year OHLCV candles locally with a 4-hour TTL for instant, rate-limit-free scanning.
-* **Official Exchange Universes**: Nifty 50, Nifty Next 50, Nifty 100, Nifty Midcap 150, Nifty Smallcap 250, Nifty 500, BSE Sensex 30, and US Megacap.
-
-### 2. Live Quantitative Screener
-* Multi-threaded parallel scanner with WebSocket real-time progress bar.
+### 1. Live Quantitative Screener
+* Multi-threaded parallel scanner across official exchange universes: **Nifty 50**, **Nifty Next 50**, **Nifty 100**, **Nifty Midcap 100/150**, **Nifty Smallcap 100/250**, **Nifty 500**, **BSE Sensex 30**, and **US Megacap Tech**.
 * Quality Scoring algorithm ($0\text{--}100$) evaluating volume expansion, candlestick structure, and momentum.
-* Direct action buttons: 1-click **Chart Studio**, 1-click **Deep Scan**, 1-click **Risk Calculator**, and 1-click **Backtest**.
-* Export results to CSV/JSON.
+* 1-Click drilldown navigation directly to **Chart Studio**, **Deep Scan**, **Risk Calculator**, and **Backtest**.
 
-### 3. Single Stock Deep Scanner & Profiler
-* Comprehensive technical profile for any equity:
-  * CMP with daily change %.
-  * 52-Week & 20-Day Range analysis.
-  * Daily ATR(14) Volatility (₹ and %).
-  * **Moving Averages Alignment Matrix**: 20, 50, 100, 200 EMA and 20, 50, 200 SMA with price distance %.
-  * **Momentum Oscillators**: Wilder RSI(14), MACD (12, 26, 9), Bollinger Bands, and Volume surge ratios.
-  * **Simultaneous Multi-Strategy Evaluation**: Evaluates all 6 strategies concurrently on the active candle.
-  * **2-Year Strategy Backtest Snapshot**: Win Rate %, Total Trades, Profit Factor, Max Drawdown %, Net Profit.
-  * **Position Sizing Calculator**: Computes exact share quantity and capital allocation for 1% risk budgets.
-  * **10-Session Historical OHLCV Table**.
+### 2. Sector Pulse & Ranked Constituent Leaders
+* **Top-Down Macro Sector Rotation**: Analyzes all 11 official Indian sector indices (`^NSEBANK`, `^CNXIT`, `^CNXAUTO`, `^CNXPHARMA`, `^CNXFMCG`, `^CNXMETAL`, `^CNXREALTY`, `^CNXENERGY`, `^CNXINFRA`, `^CNXPSUBANK`, `^CNXMEDIA`) and US SPDR sectors against the benchmark (`^NSEI` / `SPY`).
+* **Econometric Models**: Mansfield Relative Strength, Hurst Exponent ($H$), Markov transition regime durations, and Chronos-Bolt probabilistic exhaustion forecasting.
+* **Top Constituent Leaders by Technical Merit**:
+  * Evaluates heavyweight liquid constituents per sector.
+  * Sorts descending by **Merit Score (10–100)** incorporating distance above 50/200 EMA, RSI momentum, and active setup triggers.
+  * **Interactive Expandable Drawer**: Clean, uncluttered master table with inline expandable drawers on demand.
 
-### 4. Smart Fuzzy Search & Natural Company Name Resolver
-* Resolves company names with typos and spaces (e.g. `piccadily agro` $\rightarrow$ `PICCADIL.NS`, `confidence petro` $\rightarrow$ `CONFIPET.NS`, `state bank of india` $\rightarrow$ `SBIN.NS`, `tata motors` $\rightarrow$ `TATAMOTORS.NS`).
-* Autocomplete dropdown with keyboard navigation (`↑`/`↓` and `Enter`).
-* Interactive **"Did you mean?"** rebound suggestion chips on invalid queries.
+### 3. TradingView Chart Studio
+* Powered by **TradingView Lightweight Charts** with an un-overlapped, clean canvas.
+* Overlays: 20 EMA (Cyan), 50 EMA (Amber), 200 EMA (Purple), Bollinger Bands, and Volume histogram.
+* Dedicated **RSI(14)** subchart with 70, 50, 30 reference levels.
+* Setup price geometry overlays: Entry (Cyan line), Stop Loss (Red line), Target 1 (Green line), Target 2 (Emerald line).
 
-### 5. TradingView Chart Studio
-* Powered by **TradingView Lightweight Charts**.
-* Indicators: 20 EMA (Cyan), 50 EMA (Amber), 200 EMA (Purple), Bollinger Bands, and Volume histogram.
-* Dedicated **RSI(14)** sub-chart with 70, 50, 30 reference levels.
-* Visual horizontal price lines on the chart for **Entry Price**, **Stop Loss**, **Target 1 (2R)**, and **Target 2 (3R)**.
+### 4. Walk-Forward Backtest Studio
+* Event-driven bar-by-bar walk-forward simulation engine.
+* Realistic transaction cost models: **STT (Securities Transaction Tax)**, **Exchange Turnovers**, **SEBI Charges**, **Brokerage (₹20/order)**, **GST (18%)**, and **Slippage (0.08%)**.
+* Performance metrics: Net Profit (₹ and %), Total Trades, Win Rate %, Profit Factor, Payoff Ratio, Max Drawdown %, Sharpe Ratio, Sortino Ratio, CAGR %, and Trade Logs with CSV export.
 
-### 6. Institutional Backtesting Studio
-* **Realistic Cost Simulation**: Incorporates Indian equity delivery taxes (STT $0.1\%$, GST $18\%$, Brokerage ₹20, Stamp Duty, Turnover charges) and customizable slippage ($0.08\%$).
-* **Trade Lifecycle Management**: Trailing stop loss (moves to breakeven after Target 1), multi-target profit taking, and maximum holding period timeouts.
-* **KPI Metrics**: Net Profit, Win Rate %, Profit Factor, Max Drawdown %, Sharpe Ratio, Sortino Ratio, CAGR %, and full Trade-by-Trade logs with CSV export.
+### 5. Institutional Position & Risk Sizer
+* Computes exact share quantities based on predefined portfolio risk budgets ($1\%-2\%$).
+* Implements safety guardrails: warns if single-position exposure exceeds **25% portfolio capital**.
+* Handles fractional share math, risk-reward ratios, and target profit forecasts.
 
-### 7. Custom Watchlists Manager
-* Create and manage custom equity baskets.
-* **1-Click Basket Scanning**: Directly scan custom watchlists from the Screener dropdown or Watchlists tab.
+### 6. Custom Watchlists & Fuzzy Search Engine
+* SQLite persistent custom watchlists with batch real-time quote refresh.
+* Fuzzy search engine resolving company names with typos or spaces (e.g. `tata motors` $\rightarrow$ `TATAMOTORS.NS`, `state bank of india` $\rightarrow$ `SBIN.NS`, `confidence petro` $\rightarrow$ `CONFIPET.NS`).
 
 ---
 
-## 🚀 Free Cloud Deployment
+## 🧪 Automated Testing & Quality Assurance
 
-### Deploying to Render.com (1-Click Docker)
-1. Fork or push this repository to GitHub.
-2. Log in to [dashboard.render.com](https://dashboard.render.com).
-3. Click **New +** $\rightarrow$ **Web Service** $\rightarrow$ select `SwingTradeDeskPro`.
-4. Render automatically detects `render.yaml` and `Dockerfile`.
-5. Select the **Free** tier ($0/mo) and click **Deploy**!
-
----
-
-## 📂 Project Structure
-
-```
-SwingTradeDeskPro/
-├── Dockerfile                          # Multi-stage production container build
-├── render.yaml                         # Render.com Blueprint configuration
-├── requirements.txt                    # Python backend dependencies
-├── run.sh                              # One-click local startup script
-├── backend/
-│   └── app/
-│       ├── main.py                     # FastAPI entrypoint & SPA static file serving
-│       ├── api/
-│       │   ├── screener_routes.py      # Screener REST & WebSocket stream
-│       │   ├── deep_scan_routes.py     # Single-stock comprehensive analyzer
-│       │   ├── chart_routes.py         # TradingView chart data & price lines
-│       │   ├── backtest_routes.py      # Backtesting execution
-│       │   ├── risk_routes.py          # Risk & position sizer
-│       │   ├── search_routes.py        # Fuzzy stock search API
-│       │   └── watchlist_routes.py     # SQLite watchlists CRUD
-│       ├── core/
-│       │   ├── data_engine.py          # Yahoo Finance + SQLite cache + symbol resolver
-│       │   ├── index_manager.py        # Official NSE/BSE universes
-│       │   ├── indicator_engine.py     # Vectorized NumPy/Pandas technical indicators
-│       │   ├── search_engine.py        # Fuzzy SequenceMatcher & exchange resolver
-│       │   └── risk_calculator.py      # Position sizing math
-│       ├── strategies/
-│       │   ├── base.py                 # Abstract BaseStrategy
-│       │   ├── trend_pullback.py       # 20/50 EMA Pullback model
-│       │   ├── vcp_breakout.py         # VCP Base Breakout model
-│       │   ├── mean_reversion.py       # Bollinger + RSI model
-│       │   ├── volatility_squeeze.py   # TTM Squeeze Expansion model
-│       │   ├── connors_rsi2.py         # Connors RSI-2 Panic Reversion model
-│       │   └── relative_strength_leader.py # Mansfield RS Stage-2 model
-│       └── backtester/
-│           ├── engine.py               # Realistic Indian market simulation engine
-│           └── analytics.py            # Sharpe, Sortino, Drawdown, Profit Factor
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx              # Institutional navigation
-│   │   │   ├── ScreenerView.jsx        # Live screener with WebSocket progress
-│   │   │   ├── SingleStockScanner.jsx  # Deep Scan Technical Profiler
-│   │   │   ├── StockSearchInput.jsx    # Autocomplete fuzzy search input
-│   │   │   ├── ChartStudio.jsx         # Lightweight Charts with overlays
-│   │   │   ├── BacktestStudio.jsx      # Equity curve & KPI analyzer
-│   │   │   ├── RiskCalculator.jsx      # Position sizer
-│   │   │   ├── WatchlistView.jsx       # Watchlist manager & basket scanner
-│   │   │   └── ErrorBoundary.jsx       # React safety error boundary
-│   │   ├── services/api.js             # API client & WebSocket resolver
-│   │   ├── App.jsx                     # Root UI state container
-│   │   └── index.css                   # Dark-themed Tailwind styling
-│   ├── package.json
-│   └── vite.config.js
-├── STATE.md                            # Project state & persistence tracker
-└── README.md                           # Documentation & research foundations
-```
-
----
-
-## 📜 License & Disclaimer
-
-This software is for educational and quantitative research purposes only. It is not financial or investment advice. Always backtest strategies and practice sound risk management before deploying real capital.
-
----
-
-## 🏛️ Organization & Copyright
-
-**SwingDesk Pro** is designed, developed, and maintained by **Sandesh Rathi** at **[rupeemap.in labs](https://rupeemap.in)**.
-
-```
-Copyright (c) 2026 rupeemap.in labs (by Sandesh Rathi). All rights reserved.
-```
-
----
-
-## 🧭 SectorPulse — Quantitative Sector Rotation & Regime Forecaster
-
-`SectorPulse` is a high-performance quantitative package and CLI service built to detect top-down macro sector trends, quantify Mansfield Relative Strength against the benchmark, and forecast regime duration/exhaustion using econometric models (Hurst Exponent, Markov Transition Matrices) and deep learning foundation forecasters (Amazon Chronos).
-
-### CLI Usage
+Run the complete automated pytest suite across strategies, econometric persistence, and data pipelines:
 
 ```bash
-# 1. Scan Indian sector indices against Nifty 50 benchmark in formatted table
-python3 -m sectorpulse.cli --benchmark "^NSEI" --sectors "^CNXIT,^NSEBANK,^CNXAUTO,^CNXMETAL,^CNXPHARMA" --format table
-
-# 2. Output strictly typed JSON contract
-python3 -m sectorpulse.cli --benchmark "^NSEI" --sectors "^CNXIT" --format json
+# Run all unit tests
+python3 -m pytest tests/ -v
 ```
 
-### JSON Output Contract
+All 9 automated test cases verify:
+* Mansfield Relative Strength calculation
+* Hurst Exponent trending & mean-reversion boundaries
+* Markov regime duration modeling
+* Chronos foundation forecaster fallback
+* Strict JSON contract schema conformity
+* GMMA ribbon structure & strategy setup evaluation
+* GMMA backtest signal generation & $R:R \ge 2.0$ math
 
-```json
-{
-  "timestamp": "2026-08-26T17:36:54Z",
-  "sector": "^CNXMETAL",
-  "name": "Nifty Metal",
-  "regime": {
-    "trend_classification": "EARLY_UPTREND",
-    "mrs_score": 7.89,
-    "mrs_slope_5d": 8.73,
-    "adx_14": 13.0,
-    "hurst_exponent": 0.68
-  },
-  "duration_forecast": {
-    "current_regime_age_days": 1,
-    "expected_total_duration_days": 21,
-    "estimated_remaining_days": 20,
-    "chronos_median_peak_horizon_days": 23,
-    "exhaustion_probability": 0.04
-  },
-  "risk_parameters": {
-    "atr_14": 250.82,
-    "trailing_stop_level": 12052.71,
-    "overextension_flag": true
-  },
-  "trade_recommendation": {
-    "action": "ACCUMULATE_BREAKOUT",
-    "sector_weight_multiplier": 1.15
-  }
-}
-```
+---
 
-### Running Unit Tests
+## 📜 Authors & Copyright
 
-```bash
-python3 -m pytest tests/test_sectorpulse.py -v
-```
-
+* **Engineered & Designed by**: [Sandesh Rathi](https://github.com/srathi)
+* **Organization**: [rupeemap.in labs](https://www.rupeemap.in)
+* **License**: MIT License
