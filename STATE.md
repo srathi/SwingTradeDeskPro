@@ -239,3 +239,12 @@
   * **Enhancement**: Removed embedded text titles (`title: ''`) from the TradingView `addLineSeries` configurations for 20 EMA, 50 EMA, and 200 EMA lines.
   * Prevents graph labels from overlapping with the candlesticks and future price action, relying on the top indicator legend buttons for color mapping (**Cyan** for 20 EMA, **Amber** for 50 EMA, **Purple** for 200 EMA).
   * Pushed commit (`f077ad1`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Fixed Cross-Sector Data Duplication in Sector Pulse:**
+  * **Root Cause**: `DataEngine.resolve_symbol()` was triggering a fuzzy text search on ticker strings containing `^CNX`, causing `^CNXAUTO`, `^CNXFMCG`, `^CNXMETAL`, `^CNXREALTY`, `^CNXINFRA`, and `^CNXMEDIA` to resolve to the same stock (`^CNXPHARMA`). Consequently, all sectors downloaded duplicate price series and rendered identical Mansfield RS scores (+4.43%) and metrics.
+  * **Fix**:
+    1. Disabled fuzzy search on careted/index symbols in `data_engine.py`.
+    2. Implemented strict, isolated per-sector candidate maps (`SECTOR_CANDIDATE_MAP`) in `sectorpulse/data_ingestion.py`.
+    3. Wiped old SQLite market cache and rebuilt fresh, isolated time series.
+  * **Verification**: Verified distinct prices, MRS scores, Hurst values, and regime durations across all 11 sectors.
+  * Pushed commit (`d761d70`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
