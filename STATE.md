@@ -274,3 +274,17 @@
     * Production Vite build succeeded in 8.20s.
   * **UI Documentation**: Added full empirical research and cheat sheet to [`StrategyGuideView.jsx`](frontend/src/components/StrategyGuideView.jsx).
   * Pushed commit (`1879145`) to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.
+
+* **Feature Added: 52-Week High Breakout Strategy (#8):**
+  * **Mathematical & Empirical Model**:
+    * Created [`backend/app/strategies/high_52w_breakout.py`](backend/app/strategies/high_52w_breakout.py) implementing `High52WBreakoutStrategy` inheriting from `BaseStrategy`.
+    * Implements the landmark George & Hwang (2004, *Journal of Finance*) / Minervini SEPA model identifying leading equities emerging from tight consolidation bases ($\le 15\%$ depth) to new 52-week highs on $\ge 1.4\times$ volume.
+    * Payoff targets: $2.5R$ (Target 1) and $4.0R+$ (Target 2).
+  * **Zero-Regression Verification**:
+    * Added automated unit tests in [`tests/test_52w_strategy.py`](tests/test_52w_strategy.py).
+    * `pytest tests/ -v`: 12/12 passed (100%).
+    * Production Vite build succeeded in 4.91s.
+  * **UI & Documentation Sync**:
+    * Strategy Guide, Chart Studio, Screener, and Backtest Studio updated with all 8 strategies.
+    * [`README.md`](README.md) updated with full research specifications.
+  * Pushed commit to GitHub: `https://github.com/srathi/SwingTradeDeskPro.git`.

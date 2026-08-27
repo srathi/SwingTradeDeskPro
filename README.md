@@ -6,7 +6,7 @@
 [![TradingView](https://img.shields.io/badge/TradingView-Lightweight%20Charts-blue?style=for-the-badge)](https://tradingview.github.io/lightweight-charts/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-An institutional-grade quantitative swing trading suite designed for Indian equities (NSE & BSE) and global markets by [rupeemap.in labs](https://www.rupeemap.in). Features automated multi-strategy screening across 7 research-backed models, top-down macro sector rotation, ranked sector constituent leaders, realistic walk-forward backtesting with Indian tax/slippage models, interactive TradingView charts, and exact risk-managed position sizing.
+An institutional-grade quantitative swing trading suite designed for Indian equities (NSE & BSE) and global markets by [rupeemap.in labs](https://www.rupeemap.in). Features automated multi-strategy screening across 8 research-backed models, top-down macro sector rotation, ranked sector constituent leaders, realistic walk-forward backtesting with Indian tax/slippage models, interactive TradingView charts, and exact risk-managed position sizing.
 
 🌐 **Live Web Application**: **[https://swingtradedeskpro.onrender.com](https://swingtradedeskpro.onrender.com)**  
 📖 **Interactive API Docs (Swagger)**: **[https://swingtradedeskpro.onrender.com/docs](https://swingtradedeskpro.onrender.com/docs)**
@@ -30,7 +30,7 @@ Once running:
 
 ---
 
-## 🔬 Quantitative Research & Empirical Strategy Suite (7 Core Models)
+## 🔬 Quantitative Research & Empirical Strategy Suite (8 Core Models)
 
 The platform's trading models are grounded in empirical quantitative finance research and academic literature on momentum, multi-timeframe moving average ribbons, volatility regime shifts, and mean-reversion anomalies:
 
@@ -41,56 +41,64 @@ The platform's trading models are grounded in empirical quantitative finance res
 | **3. Mean Reversion (Bollinger + RSI)** | John Bollinger (2001) / Oversold Reversion | Captures extreme oversold bounces when price touches Lower Bollinger Band with $\text{RSI}_{14} \le 35$ and a bullish rejection candle. | **$60\% - 68\%$** | **$1.2 - 1.4$** | $1:1.5 - 1:2.0$ | **3 – 7 Days** |
 | **4. Mansfield Relative Strength (Stage 2)** | Stan Weinstein (1988) / Gary Antonacci Dual Momentum | Institutional capital accumulation in market leaders outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs. | **$58\% - 66\%$** | **$1.6 - 2.1$** | $1:2.5 - 1:4.0+$ | **10 – 30 Days** |
 | **5. GMMA Weekly Multi-Timeframe Breakout** | Daryl Guppy (2004) / Multi-Timeframe Ribbon Theory | Aligns Weekly institutional investor ribbon (30–60 EMA) expansion with daily volume-backed breakouts to ride high-momentum Stage 2 runners. | **$54\% - 62\%$** | **$1.5 - 1.9$** | $1:2.5 - 1:4.0$ | **10 – 30 Days** |
-| **6. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
-| **7. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
+| **6. 52-Week High Breakout (George & Hwang)** | Thomas J. George & Chuan-Yang Hwang (2004) / Minervini | Exploits zero overhead supply as leading equities emerge from tight consolidation bases to new 52-week highs on $\ge 1.4\times$ volume. | **$52\% - 60\%$** | **$1.6 - 2.0$** | $1:2.5 - 1:4.0+$ | **10 – 45 Days** |
+| **7. Trend-Pullback (20/50 EMA)** | Academic Trend Following & Moving Average Envelopes | Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward. | **$48\% - 56\%$** | **$1.2 - 1.5$** | $1:2.0 - 1:3.0$ | **5 – 12 Days** |
+| **8. VCP & Base Breakout** | Mark Minervini (SEPA) & Volatility Contraction Papers | Progressive volatility contraction cycles followed by a 20-day high breakout backed by $1.4\times+$ institutional volume expansion. | **$38\% - 46\%$** | **$1.3 - 1.6$** | $1:2.5 - 1:3.5$ | **7 – 20 Days** |
 
 ---
 
 ## 🎯 Detailed Strategy Breakdowns & Specifications
 
-### 1. GMMA Weekly Multi-Timeframe Breakout (`gmma_breakout`)
+### 1. 52-Week High Breakout (`high_52w_breakout`)
+* **Research Basis**: Thomas J. George & Chuan-Yang Hwang (2004) — *The Journal of Finance* / Mark Minervini SEPA Model.
+* **Empirical Edge**: Exploits the 52-week high anomaly where zero overhead supply allows leading equities emerging from tight consolidation bases to enter unconstrained price discovery.
+* **Entry Trigger**: Daily close breaking prior 52-week high resistance on $\ge 1.4\times$ institutional volume surge with $\text{Price} > 50\text{ EMA} > 200\text{ EMA}$.
+* **Stop Loss**: Consolidation base low or $20\text{ EMA} - 0.5\times\text{ATR}_{14}$.
+* **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Trailing 20/50 EMA).
+
+### 2. GMMA Weekly Multi-Timeframe Breakout (`gmma_breakout`)
 * **Research Basis**: Daryl Guppy (2004) — *Trend Trading* / Guppy Multiple Moving Averages.
 * **Empirical Edge**: Eliminates daily false breakout traps by requiring the **Weekly Investor Ribbon (30, 35, 40, 45, 50, 60 EMAs)** to be fanning outward in parallel upward expansion with the **Fast Trader Ribbon (3, 5, 8, 10, 12, 15 EMAs)** strictly aligned above.
 * **Entry Trigger**: Daily close breaking above 20D pivot on $\ge 1.3\times$ institutional volume surge.
 * **Stop Loss**: Anchored below the top of the slow ribbon or 10-day swing low.
 * **Profit Targets**: $\text{Target 1} = 2.5\text{R}$, $\text{Target 2} = 4.0\text{R}$ (Stage 2 markup runner).
 
-### 2. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
+### 3. Connors RSI(2) Ultra-Mean Reversion (`connors_rsi2`)
 * **Research Basis**: Larry Connors & Cesar Alvarez (2009) — *Short Term Trading Strategies That Work*.
 * **Empirical Edge**: Exploits temporary liquidity dislocations caused by institutional stop hunts and retail panic in fundamentally strong equities ($\text{Price} > \text{SMA}_{200}$).
 * **Entry Trigger**: $\text{RSI}_2 < 10$ with 2+ consecutive down closes and a bullish reversal bounce.
 * **Stop Loss**: $\text{Close} - 2.0 \times \text{ATR}_{14}$ (or recent swing low).
 * **Profit Exit**: First close above the 5-period SMA ($\text{Close} > \text{SMA}_5$) or $1:2$ R:R.
 
-### 3. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
+### 4. TTM Volatility Squeeze Breakout (`volatility_squeeze`)
 * **Research Basis**: John Carter (2007) — *Mastering the Trade* / Volatility Regime Models.
 * **Empirical Edge**: Cyclical volatility compression (Bollinger Bands narrowing inside Keltner Channels) precedes explosive directional expansion with accelerating MACD histogram.
 * **Entry Trigger**: Bollinger Bands expand outside Keltner Channels with $\text{MACD Histogram} > 0$ and $\text{Volume} \ge 1.2 \times \text{SMA}_{20}(\text{Volume})$.
 * **Stop Loss**: Lowest low of the squeeze base.
 * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.5\text{R}$.
 
-### 4. Mean Reversion (`mean_reversion`)
+### 5. Mean Reversion (`mean_reversion`)
 * **Research Basis**: John Bollinger (2001) — *Bollinger on Bollinger Bands*.
 * **Empirical Edge**: Extreme statistical price deviation beyond $2\sigma$ lower boundary snaps back to historical moving average equilibrium.
 * **Entry Trigger**: $\text{Low} \le \text{BB}_{\text{Lower}}$ with $\text{RSI}_{14} \le 35$ and a bullish rejection candle ($\text{Close} > \text{Open}$).
 * **Stop Loss**: $\text{Candle Low} - 0.5 \times \text{ATR}_{14}$.
 * **Profit Targets**: $\text{Target 1} = 20\text{ SMA Middle Band}$, $\text{Target 2} = 2\sigma\text{ Upper Band}$.
 
-### 5. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
+### 6. Mansfield Relative Strength Stage-2 Leader (`relative_strength_leader`)
 * **Research Basis**: Stan Weinstein (1988) — *Stage Analysis* / Gary Antonacci — *Dual Momentum*.
 * **Empirical Edge**: Institutional capital concentration in top relative-strength equities outperforming the Nifty 50 benchmark ($\text{MRS}_{50} > 0$) breaking out to new 20D/52W highs.
 * **Entry Trigger**: 20-Day or 52-Week High Breakout on $>1.5\times$ 20-day average volume accumulation.
 * **Stop Loss**: 20 EMA or 10-day swing low.
 * **Profit Targets**: $\text{Target 1} = +12\%$ ($1:2.5\text{R}$), $\text{Target 2} = \text{Trailing 20 EMA Exit}$.
 
-### 6. Trend-Pullback (`trend_pullback`)
+### 7. Trend-Pullback (`trend_pullback`)
 * **Research Basis**: Moving Average Envelopes & Trend Following (Fama-French, Moskowitz).
 * **Empirical Edge**: Low-risk entry at rising dynamic support (20 EMA) in established macro bull structure ($\text{Price} > 200\text{ EMA}$) with favorable asymmetric reward.
 * **Entry Trigger**: Pullback within $1\%$ of rising 20 EMA with bullish candlestick and $40 \le \text{RSI}_{14} \le 65$.
 * **Stop Loss**: Below the 50 EMA or recent swing low ($\text{Close} - 1.5 \times \text{ATR}_{14}$).
 * **Profit Targets**: $\text{Target 1} = 2.0\text{R}$, $\text{Target 2} = 3.0\text{R}$.
 
-### 7. Volatility Contraction Pattern (`vcp_breakout`)
+### 8. Volatility Contraction Pattern (`vcp_breakout`)
 * **Research Basis**: Mark Minervini — *Trade Like a Stock Market Wizard* (SEPA Model).
 * **Empirical Edge**: Progressive reduction in price swings dries up supply float before institutional demand creates explosive upward re-rating.
 * **Entry Trigger**: Daily close breaking above 20-day high resistance on $\ge 1.4\times$ volume surge.
@@ -160,14 +168,14 @@ Run the complete automated pytest suite across strategies, econometric persisten
 python3 -m pytest tests/ -v
 ```
 
-All 9 automated test cases verify:
+All 12 automated test cases verify:
+* 52-Week High Breakout setup math, risk geometry ($SL < \text{Entry} < T_1 < T_2$), and signal generation
+* GMMA ribbon structure, weekly resampling, and backtest execution
 * Mansfield Relative Strength calculation
 * Hurst Exponent trending & mean-reversion boundaries
 * Markov regime duration modeling
 * Chronos foundation forecaster fallback
 * Strict JSON contract schema conformity
-* GMMA ribbon structure & strategy setup evaluation
-* GMMA backtest signal generation & $R:R \ge 2.0$ math
 
 ---
 

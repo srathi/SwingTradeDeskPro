@@ -373,6 +373,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
             >
               <option value="trend_pullback">Trend-Pullback (20/50 EMA)</option>
               <option value="vcp_breakout">VCP & Base Breakout</option>
+              <option value="high_52w_breakout">52-Week High Breakout</option>
               <option value="gmma_breakout">GMMA Weekly Multi-Timeframe Breakout</option>
               <option value="mean_reversion">Mean Reversion (Bollinger + RSI)</option>
               <option value="volatility_squeeze">TTM Volatility Squeeze</option>

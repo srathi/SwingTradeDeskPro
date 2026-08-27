@@ -133,6 +133,23 @@ const STRATEGIES_DATA = [
     profit_exit: "Target 1 = 2.5R, Target 2 = 4.0R (Trailing Slow Ribbon)",
     color: "from-cyan-500/20 to-purple-500/10",
     badge_color: "text-cyan-300 bg-cyan-500/10 border-cyan-500/30"
+  },
+  {
+    id: "high_52w_breakout",
+    name: "52-Week High Breakout (George & Hwang / SEPA)",
+    research_basis: "Thomas J. George & Chuan-Yang Hwang (2004) — Journal of Finance / Mark Minervini SEPA",
+    empirical_edge: "Exploits the 52-week high anomaly where zero overhead supply allows leading equities emerging from tight consolidation bases to enter unconstrained price discovery.",
+    win_rate: "52% – 60%",
+    win_rate_val: 56,
+    sharpe: "1.6 – 2.0",
+    holding: "10 – 45 Days",
+    rr_target: "1:2.5 – 1:4.0+",
+    trend_filter: "Stage-2 Bull Structure: Close > 50 EMA > 200 EMA with tight base (<= 15% depth)",
+    entry_trigger: "Daily close breaking prior 52-Week High resistance on >= 1.4x institutional volume surge",
+    stop_loss: "Pivot low of the consolidation base or 20 EMA - 0.5 ATR",
+    profit_exit: "Target 1 = 2.5R, Target 2 = 4.0R (Trailing 20/50 EMA)",
+    color: "from-emerald-500/20 to-blue-500/10",
+    badge_color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/30"
   }
 ];
 
