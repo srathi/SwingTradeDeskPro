@@ -16,8 +16,8 @@ class MeanReversionStrategy(BaseStrategy):
     description: str = "Enters on oversold extremes when price tests the Lower Bollinger Band with an RSI hook and bullish rejection candle."
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
-        "min_volume": 300_000,
-        "rsi_oversold": 35.0,
+        "min_volume": 200_000,
+        "rsi_oversold": 38.0,
         "bb_length": 20,
         "bb_std": 2.0,
         "rr_target_1": 1.5,
@@ -54,14 +54,14 @@ class MeanReversionStrategy(BaseStrategy):
         if close < p["min_price"] or vol_sma < p["min_volume"]:
             return None
 
-        # 2. Bollinger Band Oversold Test (Low touches/crosses below lower band or Close <= BB_Lower * 1.01)
-        is_oversold_band = (low <= bb_lower * 1.01) or (prev['Close'] <= prev['BB_Lower'])
+        # 2. Bollinger Band Oversold Test (Low touches/crosses below lower band in last 2 sessions)
+        is_oversold_band = (low <= bb_lower * 1.015) or (prev['Low'] <= prev['BB_Lower'] * 1.015) or (prev['Close'] <= prev['BB_Lower'])
 
         # 3. RSI Oversold Condition
         is_rsi_oversold = rsi_val <= p["rsi_oversold"] or prev['RSI_14'] <= p["rsi_oversold"]
 
-        # 4. Bullish Reversal Bar (Green candle or long lower shadow / pin bar)
-        is_bullish = (close >= open_price) or ((close - low) > (high - close) * 1.5)
+        # 4. Bullish Reversal Bar (Green candle, positive close vs prev, or long lower shadow / pin bar)
+        is_bullish = (close >= open_price) or (close >= prev['Close']) or ((close - low) > (high - close) * 1.2)
 
         if is_oversold_band and is_rsi_oversold and is_bullish:
             stop_loss = round(min(low, prev['Low']) - (atr_val * 0.4), 2)
@@ -159,9 +159,9 @@ class MeanReversionStrategy(BaseStrategy):
             if close < p["min_price"] or vol_sma < p["min_volume"]:
                 continue
 
-            is_oversold_band = (low <= bb_lower * 1.01) or (prev['Close'] <= prev['BB_Lower'])
+            is_oversold_band = (low <= bb_lower * 1.015) or (prev['Low'] <= prev['BB_Lower'] * 1.015) or (prev['Close'] <= prev['BB_Lower'])
             is_rsi_oversold = rsi_val <= p["rsi_oversold"] or prev['RSI_14'] <= p["rsi_oversold"]
-            is_bullish = (close >= open_p) or ((close - low) > (high - close) * 1.5)
+            is_bullish = (close >= open_p) or (close >= prev['Close']) or ((close - low) > (high - close) * 1.2)
 
             if is_oversold_band and is_rsi_oversold and is_bullish:
                 sl = round(min(low, prev['Low']) - (atr_val * 0.4), 2)
