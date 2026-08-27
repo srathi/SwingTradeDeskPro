@@ -130,20 +130,19 @@ class DataEngine:
         if q.upper().endswith(('.NS', '.BO')):
             candidates.append(q.upper())
 
-        # If natural name or containing spaces or typos, query SearchEngine
-        if not q.upper().endswith(('.NS', '.BO')):
-            from backend.app.core.search_engine import SearchEngine
-            matches = SearchEngine.search(q, limit=4)
-            for m in matches:
-                sym = m["symbol"]
-                if sym not in candidates:
-                    candidates.append(sym)
-
         # Standard suffixes fallback
         q_upper = q.upper().replace(" ", "")
         for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
             if fallback not in candidates:
                 candidates.append(fallback)
+
+        # Query SearchEngine for fuzzy company/ticker matches
+        from backend.app.core.search_engine import SearchEngine
+        matches = SearchEngine.search(q, limit=5)
+        for m in matches:
+            sym = m["symbol"]
+            if sym not in candidates:
+                candidates.append(sym)
 
         return candidates
 

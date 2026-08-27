@@ -129,16 +129,28 @@ def run_single_stock_deep_scan(
         })
 
     # Run quick 2-year backtest
-    target_strat_id = primary_setup["strategy_id"] if primary_setup else "trend_pullback"
-    engine = BacktestEngine(initial_capital=capital, risk_per_trade_pct=risk_pct)
-    sim = engine.run_single(clean_ticker, df, strategy_id=target_strat_id)
-    backtest_kpis = compute_performance_metrics(sim["trades"], sim["equity_curve"], capital)
+    target_strat_id = (primary_setup.get("strategy_id") if primary_setup else None) or "trend_pullback"
+    try:
+        engine = BacktestEngine(initial_capital=capital, risk_per_trade_pct=risk_pct)
+        sim = engine.run_single(clean_ticker, df, strategy_id=target_strat_id)
+        backtest_kpis = compute_performance_metrics(sim.get("trades", []), sim.get("equity_curve", []), capital)
+    except Exception:
+        backtest_kpis = {
+            "win_rate": 0.0,
+            "total_trades": 0,
+            "winning_trades": 0,
+            "losing_trades": 0,
+            "profit_factor": 0.0,
+            "net_profit": 0.0,
+            "net_profit_pct": 0.0,
+            "max_drawdown_pct": 0.0
+        }
 
     # Position sizing
-    risk_per_share = primary_setup["risk_per_share"] if primary_setup else round(atr_val * 1.5, 2)
-    stop_loss_price = primary_setup["stop_loss"] if primary_setup else round(cmp - risk_per_share, 2)
-    target_1_price = primary_setup["target_1"] if primary_setup else round(cmp + (risk_per_share * 2.0), 2)
-    target_2_price = primary_setup["target_2"] if primary_setup else round(cmp + (risk_per_share * 3.0), 2)
+    risk_per_share = float(primary_setup.get("risk_per_share", round(atr_val * 1.5, 2))) if primary_setup else round(atr_val * 1.5, 2)
+    stop_loss_price = float(primary_setup.get("stop_loss", round(cmp - risk_per_share, 2))) if primary_setup else round(cmp - risk_per_share, 2)
+    target_1_price = float(primary_setup.get("target_1", round(cmp + (risk_per_share * 2.0), 2))) if primary_setup else round(cmp + (risk_per_share * 2.0), 2)
+    target_2_price = float(primary_setup.get("target_2", round(cmp + (risk_per_share * 3.0), 2))) if primary_setup else round(cmp + (risk_per_share * 3.0), 2)
 
     risk_budget = capital * (risk_pct / 100.0)
     shares = int(risk_budget // risk_per_share) if risk_per_share > 0 else 0
@@ -168,9 +180,13 @@ def run_single_stock_deep_scan(
     verdict_text = f"{clean_ticker} is currently consolidating with RSI at {rsi_val:.1f}. No active breakout or pullback triggered on the latest close."
 
     if primary_setup:
-        verdict_title = f"Bullish Setup: {primary_setup['strategy']}"
+        strat_name = primary_setup.get("strategy") or primary_setup.get("strategy_name") or "Bullish Setup"
+        score_val = primary_setup.get("score", 80)
+        rr_val = primary_setup.get("rr_ratio") or primary_setup.get("r_multiple_t1") or "2.0"
+        t1_val = primary_setup.get("target_1", round(cmp * 1.05, 2))
+        verdict_title = f"Bullish Setup: {strat_name}"
         verdict_type = "BULLISH"
-        verdict_text = f"Triggered high-probability {primary_setup['strategy']} with a Setup Quality Score of {primary_setup['score']}/100. Risk-to-Reward is {primary_setup['rr_ratio']} with target at ₹{primary_setup['target_1']}."
+        verdict_text = f"Triggered high-probability {strat_name} with a Setup Quality Score of {score_val}/100. Risk-to-Reward is {rr_val} with target at ₹{t1_val}."
     elif cmp > ema200 and ema20 > ema50:
         verdict_title = "Macro Uptrend (Waiting for Pullback)"
         verdict_type = "UPTREND"

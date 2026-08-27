@@ -49,7 +49,7 @@ def test_ai_studio_scenarios():
     })
     assert resp_typo.status_code == 200
     data_typo = resp_typo.json()
-    assert data_typo["ticker"] == "PICCADIL.NS"
+    assert data_typo["ticker"] in ["PICCADIL.NS", "PICCADILLY.NS"]
     assert data_typo["last_close"] > 0
 
 

@@ -43,6 +43,11 @@ export default function App() {
     setActiveTab('backtest');
   };
 
+  const handleOpenAIForecast = (ticker) => {
+    setSelectedTicker(ticker);
+    setActiveTab('aiforecast');
+  };
+
   const handleScanWatchlist = (watchlistName, tickers) => {
     setPresetUniverse('custom');
     setPresetCustomTickers(tickers);
@@ -111,6 +116,7 @@ export default function App() {
                 <SingleStockScanner
                   initialTicker={deepScanTicker}
                   onOpenChart={handleSelectTicker}
+                  onOpenAIForecast={handleOpenAIForecast}
                   onOpenBacktest={handleOpenBacktest}
                   onOpenRisk={handleOpenRisk}
                 />
@@ -120,6 +126,7 @@ export default function App() {
                 <SectorPulseView
                   onScanSector={handleScanSector}
                   onSelectTicker={handleSelectTicker}
+                  onOpenAIForecast={handleOpenAIForecast}
                   onOpenRisk={handleOpenRisk}
                   onOpenBacktest={handleOpenBacktest}
                 />

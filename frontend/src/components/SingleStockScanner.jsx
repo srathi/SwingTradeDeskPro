@@ -39,6 +39,7 @@ const POPULAR_STOCKS = [
 export default function SingleStockScanner({ 
   initialTicker = "", 
   onOpenChart, 
+  onOpenAIForecast,
   onOpenBacktest, 
   onOpenRisk 
 }) {
@@ -297,6 +298,36 @@ export default function SingleStockScanner({
                   }`}>
                     {data.oscillators.vol_ratio}x 20D Avg
                   </span>
+                </div>
+              </div>
+
+              {/* Quick Action Navigation Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-800/80">
+                <div className="text-[11px] text-gray-400 font-medium">
+                  Instant Navigation:
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => onOpenChart && onOpenChart(data.ticker)}
+                    className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span>Interactive Chart</span>
+                  </button>
+                  <button
+                    onClick={() => onOpenAIForecast && onOpenAIForecast(data.ticker)}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow-sm transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>🔮 AI Forecast</span>
+                  </button>
+                  <button
+                    onClick={() => onOpenBacktest && onOpenBacktest(data.ticker, data.backtest_snapshot?.strategy_id || 'trend_pullback')}
+                    className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 hover:border-gray-500 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Backtest</span>
+                  </button>
                 </div>
               </div>
             </div>

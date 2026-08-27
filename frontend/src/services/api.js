@@ -115,7 +115,8 @@ export async function fetchDeepScan(ticker, period = "2y", capital = 500000, ris
   const res = await fetch(`${API_BASE}/deep-scan/${encodeURIComponent(ticker)}?period=${period}&capital=${capital}&risk_pct=${riskPct}`);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `Failed to run deep scan on '${ticker}'`);
+    const errMsg = typeof err.detail === 'string' ? err.detail : (err.detail?.message || err.message || `Failed to run deep scan on '${ticker}'`);
+    throw new Error(errMsg);
   }
   return res.json();
 }
