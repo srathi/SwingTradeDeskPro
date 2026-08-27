@@ -208,7 +208,7 @@ class SearchEngine:
                     "score": 90
                 })
                 seen_syms.add(sym)
-            elif q in name_lower or any(word in name_lower for word in q.split() if len(word) >= 3):
+            elif q in name_lower or q_clean in name_lower or any(word in name_lower for word in q_clean.split() if len(word) >= 3):
                 results.append({
                     "symbol": sym,
                     "name": name,
@@ -219,7 +219,8 @@ class SearchEngine:
 
         # 3. Always Query Live Yahoo Finance Search API for unindexed or newly listed smallcaps
         try:
-            yf_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={requests.utils.quote(query)}&quotesCount=8&newsCount=0"
+            search_term = q_clean if len(q_clean) >= 2 else query
+            yf_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={requests.utils.quote(search_term)}&quotesCount=8&newsCount=0"
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
             resp = requests.get(yf_url, headers=headers, timeout=2.0)
             if resp.status_code == 200:
@@ -251,11 +252,15 @@ class SearchEngine:
                 if sym in seen_syms:
                     continue
                 name_clean = name.lower().replace("ltd", "").replace("limited", "").replace("corporation", "").replace("industries", "").replace("india", "").strip()
-                sim_name = difflib.SequenceMatcher(None, q, name_clean).ratio()
+                sim_name = max(
+                    difflib.SequenceMatcher(None, q, name_clean).ratio(),
+                    difflib.SequenceMatcher(None, q_clean, name_clean).ratio(),
+                    difflib.SequenceMatcher(None, q_clean, name_clean.split()[0] if name_clean else "").ratio()
+                )
                 sim_sym = difflib.SequenceMatcher(None, q_clean, sym.lower().replace(".ns", "").replace(".bo", "")).ratio()
                 best_sim = max(sim_name, sim_sym)
 
-                if best_sim >= 0.40:
+                if best_sim >= 0.35:
                     scored_candidates.append((best_sim, sym, name))
 
             scored_candidates.sort(key=lambda x: x[0], reverse=True)

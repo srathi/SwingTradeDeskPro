@@ -4,7 +4,8 @@ import {
   BarChart2, RefreshCw, Download, Layers, Activity, Cpu, 
   CheckCircle2, AlertTriangle, ArrowUpRight, ArrowDownRight, Compass
 } from 'lucide-react';
-import { fetchAIForecast, fetchAIModelStatus } from '../services/api';
+import { fetchAIForecast, fetchAIModelStatus, searchStocks } from '../services/api';
+import StockSearchInput from './StockSearchInput';
 
 const QUICK_TICKERS = [
   { symbol: "RELIANCE.NS", name: "Reliance Ind." },
@@ -32,6 +33,7 @@ export default function AIForecastStudio({
   const [loading, setLoading] = useState(false);
   const [forecastData, setForecastData] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [reboundSuggestions, setReboundSuggestions] = useState([]);
   const [modelStatus, setModelStatus] = useState(null);
   const [showGhostPaths, setShowGhostPaths] = useState(true);
 
@@ -55,22 +57,30 @@ export default function AIForecastStudio({
     if (!symbol) return;
     setLoading(true);
     setErrorMsg(null);
+    setReboundSuggestions([]);
     try {
       const data = await fetchAIForecast(symbol, horizon, samplePaths, modelTier);
       setForecastData(data);
+      if (data.ticker && data.ticker !== activeTicker) {
+        setActiveTicker(data.ticker);
+        setTickerInput(data.ticker);
+      }
     } catch (err) {
       setErrorMsg(err.message || "Failed to generate AI forecast.");
       setForecastData(null);
+      try {
+        const suggestions = await searchStocks(symbol);
+        setReboundSuggestions(suggestions);
+      } catch (sugErr) {}
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (!tickerInput.trim()) return;
-    setActiveTicker(tickerInput.trim().toUpperCase());
-    runForecast(tickerInput.trim().toUpperCase(), predLen, paths, modelType);
+  const handleSelectStock = (symbol, stockObj) => {
+    setTickerInput(symbol);
+    setActiveTicker(symbol);
+    runForecast(symbol, predLen, paths, modelType);
   };
 
   const exportForecastCSV = () => {
@@ -134,27 +144,14 @@ export default function AIForecastStudio({
       {/* Control & Search Bar */}
       <div className="bg-gray-900/90 p-4 rounded-xl border border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
         
-        {/* Ticker Search */}
-        <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-1 max-w-md">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={tickerInput}
-              onChange={(e) => setTickerInput(e.target.value)}
-              placeholder="Enter symbol (e.g. RELIANCE.NS, TCS.NS)..."
-              className="w-full bg-gray-950 text-white pl-9 pr-3 py-2 rounded-lg border border-gray-700 focus:border-cyan-500 focus:outline-none text-xs font-mono"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors disabled:opacity-50"
-          >
-            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            <span>Forecast</span>
-          </button>
-        </form>
+        {/* Ticker Search with Live Autocomplete */}
+        <div className="flex-1 max-w-md">
+          <StockSearchInput
+            value={tickerInput}
+            onSelectStock={handleSelectStock}
+            placeholder="Search ticker or company (e.g. Piccadily, Reliance, TCS, HDFC)..."
+          />
+        </div>
 
         {/* Forecast Parameters */}
         <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -237,11 +234,33 @@ export default function AIForecastStudio({
         ))}
       </div>
 
-      {/* Error Message */}
+      {/* Error Message & Rebound Suggestions */}
       {errorMsg && (
-        <div className="p-4 bg-red-950/40 border border-red-800/80 rounded-xl text-red-300 text-xs flex items-center space-x-3">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-          <span>{errorMsg}</span>
+        <div className="p-4 bg-red-950/40 border border-red-800/80 rounded-xl space-y-3">
+          <div className="flex items-center space-x-3 text-red-300 text-xs">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+
+          {reboundSuggestions.length > 0 && (
+            <div className="pt-2 border-t border-red-900/40 space-y-2">
+              <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Did you mean one of these?
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {reboundSuggestions.map((stock) => (
+                  <button
+                    key={stock.symbol}
+                    onClick={() => handleSelectStock(stock.symbol, stock)}
+                    className="px-3 py-1.5 bg-gray-900 hover:bg-gray-800 border border-cyan-500/40 hover:border-cyan-400 rounded-lg text-xs text-white transition-all flex items-center space-x-2 shadow-sm"
+                  >
+                    <span className="font-mono font-bold text-cyan-300">{stock.symbol}</span>
+                    <span className="text-gray-400 truncate max-w-xs">{stock.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
