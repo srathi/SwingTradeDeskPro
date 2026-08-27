@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Search, TrendingUp, TrendingDown, ShieldAlert, 
   BarChart2, RefreshCw, Download, Layers, Activity, Cpu, 
-  CheckCircle2, AlertTriangle, ArrowUpRight, ArrowDownRight, Compass
+  AlertTriangle, ArrowUpRight, ArrowDownRight, Compass
 } from 'lucide-react';
 import { fetchAIForecast, fetchAIModelStatus, searchStocks } from '../services/api';
 import StockSearchInput from './StockSearchInput';

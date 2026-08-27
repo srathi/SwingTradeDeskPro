@@ -22,6 +22,13 @@ const fmt = (v, d = 2) => {
   return '—';
 };
 
+const SafeCheckCircle = ({ className = "w-4 h-4 text-emerald-400" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+
 export default function ScreenerView({ 
   onSelectTicker, 
   onOpenRisk, 
@@ -654,7 +661,7 @@ export default function ScreenerView({
                 {/* Strategy Confluence Synthesis Box */}
                 <div className="bg-gradient-to-r from-purple-950/40 to-blue-950/40 p-3.5 rounded-xl border border-purple-800/60 text-xs space-y-1.5">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <SafeCheckCircle className="w-4 h-4 text-emerald-400" />
                     <span className="font-bold text-white">{aiModalData.confluence_badge}</span>
                   </div>
                   <p className="text-gray-300 text-[11px] leading-relaxed">
