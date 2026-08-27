@@ -11,7 +11,8 @@ import {
   Target, 
   AlertCircle,
   Bookmark,
-  Compass
+  Compass,
+  CheckCircle2
 } from 'lucide-react';
 import { fetchUniverses, fetchStrategies, fetchWatchlists, runScanSync, fetchAIForecast } from '../services/api';
 
