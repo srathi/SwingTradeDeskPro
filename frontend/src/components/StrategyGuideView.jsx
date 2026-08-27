@@ -116,6 +116,23 @@ const STRATEGIES_DATA = [
     profit_exit: "Target 1 = 2.5R, Target 2 = 3.5R",
     color: "from-rose-500/20 to-red-500/10",
     badge_color: "text-rose-400 bg-rose-500/10 border-rose-500/30"
+  },
+  {
+    id: "gmma_breakout",
+    name: "GMMA Weekly Multi-Timeframe Breakout",
+    research_basis: "Daryl Guppy (2004) — Trend Trading / Guppy Multiple Moving Averages",
+    empirical_edge: "Aligns Weekly institutional investor ribbon (30-60 EMA) expansion with daily volume-backed breakouts to ride high-momentum multi-week Stage 2 markup runners.",
+    win_rate: "54% – 62%",
+    win_rate_val: 58,
+    sharpe: "1.5 – 1.9",
+    holding: "10 – 30 Days",
+    rr_target: "1:2.5 – 1:4.0",
+    trend_filter: "Weekly Slow Investor Ribbon (30, 35, 40, 45, 50, 60 EMA) expanding upward + Fast Ribbon above Slow",
+    entry_trigger: "Daily breakout above 20D pivot on >= 1.3x institutional volume surge",
+    stop_loss: "Below top of Slow Investor Ribbon or 10-day swing low",
+    profit_exit: "Target 1 = 2.5R, Target 2 = 4.0R (Trailing Slow Ribbon)",
+    color: "from-cyan-500/20 to-purple-500/10",
+    badge_color: "text-cyan-300 bg-cyan-500/10 border-cyan-500/30"
   }
 ];
 

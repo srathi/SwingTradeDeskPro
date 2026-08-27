@@ -163,3 +163,36 @@ def compute_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     data['Low_50'] = lowest(data['Low'], 50)
 
     return data
+
+
+def gmma_ribbons(series: pd.Series) -> Tuple[Dict[str, pd.Series], Dict[str, pd.Series]]:
+    """
+    Computes Guppy Multiple Moving Average (GMMA) ribbons.
+    - Fast / Short-term (Trader) EMAs: 3, 5, 8, 10, 12, 15
+    - Slow / Long-term (Investor) EMAs: 30, 35, 40, 45, 50, 60
+    """
+    fast_periods = [3, 5, 8, 10, 12, 15]
+    slow_periods = [30, 35, 40, 45, 50, 60]
+
+    fast_ribbon = {f"EMA_{p}": ema(series, p) for p in fast_periods}
+    slow_ribbon = {f"EMA_{p}": ema(series, p) for p in slow_periods}
+
+    return fast_ribbon, slow_ribbon
+
+
+def resample_weekly(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Resamples daily OHLCV DataFrame into weekly bars (aligned to weekly close).
+    """
+    if df is None or len(df) == 0:
+        return df
+
+    weekly = df.resample('W-FRI').agg({
+        'Open': 'first',
+        'High': 'max',
+        'Low': 'min',
+        'Close': 'last',
+        'Volume': 'sum'
+    }).dropna()
+
+    return weekly

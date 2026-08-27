@@ -6,10 +6,12 @@ from backend.app.strategies.mean_reversion import MeanReversionStrategy
 from backend.app.strategies.volatility_squeeze import VolatilitySqueezeStrategy
 from backend.app.strategies.connors_rsi2 import ConnorsRSI2Strategy
 from backend.app.strategies.relative_strength_leader import RelativeStrengthLeaderStrategy
+from backend.app.strategies.gmma_breakout import GMMABreakoutStrategy
 
 STRATEGY_REGISTRY: Dict[str, BaseStrategy] = {
     "trend_pullback": TrendPullbackStrategy(),
     "vcp_breakout": VCPBreakoutStrategy(),
+    "gmma_breakout": GMMABreakoutStrategy(),
     "mean_reversion": MeanReversionStrategy(),
     "volatility_squeeze": VolatilitySqueezeStrategy(),
     "connors_rsi2": ConnorsRSI2Strategy(),
