@@ -93,9 +93,11 @@ export default function TopHeader({
               className="flex items-center space-x-2 bg-gray-950/90 hover:bg-gray-900 border border-gray-800 hover:border-cyan-500/50 px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer shadow-sm group"
               title="Click to view full Macro Market Regime & Volatility Intelligence Report"
             >
-              {/* Benchmark Nifty */}
+              {/* Benchmark Nifty / Sensex */}
               <div className="flex items-center space-x-1">
-                <span className="text-gray-400 font-bold">NIFTY</span>
+                <span className="text-gray-400 font-bold">
+                  {regimeData.benchmark?.close > 45000 ? 'SENSEX' : (regimeData.benchmark?.name?.replace(' 50', '') || 'NIFTY')}
+                </span>
                 <span className="text-white font-bold">₹{regimeData.benchmark?.close?.toLocaleString('en-IN')}</span>
                 <span className={`text-[10px] ${regimeData.benchmark?.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   ({regimeData.benchmark?.change_pct >= 0 ? '+' : ''}{regimeData.benchmark?.change_pct}%)

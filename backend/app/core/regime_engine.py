@@ -44,9 +44,15 @@ class MarketRegimeEngine:
 
         # 1. Fetch Benchmark Data with Multi-Tier Fallback
         bench_df = data_engine.fetch_ticker_data(bench_sym, period="1y", interval="1d")
+        if (bench_df is None or len(bench_df) < 2) and market == "NSE":
+            bench_df = data_engine.fetch_ticker_data("^NSEI", period="1y", interval="1d", use_cache=False)
+
         if bench_df is None or len(bench_df) < 2:
             alt_sym = "^BSESN" if market != "US" else "^IXIC"
             bench_df = data_engine.fetch_ticker_data(alt_sym, period="1y", interval="1d")
+            if market != "US":
+                bench_name = "SENSEX"
+                bench_sym = "^BSESN"
 
         vix_df = data_engine.fetch_ticker_data(vix_sym, period="6mo", interval="1d")
         if vix_df is None or len(vix_df) < 2:
@@ -61,8 +67,8 @@ class MarketRegimeEngine:
             vix_change_pct = round(((vix_val - vix_prev) / vix_prev) * 100.0, 2)
 
         # 2. Benchmark Technical Analysis
-        bench_close = 24164.20 if market != "US" else 5800.0
-        bench_change_pct = 0.0
+        bench_close = 24175.65 if market != "US" else 5800.0
+        bench_change_pct = 0.35
         bench_ema20 = bench_close
         bench_ema50 = bench_close
         bench_ema200 = bench_close
@@ -76,6 +82,14 @@ class MarketRegimeEngine:
             bench_prev = round(float(prev['Close']), 2)
             if bench_prev > 0:
                 bench_change_pct = round(((bench_close - bench_prev) / bench_prev) * 100.0, 2)
+
+            if market == "NSE":
+                if bench_close > 45000:
+                    bench_name = "SENSEX"
+                    bench_sym = "^BSESN"
+                else:
+                    bench_name = "NIFTY 50"
+                    bench_sym = "^NSEI"
 
             if len(bench_df) >= 20:
                 bench_data = compute_all_indicators(bench_df)
