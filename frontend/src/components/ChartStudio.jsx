@@ -11,7 +11,10 @@ import {
   Info,
   AlertCircle,
   Sparkles,
-  BarChart2
+  BarChart2,
+  Maximize2,
+  Minimize2,
+  X
 } from 'lucide-react';
 import { fetchChartData, searchStocks, fetchAIForecast } from '../services/api';
 import StockSearchInput from './StockSearchInput';
@@ -43,6 +46,17 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
   const [showSetupLines, setShowSetupLines] = useState(true);
   const [showVolumeProfile, setShowVolumeProfile] = useState(true);
   const [showAVWAP, setShowAVWAP] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   // AI Forecast state
   const [showAIForecast, setShowAIForecast] = useState(false);
@@ -108,9 +122,13 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
   };
 
   const handleSelectStock = (selectedSym, stockObj) => {
-    setTicker(selectedSym);
-    setErrorMsg(null);
-    setReboundSuggestions([]);
+    if (!selectedSym) return;
+    let clean = selectedSym.trim().toUpperCase();
+    setTicker(clean);
+    setAiForecastData(null);
+    if (showAIForecast) {
+      loadAIForecast(clean);
+    }
   };
 
   useEffect(() => {
@@ -129,6 +147,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     const rsiContainer = rsiContainerRef.current;
 
     const initialWidth = container.clientWidth || 800;
+    const mainHeight = isFullscreen ? Math.max(360, window.innerHeight - 280) : 400;
+    const rsiHeight = isFullscreen ? 140 : 120;
 
     let chart = null;
     let rsiChart = null;
@@ -136,7 +156,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     try {
       chart = createChart(container, {
         width: initialWidth,
-        height: 400,
+        height: mainHeight,
         layout: {
           background: { color: '#0B0F19' },
           textColor: '#9CA3AF',
@@ -388,7 +408,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
       if (rsiContainer && rsiData && rsiData.length > 0) {
         rsiChart = createChart(rsiContainer, {
           width: initialWidth,
-          height: 120,
+          height: rsiHeight,
           layout: {
             background: { color: '#0B0F19' },
             textColor: '#9CA3AF',
@@ -439,11 +459,14 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     }
 
     const handleResize = () => {
+      const w = container ? (container.clientWidth || 800) : 800;
+      const h = isFullscreen ? Math.max(360, window.innerHeight - 280) : 400;
+      const rh = isFullscreen ? 140 : 120;
       if (chartRef.current && container) {
-        chartRef.current.applyOptions({ width: container.clientWidth || 800 });
+        chartRef.current.applyOptions({ width: w, height: h });
       }
       if (rsiChartRef.current && rsiContainer) {
-        rsiChartRef.current.applyOptions({ width: rsiContainer.clientWidth || 800 });
+        rsiChartRef.current.applyOptions({ width: w, height: rh });
       }
     };
     window.addEventListener('resize', handleResize);
@@ -468,7 +491,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     showVolumeProfile, 
     showAVWAP, 
     showAIForecast, 
-    aiForecastData
+    aiForecastData,
+    isFullscreen
   ]);
 
   const setup = chartData ? (chartData.setup || chartData.active_setup) : null;
@@ -602,6 +626,15 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
                 {aiForecastLoading ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
                 <span>AI Forecast</span>
               </button>
+
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="px-2 py-1 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-700/60 hover:border-cyan-400 rounded font-mono text-[10px] sm:text-[11px] flex items-center space-x-1 transition-all shadow-sm"
+                title="Expand Chart Studio to Fullscreen Mode (Esc to Exit)"
+              >
+                <Maximize2 className="w-3 h-3 text-cyan-400" />
+                <span className="font-semibold hidden sm:inline">Fullscreen</span>
+              </button>
             </div>
           </div>
         </div>
@@ -655,10 +688,71 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
       {chartData && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           
-          {/* TradingView Chart Container (3 cols) */}
-          <div className="lg:col-span-3 bg-gray-900/80 border border-gray-800 rounded-xl p-3 space-y-2">
+          {/* TradingView Chart Container (3 cols or Fullscreen) */}
+          <div className={
+            isFullscreen 
+              ? "fixed inset-0 z-50 bg-[#080C14] p-4 flex flex-col justify-between overflow-hidden shadow-2xl"
+              : "lg:col-span-3 bg-gray-900/80 border border-gray-800 rounded-xl p-3 space-y-2"
+          }>
             
-            <div className="relative min-h-[420px]">
+            {/* Top Chart Header with Expand / Exit Fullscreen action */}
+            <div className="flex flex-wrap items-center justify-between border-b border-gray-800/80 pb-2 px-1 text-xs gap-2 flex-shrink-0">
+              <div className="flex items-center space-x-3 font-mono">
+                <span className="font-extrabold text-white text-base">{chartData.ticker}</span>
+                <span className="text-gray-300 font-bold text-sm">₹{fmt(chartData.latest_close)}</span>
+                <span className={`font-semibold text-xs ${chartData.change_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  ({chartData.change_pct >= 0 ? '+' : ''}{chartData.change_pct}%)
+                </span>
+                {isFullscreen && (
+                  <span className="text-gray-500 text-[11px] hidden md:inline">| Press [ESC] to Exit</span>
+                )}
+              </div>
+
+              {isFullscreen ? (
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                  <select
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value)}
+                    className="bg-gray-950 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-200 font-mono"
+                  >
+                    <option value="6mo">6M</option>
+                    <option value="1y">1Y</option>
+                    <option value="2y">2Y</option>
+                    <option value="5y">5Y</option>
+                  </select>
+
+                  <button onClick={() => setShowEMA20(!showEMA20)} className={`px-2 py-1 rounded font-mono text-xs ${showEMA20 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold' : 'text-gray-500'}`}>20 EMA</button>
+                  <button onClick={() => setShowEMA50(!showEMA50)} className={`px-2 py-1 rounded font-mono text-xs ${showEMA50 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-gray-500'}`}>50 EMA</button>
+                  <button onClick={() => setShowEMA200(!showEMA200)} className={`px-2 py-1 rounded font-mono text-xs ${showEMA200 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold' : 'text-gray-500'}`}>200 EMA</button>
+                  <button onClick={() => setShowVolumeProfile(!showVolumeProfile)} className={`px-2 py-1 rounded font-mono text-xs ${showVolumeProfile ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-gray-500'}`}>Vol Profile</button>
+                  <button onClick={() => setShowAVWAP(!showAVWAP)} className={`px-2 py-1 rounded font-mono text-xs ${showAVWAP ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'text-gray-500'}`}>AVWAP</button>
+                  <button onClick={() => setShowAIForecast(!showAIForecast)} className={`px-2 py-1 rounded font-mono text-xs flex items-center space-x-1 ${showAIForecast ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400 font-bold' : 'text-gray-500'}`}>
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <span>AI Forecast</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsFullscreen(false)}
+                    className="flex items-center space-x-1.5 text-xs text-red-300 hover:text-white px-3 py-1 bg-red-950/50 hover:bg-red-900/80 border border-red-800 rounded-lg transition-all shadow-sm ml-2 font-semibold"
+                    title="Exit Fullscreen (Esc)"
+                  >
+                    <Minimize2 className="w-3.5 h-3.5" />
+                    <span>Exit Fullscreen</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsFullscreen(true)}
+                  className="flex items-center space-x-1.5 text-xs text-cyan-300 hover:text-white px-2.5 py-1 bg-gray-950 hover:bg-gray-800 border border-gray-800 hover:border-cyan-500/50 rounded-lg transition-all"
+                  title="Expand to Fullscreen Mode"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="font-semibold">Full Screen</span>
+                </button>
+              )}
+            </div>
+
+            <div className={`relative ${isFullscreen ? 'flex-1 my-1 overflow-hidden' : 'min-h-[420px]'}`}>
               {loading && (
                 <div className="absolute inset-0 bg-[#0B0F19]/60 backdrop-blur-sm flex items-center justify-center z-20 rounded-lg">
                   <div className="flex items-center space-x-2 text-cyan-400 text-sm font-medium">
@@ -669,12 +763,12 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
               )}
               
               {/* Candlestick & Volume Chart */}
-              <div ref={chartContainerRef} className="w-full rounded-lg overflow-hidden" />
+              <div ref={chartContainerRef} className="w-full h-full rounded-lg overflow-hidden" />
             </div>
 
             {/* Kronos AI Forecast Confluence Ribbon */}
             {showAIForecast && aiForecastData && (
-              <div className="bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-gray-950 p-3 rounded-lg border border-cyan-500/30 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+              <div className="bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-gray-950 p-2.5 rounded-lg border border-cyan-500/30 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md flex-shrink-0">
                 <div className="flex items-center space-x-2.5">
                   <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
                   <div>
@@ -697,7 +791,7 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
             )}
 
             {/* RSI Sub-Chart */}
-            <div className="border-t border-gray-800 pt-2 min-h-[140px]">
+            <div className={`border-t border-gray-800 pt-1 flex-shrink-0 ${isFullscreen ? 'h-[140px]' : 'min-h-[140px]'}`}>
               <div className="flex items-center justify-between text-[11px] text-gray-400 px-2 pb-1 font-mono">
                 <span className="font-semibold text-yellow-400">RSI(14) Momentum</span>
                 <span>Levels: Overbought (70) | Mid (50) | Oversold (30)</span>
