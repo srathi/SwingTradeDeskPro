@@ -250,6 +250,98 @@ export const UNIVERSAL_GLOSSARY = {
     importance: "Separates short-term speculative sentiment from long-term institutional accumulation. Ribbon separation confirms trend strength.",
     playbook: "Buy when the Trader Ribbon expands and bounces off the Investor Ribbon in stacked upward alignment.",
     example: "All 6 Trader EMAs compress into the Investor Ribbon and bounce cleanly upward, confirming institutional support."
+  },
+
+  // --- SECTOR PULSE QUANTITATIVE INTELLIGENCE ---
+  regime_forecast_memory: {
+    term: "Regime Forecast & Memory (Hurst H & Markov Duration)",
+    acronym: "Regime Memory",
+    category: "Sector & Macro",
+    short_def: "A quantitative forecasting framework combining Hurst Long-Memory ($H$) with Markov Chain state-transition duration models to predict how many days a sector trend will persist.",
+    formula: "Expected Runway = E[Duration | Current State] - Current Regime Age",
+    importance: "Prevents entering a sector right as its multi-month momentum run is mathematically exhausting, and highlights fresh breakouts with 20+ days of remaining runway.",
+    playbook: "• High Runway (> 15 Days) + Hurst > 0.55: Deploy aggressive Breakout & Trend-Following strategies.\n• Low Runway (< 5 Days) or High Exhaustion: Tighten trailing stops and take profits on strength.",
+    example: "NIFTY AUTO is on Day 12 of a Strong Uptrend with Expected Total Run of 28 Days. It has an Estimated Runway of 16 Days Remaining, making fresh swing pullback entries high-probability."
+  },
+  exhaustion_risk: {
+    term: "Exhaustion & Volatility Risk (Weibull & ATR Gating)",
+    acronym: "Exhaustion Risk",
+    category: "Sector & Macro",
+    short_def: "Multi-factor risk diagnostic measuring trend fatigue (Weibull hazard rate), overextension distance from the 50 EMA (> 3×ATR), and trailing stop floors.",
+    formula: "Exhaustion Prob = 1 - e^{-(Age / \\eta)^\\beta}, Overextension = (Price - EMA_{50}) > 3.0 × ATR_{14}",
+    importance: "When a sector becomes overextended (> 3 ATR) and exhaustion exceeds 65%, even strong news catalysts trigger sharp mean-reverting pullbacks rather than continued rallies.",
+    playbook: "• Exhaustion < 30% & Normal Band: Safe for fresh breakout entries.\n• Exhaustion > 60% or Overextended Flag: Avoid initiating new positions; trail stops to lock in gains.",
+    example: "NIFTY PHARMA is up 8 consecutive weeks, with Exhaustion Probability at 74% and Overextension Flag active. Swing traders should trail stops to the ₹21,400 floor rather than buying new breakouts."
+  },
+  regime_age_runway: {
+    term: "Current Regime Age & Estimated Runway",
+    acronym: "Runway",
+    category: "Sector & Macro",
+    short_def: "The exact number of trading sessions a sector has spent in its current trend regime compared against its historical Markov expected run length.",
+    formula: "Estimated Runway = max(0, Expected_Total_Days - Current_Age_Days)",
+    importance: "Identifies whether a sector trend is in its youth (early Stage 2), maturity (mid-run), or late-stage exhaustion.",
+    playbook: "The best risk-to-reward swing entries occur in young trends with Age < 10 days and Runway > 15 days.",
+    example: "NIFTY METAL just transitioned into 'Early Uptrend' on Day 3 with an Expected Run of 22 Days (19 Days Runway remaining) — optimal for fresh accumulation."
+  },
+  weibull_exhaustion: {
+    term: "Trend Exhaustion Probability (Weibull Hazard Rate)",
+    acronym: "Exhaustion %",
+    category: "Quantitative Statistics",
+    short_def: "The mathematical probability that the current price trend will terminate or experience a deep mean-reverting correction within the next 5 sessions.",
+    formula: "h(t) = (\\beta / \\eta) × (t / \\eta)^{\\beta - 1}",
+    importance: "Unlike static indicators, Weibull hazard models factor in time-decay of momentum trends. Older trends experience non-linear acceleration in failure risk.",
+    playbook: "Scale down position sizing to 50% when Exhaustion Probability crosses 60%.",
+    example: "Exhaustion Probability rising from 22% to 68% over 3 weeks warns of institutional profit-taking ahead."
+  },
+  overextension_risk: {
+    term: "Overextension Flag (> 3x ATR Deviation)",
+    acronym: "Overextended",
+    category: "Volatility & Risk",
+    short_def: "Quantitative alert triggered when price stretches more than 3.0 standard Daily Average True Ranges (ATR 14) above its 50-day Exponential Moving Average.",
+    formula: "Overextension Flag = True if (Close - EMA_{50}) > 3.0 × ATR_{14}",
+    importance: "Mean-reversion physics dictate that extreme elastic stretches from moving averages snap back aggressively toward the mean.",
+    playbook: "Never initiate new long breakout positions when Overextension Flag is True. Wait for a pullback to the 20 EMA.",
+    example: "TRENT surges 22% in 6 days and triggers Overextension Flag (+3.4 ATR). Buying here has poor R/R; wait for a retest of the 20 EMA."
+  },
+  merit_score: {
+    term: "Constituent Merit Score (0–100)",
+    acronym: "Merit",
+    category: "Stock Scoring",
+    short_def: "A composite ranking metric evaluating individual stocks inside a sector by relative strength against the sector index, volume surge, EMA alignment, and stage quality.",
+    formula: "Merit = 0.35(RS_vs_Sector) + 0.25(Volume_Surge) + 0.25(EMA_Trend) + 0.15(RSI_Momentum)",
+    importance: "Ensures you always pick the #1 or #2 market leaders in a winning sector rather than lagging sympathy plays.",
+    playbook: "When trading a leading sector, exclusively pick stocks with Merit Score > 80.",
+    example: "In NIFTY IT, COFORGE has a Merit Score of 91 while WIPRO has a Merit Score of 48. Allocate capital into COFORGE for maximum alpha."
+  },
+  weinstein_stage: {
+    term: "Stan Weinstein 4-Stage Analysis",
+    acronym: "Stage",
+    category: "Technical Analysis",
+    short_def: "Classical institutional market structure model classifying price cycles into 4 distinct phases based on the 30-week (150-day) moving average.",
+    formula: "Stage 1 (Accumulation / Base) → Stage 2 (Bull Expansion / Markup) → Stage 3 (Distribution / Top) → Stage 4 (Decline / Markdown)",
+    importance: "80% of all massive swing trade winners occur exclusively in Stage 2. Trading in Stage 4 causes chronic capital erosion.",
+    playbook: "• Stage 2 (Bull): Buy breakouts and 20 EMA pullbacks.\n• Stage 1 (Base): Monitor for early breakout.\n• Stage 3/4: Avoid or exit immediately.",
+    example: "A stock breaking out of a 6-month base above its rising 30-week SMA enters Stage 2 Bull Expansion."
+  },
+  avwap_multi_pivot: {
+    term: "Multi-Pivot Anchored VWAP (AVWAP)",
+    acronym: "AVWAP",
+    category: "Volume Profile & Orderflow",
+    short_def: "Volume-Weighted Average Price anchored from key psychological inflection points: 52-Week High, Recent Swing Low, and Earnings/Surge Bar.",
+    formula: "AVWAP = \\frac{\\sum_{i=anchor}^{t} (Price_i \\times Volume_i)}{\\sum_{i=anchor}^{t} Volume_i}",
+    importance: "Represents the aggregate breakeven price of all buyers and sellers who entered since that critical market event.",
+    playbook: "• Price > Swing Low AVWAP: Institutional buyers from the bottom are in profit and defending their cost basis (Demand zone).\n• Price < 52W High AVWAP: Overhead trapped buyers create resistance.",
+    example: "If a stock pulls back to its Swing Low AVWAP at ₹485 and prints a hammer candle, it represents a high-conviction institutional defense level."
+  },
+  alpha_fusion_interpretation: {
+    term: "Alpha Fusion Composite Diagnostic Protocol",
+    acronym: "Alpha Fusion Protocol",
+    category: "Quantitative Synthesis",
+    short_def: "The comprehensive interpretation methodology for the 4-Pillar Alpha Fusion engine to validate high-conviction swing setups.",
+    formula: "Alpha Score = Regime_Mult × [0.30(Strategy) + 0.25(Kronos AI) + 0.25(MTF Confluence) + 0.20(Volume Profile)]",
+    importance: "Eliminates single-indicator biases by requiring confluence across price action, neural forecasting, multi-timeframe trends, and institutional orderflow.",
+    playbook: "• Score 80–100 (Triple Screen A+ / Strong Alpha): Full size entry (100% position).\n• Score 60–79 (Moderate Alpha): Standard size entry (75% position); verify EV/R > +0.30R.\n• Score < 60 (Weak Alpha): Pass or wait for better alignment.",
+    example: "If a stock has an Alpha Fusion Score of 86, Kronos Upside Prob of 68%, Double Screen B+ confluence, and EV/R of +0.52R, it meets all institutional criteria for an immediate trade."
   }
 };
 
@@ -297,59 +389,60 @@ export const PAGE_GUIDES = {
   deepscan: {
     title: "Single Stock Comprehensive Deep Scan",
     subtitle: "360-degree quantitative diagnostic combining Alpha Fusion, Triple Screen, Volume Profile, and Risk Models.",
-    summary: "Deep Scan runs a comprehensive institutional analysis on any individual stock (NSE/BSE/Global) in under 2 seconds.",
+    summary: "Deep Scan runs a comprehensive institutional diagnostic on any individual equity (NSE/BSE/Global) in under 2 seconds. It synthesizes technical rules, multi-timeframe trends, volume orderflow, neural forecasting, and mathematical position sizing into an actionable trade verdict.",
     sections: [
       {
-        heading: "1. Top Hero Header & Key Institutional Metrics",
-        description: "Shows live quote, day change %, Alexander Elder Confluence badge, and Volume Profile POC badge.",
+        heading: "1. The 5-Step Diagnostic Protocol (How to Interpret Deep Scan)",
+        description: "Follow this systematic 5-step institutional routine to evaluate any stock in seconds:",
         bullets: [
-          "52-Week High / Low Range & Distance to 52W High.",
-          "20-Day High / Low Range & Short-term momentum.",
-          "Volume Point of Control (POC) & 70% Value Area (VAH/VAL).",
-          "Daily ATR (14) Volatility in ₹."
+          "Step 1: Check Alexander Elder MTF Confluence (Hero Banner) — Look for ⭐⭐⭐ Triple Screen A+ or ⭐⭐ Double Screen B+. Ensure Screen 1 (Weekly Tide) is bullish before taking daily swing trades.",
+          "Step 2: Read Alpha Fusion Composite Score & EV/R (Section 3.6) — Verify Score ≥ 75 and Statistical Expectancy EV/R ≥ +0.35R for high-conviction trades.",
+          "Step 3: Analyze Volume Profile & AVWAPs (Section 3.8) — Confirm price is trading above the Volume POC (Point of Control) and bouncing near the Swing Low AVWAP (demand zone).",
+          "Step 4: Check Kronos AI Neural 15-Day Corridor (Section 3.5) — Verify Upside Probability ≥ 60% and ensure the expected target is within the 90% confidence corridor [P10, P90].",
+          "Step 5: Apply Risk Sizing & Chandelier Exit (Section 4) — Enter your account capital to generate the exact share count. Use the ATR Chandelier Stop (3x) to let winners run."
         ]
       },
       {
-        heading: "2. Alpha Fusion Ensemble Engine (Section 3.6)",
-        description: "The core algorithmic composite score ($0–100$) combining 4 key pillars:",
+        heading: "2. Alpha Fusion Ensemble Interpretation Matrix (Section 3.6)",
+        description: "The platform's flagship 4-pillar alpha synthesis engine ($0–100$):",
         bullets: [
-          "Strategy Criteria (30% weight): Technical rule fulfillment.",
-          "Kronos AI Upside (25% weight): Neural 15-day expected price upside.",
-          "MTF Confluence (25% weight): Weekly Tide + Daily Wave alignment.",
-          "Volume Profile (20% weight): Structural support at POC/VAH/VAL.",
-          "Macro Regime Multiplier: Scaled by current market volatility (e.g. 1.0x in Risk-On, 0.6x in Defensive)."
+          "🟢 Score 80–100 (Strong Alpha / Triple Screen A+): Exceptional institutional alignment across all 4 pillars. Full 100% position size. Highest statistical win rates.",
+          "🟡 Score 60–79 (Moderate Alpha / Double Screen B+): Solid trade setup with favorable risk/reward. Allocate standard 75% position sizing. Verify EV/R > +0.25R.",
+          "🟠 Score 45–59 (Speculative / Neutral): Mixed signals (e.g. Daily trend bullish but Weekly Tide flat or POC resistance overhead). Half 50% sizing or wait for confirmation.",
+          "🔴 Score < 45 (Invalidated / High Risk): Trend broken, heavy overhead supply, or negative AI expectancy. Avoid long entries or cut existing positions."
         ]
       },
       {
-        heading: "3. Alexander Elder Triple-Screen Matrix (Section 3.7)",
-        description: "Audits the 3 timeframes:",
+        heading: "3. Alexander Elder Triple-Screen Confluence Matrix (Section 3.7)",
+        description: "Audits market structure across 3 independent time horizons to eliminate whipsaws:",
         bullets: [
-          "Screen 1 (Weekly Tide): 13/26 EMA slope + MACD momentum.",
-          "Screen 2 (Daily Wave): 20/50 EMA alignment + RSI cooling.",
-          "Screen 3 (Micro Timing): Entry trigger break."
+          "Screen 1 (Weekly Tide): 13/26 EMA slope + Weekly MACD Histogram. Dictates the macro trade direction. (Rule: Only buy when Tide is Bullish).",
+          "Screen 2 (Daily Wave): 20/50 EMA alignment + Daily RSI(14) cooling. Identifies healthy pullbacks against the tide.",
+          "Screen 3 (Micro Trigger): Intraday breakout above previous day's high to confirm the wave has turned back into the tide."
         ]
       },
       {
         heading: "4. Volume Profile & Multi-Pivot AVWAPs (Section 3.8)",
-        description: "Pinpoints exact institutional cost bases:",
+        description: "Identifies the exact breakeven cost bases of institutional participants:",
         bullets: [
-          "52-Week High AVWAP: Resistance line since the major cycle high.",
-          "Recent Swing Low AVWAP: Primary demand line since the last bottom.",
-          "Surge Day AVWAP: Institutional volume footprint anchor."
+          "POC (Gold Line): Highest volume node. Acts as high-liquidity bedrock support when price is above.",
+          "Value Area (VAH / VAL): 70% volume containment zone. A close above VAH signals Stage-2 price discovery.",
+          "Swing Low AVWAP (Green Dotted): Cost basis of buyers from the major bottom. Strong institutional defense zone.",
+          "52W High AVWAP (Yellow Dotted): Cost basis of trapped top buyers. Represents critical overhead resistance to clear."
         ]
       },
       {
-        heading: "5. Dynamic Risk Models & Exit Modeling",
-        description: "Institutional risk management rules:",
+        heading: "5. Position Sizing & ATR Chandelier Stop (Section 4)",
+        description: "Mathematical risk management and trailing stop parameters:",
         bullets: [
-          "Chandelier Trailing Exit: Highest High(22) - 3.0×ATR to let winning trades run.",
-          "Half-Kelly Sizing: Optimal capital percentage recommendation to avoid overleveraging."
+          "1% Risk Allocation Model: Calculates exact shares so you never risk more than 1% of equity if stop is hit.",
+          "ATR Chandelier Stop (3x): Trailing exit placed 3.0 × ATR below the highest high of the swing to capture full trends."
         ]
       }
     ],
     example: {
-      title: "How to interpret Deep Scan",
-      text: "If RELIANCE has an Alpha Fusion score of 88/100, EV/R of +0.42R, and is trading right at its Swing Low AVWAP of ₹1,295 with a Stop Loss at ₹1,270, the trade offers a favorable risk/reward setup with institutional support."
+      title: "Real-World Deep Scan Case Study",
+      text: "RELIANCE trades at ₹1,305. Deep Scan reveals: Alpha Fusion Score = 86/100, MTF Rating = ⭐⭐ Double Screen B+, Kronos AI Upside = 68% (Expected Target ₹1,345), Price is resting right above 6-month POC (₹1,280) and Swing Low AVWAP (₹1,295), EV/R = +0.48R. Interpretation: Textbook high-conviction swing buy with ₹1,270 stop loss and ₹1,375 (2.5R) profit target."
     }
   },
 
@@ -496,26 +589,52 @@ export const PAGE_GUIDES = {
 
   sectors: {
     title: "Sector Pulse & Rotation Matrix",
-    subtitle: "Mansfield Relative Strength, Hurst Exponents, Markov Regime Durations, and Leading Constituents.",
-    summary: "Sector Pulse analyzes all NSE sectors against the Nifty 50 benchmark to identify leading institutional money flow, emerging rotations, and lagging sectors to avoid.",
+    subtitle: "Top-down institutional sector rotation, Mansfield RS, Hurst Memory ($H$), Markov Durations, and Constituent Merit Leaders.",
+    summary: "Sector Pulse provides macroeconomic alpha by tracking institutional money flows across all NSE/US sectors. Over 70% of a stock's individual swing move is driven by its underlying sector trend.",
     sections: [
       {
-        heading: "1. Mansfield Relative Strength (MRS)",
-        description: "Measures sector outperformance vs Nifty 50. Positive MRS indicates institutional accumulation.",
-        tips: "Only trade stocks within sectors displaying positive and rising Mansfield RS."
+        heading: "1. Mansfield Relative Strength (MRS & 5D Slope)",
+        description: "Stan Weinstein's mathematical benchmark comparison vs Nifty 50:",
+        bullets: [
+          "Positive MRS (> 0%): Sector is outperforming the benchmark and attracting institutional capital inflows.",
+          "5D Slope (Arrow Up/Down): Rate of change in relative strength over the past 5 sessions. An accelerating positive slope (+0.4) confirms fresh momentum rotation.",
+          "Golden Rule: Exclusively initiate swing trades in sectors with Positive & Rising Mansfield RS. Never bottom-fish in sectors with negative MRS."
+        ]
       },
       {
-        heading: "2. Hurst Exponent & Markov Regime Persistence",
-        description: "Hurst Exponent (H > 0.5) quantifies whether a sector is in a persistent structural trend or chopping randomly. Markov duration estimates how many sessions the current trend regime is likely to persist."
+        heading: "2. Regime Forecast & Memory ($H$) (Deep Breakdown)",
+        description: "Statistical time-series physics quantifying sector trend persistence and runway:",
+        bullets: [
+          "Hurst Exponent (H): Quantifies time-series memory. H > 0.55 indicates persistent trending behavior (breakout/trend strategies work with high win rates); H < 0.45 indicates noisy mean-reversion.",
+          "Current Regime Age (Days): Number of consecutive sessions the sector has remained in its current trend state.",
+          "Expected Total Run (Markov Duration): The mathematical expected run length calculated from historical Markov chain state-transition matrices.",
+          "Estimated Runway (Days Remaining): Expected Total Days minus Current Age. Represents the remaining momentum runway before the sector is statistically expected to pause or rotate.",
+          "Runway Interpretation: Runway > 15 Days = Fresh young trend (Green Light for aggressive trades); Runway < 5 Days = Late-stage trend (tighten stops, avoid new breakouts)."
+        ]
       },
       {
-        heading: "3. Top Sector Constituents & 1-Click Screener",
-        description: "Click 'Scan Sector' to instantly filter the top liquid stocks inside that leading sector in the Live Screener."
+        heading: "3. Exhaustion & Volatility Risk (Deep Breakdown)",
+        description: "Multi-variable quantitative risk audit protecting capital from buying market tops:",
+        bullets: [
+          "Exhaustion Probability (Weibull Hazard Rate): The mathematical likelihood that the trend will terminate or correct sharply within 5 sessions. < 30% = Fresh/Safe; > 60% = High Fatigue Warning.",
+          "Overextension Flag (> 3x ATR): Triggered when price extends > 3.0 standard ATRs away from the 50 EMA. Flags extreme elastic stretch where new entries have poor risk/reward.",
+          "Trailing Stop Level: Volatility-adjusted floor price protecting accumulated sector gains. A daily close below this line invalidates the uptrend.",
+          "ATR(14) Volatility: Daily Average True Range in index points used to size protective buffers."
+        ]
+      },
+      {
+        heading: "4. Ranked Constituent Leaders & Merit Score (0–100)",
+        description: "Ranks every individual stock in the sector to surface true market leaders:",
+        bullets: [
+          "Merit Score (> 80): Combines stock-vs-sector relative strength, volume surge, and EMA stack. Pick top #1 or #2 ranked stocks.",
+          "Stage 2 Bull Expansion: Exclusively buy stocks in Stan Weinstein Stage 2 markup.",
+          "Active Setup Pill: Highlights stocks that currently trigger a verified quantitative strategy (e.g. Trend-Pullback, VCP Breakout)."
+        ]
       }
     ],
     example: {
-      title: "Sector Rotation Playbook",
-      text: "When NIFTY AUTO shows Mansfield RS of +4.5, Hurst of 0.62, and Leading status, scan Auto stocks for Breakout and Trend-Pullback setups."
+      title: "Real-World Sector Rotation Playbook",
+      text: "NIFTY AUTO shows: Strong Uptrend, Mansfield RS = +4.8% (Rising), Hurst H = 0.62 (Persistent Memory), Age = 11 Days, Expected Run = 28 Days (17 Days Runway Remaining), Exhaustion = 24% (Low Risk), Normal Band. Interpretation: Top-priority sector for capital allocation. Expand constituent drawer, select #1 ranked COFORGE (Merit 92, Stage 2), and click 'Screen' to enter pullback setups."
     }
   },
 

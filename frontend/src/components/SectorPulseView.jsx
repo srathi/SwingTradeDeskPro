@@ -26,6 +26,7 @@ import {
   Flame
 } from 'lucide-react';
 import { fetchSectorPulse, fetchSectorConstituents } from '../services/api';
+import JargonTooltip from './JargonTooltip';
 
 export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAIForecast, onOpenRisk, onOpenBacktest }) {
   const [market, setMarket] = useState('NSE');
@@ -261,10 +262,26 @@ export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAI
                     <th className="py-3 px-2 w-8 text-center"></th>
                     <th className="py-3 px-3">Sector</th>
                     <th className="py-3 px-3">Regime</th>
-                    <th className="py-3 px-3 text-right">MRS Score</th>
-                    <th className="py-3 px-3 text-right">5D Slope</th>
-                    <th className="py-3 px-3 text-center">Hurst ($H$)</th>
-                    <th className="py-3 px-3 text-center">Rem. Days</th>
+                    <th className="py-3 px-3 text-right">
+                      <JargonTooltip termKey="mansfield_rs">
+                        <span>MRS Score</span>
+                      </JargonTooltip>
+                    </th>
+                    <th className="py-3 px-3 text-right">
+                      <JargonTooltip termKey="mansfield_rs">
+                        <span>5D Slope</span>
+                      </JargonTooltip>
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      <JargonTooltip termKey="hurst_exponent">
+                        <span>Hurst ($H$)</span>
+                      </JargonTooltip>
+                    </th>
+                    <th className="py-3 px-3 text-center">
+                      <JargonTooltip termKey="regime_age_runway">
+                        <span>Rem. Days</span>
+                      </JargonTooltip>
+                    </th>
                     <th className="py-3 px-3 text-right">Weight</th>
                   </tr>
                 </thead>
@@ -516,18 +533,22 @@ export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAI
                         </div>
 
                         <div className="text-right">
-                          <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                            c.stage_type === 'bull'
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : c.stage_type === 'early'
-                              ? 'bg-cyan-500/20 text-cyan-300'
-                              : 'bg-gray-800 text-gray-400'
-                          }`}>
-                            {c.stage}
-                          </div>
-                          <div className="text-[10px] font-mono text-purple-300 mt-0.5">
-                            Merit: {c.merit_score}
-                          </div>
+                          <JargonTooltip termKey="weinstein_stage">
+                            <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                              c.stage_type === 'bull'
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : c.stage_type === 'early'
+                                ? 'bg-cyan-500/20 text-cyan-300'
+                                : 'bg-gray-800 text-gray-400'
+                            }`}>
+                              {c.stage}
+                            </div>
+                          </JargonTooltip>
+                          <JargonTooltip termKey="merit_score">
+                            <div className="text-[10px] font-mono text-purple-300 mt-0.5">
+                              Merit: {c.merit_score}
+                            </div>
+                          </JargonTooltip>
                         </div>
                       </div>
 
@@ -571,25 +592,35 @@ export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAI
 
             {/* Persistence & Regime Duration */}
             <div className="space-y-2 text-xs font-mono">
-              <div className="text-[11px] text-gray-400 uppercase font-bold tracking-wider">
-                Regime Forecast & Memory ($H$)
-              </div>
+              <JargonTooltip termKey="regime_forecast_memory">
+                <div className="text-[11px] text-cyan-400 uppercase font-bold tracking-wider hover:text-cyan-300 transition-colors cursor-pointer">
+                  Regime Forecast & Memory ($H$)
+                </div>
+              </JargonTooltip>
 
               <div className="bg-gray-950/70 p-3 rounded-xl border border-gray-800/80 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Hurst Exponent ($H$):</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="hurst_exponent">
+                    <span className="text-gray-400">Hurst Exponent ($H$):</span>
+                  </JargonTooltip>
                   <span className="font-bold text-purple-400">{selectedSector.regime.hurst_exponent} (Persistent Memory)</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Current Regime Age:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="regime_age_runway">
+                    <span className="text-gray-400">Current Regime Age:</span>
+                  </JargonTooltip>
                   <span className="text-gray-200">{selectedSector.duration_forecast.current_regime_age_days} Days</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Expected Total Run:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="regime_forecast_memory">
+                    <span className="text-gray-400">Expected Total Run:</span>
+                  </JargonTooltip>
                   <span className="text-cyan-300 font-bold">{selectedSector.duration_forecast.expected_total_duration_days} Days</span>
                 </div>
-                <div className="flex justify-between border-t border-gray-800/80 pt-1.5">
-                  <span className="text-gray-400">Estimated Runway:</span>
+                <div className="flex justify-between items-center border-t border-gray-800/80 pt-1.5">
+                  <JargonTooltip termKey="regime_age_runway">
+                    <span className="text-gray-400">Estimated Runway:</span>
+                  </JargonTooltip>
                   <span className="text-emerald-400 font-bold">{selectedSector.duration_forecast.estimated_remaining_days} Days Remaining</span>
                 </div>
               </div>
@@ -597,29 +628,39 @@ export default function SectorPulseView({ onScanSector, onSelectTicker, onOpenAI
 
             {/* Exhaustion & Risk Alert */}
             <div className="space-y-2 text-xs font-mono">
-              <div className="text-[11px] text-gray-400 uppercase font-bold tracking-wider">
-                Exhaustion & Volatility Risk
-              </div>
+              <JargonTooltip termKey="exhaustion_risk">
+                <div className="text-[11px] text-amber-400 uppercase font-bold tracking-wider hover:text-amber-300 transition-colors cursor-pointer">
+                  Exhaustion & Volatility Risk
+                </div>
+              </JargonTooltip>
 
               <div className="bg-gray-950/70 p-3 rounded-xl border border-gray-800/80 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Exhaustion Probability:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="weibull_exhaustion">
+                    <span className="text-gray-400">Exhaustion Probability:</span>
+                  </JargonTooltip>
                   <span className={`font-bold ${selectedSector.duration_forecast.exhaustion_probability >= 0.60 ? 'text-rose-400' : 'text-emerald-400'}`}>
                     {Math.round(selectedSector.duration_forecast.exhaustion_probability * 100)}%
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Overextension Flag:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="overextension_risk">
+                    <span className="text-gray-400">Overextension Flag:</span>
+                  </JargonTooltip>
                   <span className={selectedSector.risk_parameters.overextension_flag ? 'text-amber-400 font-bold' : 'text-gray-400'}>
                     {selectedSector.risk_parameters.overextension_flag ? '⚠️ Overextended (>3 ATR)' : 'Normal Band'}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Trailing Stop Level:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="chandelier_exit">
+                    <span className="text-gray-400">Trailing Stop Level:</span>
+                  </JargonTooltip>
                   <span className="text-rose-400 font-bold">₹{selectedSector.risk_parameters.trailing_stop_level.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">ATR(14) Volatility:</span>
+                <div className="flex justify-between items-center">
+                  <JargonTooltip termKey="chandelier_exit">
+                    <span className="text-gray-400">ATR(14) Volatility:</span>
+                  </JargonTooltip>
                   <span className="text-gray-300">₹{selectedSector.risk_parameters.atr_14.toLocaleString()}</span>
                 </div>
               </div>
