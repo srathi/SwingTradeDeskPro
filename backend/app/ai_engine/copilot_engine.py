@@ -16,6 +16,8 @@ import json
 import requests
 from typing import Dict, Any, List, Optional
 
+from backend.app.ai_engine.copilot_tools import COPILOT_TOOL_DECLARATIONS, execute_copilot_tool
+
 # --- GUARDRAIL KEYWORDS & PATTERNS ---
 FINANCIAL_KEYWORDS = {
     "trade", "trading", "swing", "stock", "equity", "share", "nifty", "banknifty", "sensex",
@@ -414,8 +416,8 @@ class AlphaChanakyaEngine:
         return {"reply": local_reply, "is_deflection": False}
 
     def _call_gemini(self, user_msg: str, history: List[Dict[str, str]], rag_context: str, active_tab: str, context: Dict[str, Any], market_snapshot: Optional[Dict[str, Any]] = None) -> Optional[str]:
-        """Calls Google Gemini model endpoints with full multi-turn conversational history."""
-        model_candidates = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash", "gemini-2.5-flash-lite"]
+        """Calls Google Gemini model endpoints with Function Calling and multi-turn conversational history."""
+        model_candidates = ["gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]
         
         system_instruction = (
             "You are AlphaChanakya, the wise, disciplined, and witty quantitative trading AI copilot for SwingTradeDesk Pro "
@@ -423,10 +425,17 @@ class AlphaChanakyaEngine:
             "rigor, 1% risk management, Volume Profile (POC/VAH/VAL), Alexander Elder Triple Screen, and Market Regimes.\n\n"
             "STRICT OPERATIONAL RULES:\n"
             "1. Answer ONLY finance, swing trading, technical analysis, and platform-related queries.\n"
-            "2. When a user asks for stock prices, current levels, or technical analysis on any stock, YOU MUST USE THE PROVIDED "
-            "REAL-TIME MARKET DATA SNAPSHOT under '=== LIVE REAL-TIME MARKET DATA SNAPSHOT ===' to cite the exact CMP (₹), today's % change, "
-            "20/50/200 EMAs, RSI, and 52-week range with high precision. NEVER claim you cannot provide real-time stock prices when snapshot data is present in your context!\n"
-            "3. When a user asks for examples or follow-up details, provide concrete real-world numerical trade examples (e.g. Reliance at ₹1,305 or Nifty Auto at ₹24,000) showing exact entry, stop loss, 2R target, and position sizing calculation.\n"
+            "2. TOOL CALLING CAPABILITIES: You have direct access to execution tools:\n"
+            "   - 'tool_scan_screener': Run live screener scans for breakout, pullback, squeeze, and momentum setups.\n"
+            "   - 'tool_deep_scan_stock': Run 360-degree Alpha Fusion diagnostics, Volume Profile, and Elder MTF.\n"
+            "   - 'tool_kronos_ai_forecast': Run Monte Carlo candlestick neural forecasting.\n"
+            "   - 'tool_run_backtest': Execute event-driven walk-forward backtests.\n"
+            "   - 'tool_calculate_position_size': Calculate exact share sizing and risk exposure.\n"
+            "   - 'tool_get_sector_pulse': Query live sector rotation, Hurst Exponent (H), and remaining runway days.\n"
+            "   - 'tool_get_sector_constituents': Query ranked sector leaderboards.\n"
+            "   - 'tool_log_paper_trade': Log paper trades into the journal.\n"
+            "   Invoke these tools when the user asks to scan, calculate, forecast, backtest, or inspect quantitative setups.\n"
+            "3. When tool results or live snapshots are provided, cite the exact numbers (prices, share quantities, Win Rates, % changes) with institutional precision.\n"
             "4. Maintain full awareness of previous conversation turns.\n"
             "5. Format all formulas in clear LaTeX/code blocks and keep responses structured with bullet points."
         )
@@ -435,7 +444,7 @@ class AlphaChanakyaEngine:
 
         contents = [
             {"role": "user", "parts": [{"text": system_intro_text}]},
-            {"role": "model", "parts": [{"text": "Understood. I am AlphaChanakya, fully grounded in the platform models, active screen context, and previous discussion. I will guide you with mathematical clarity and practical numerical examples."}]}
+            {"role": "model", "parts": [{"text": "Understood. I am AlphaChanakya, equipped with native quantitative execution tools, live market data feeds, and platform knowledge. I will execute tools and guide you with mathematical clarity."}]}
         ]
 
         # Append last 6 turns from history
@@ -450,23 +459,74 @@ class AlphaChanakyaEngine:
 
         payload = {
             "contents": contents,
+            "tools": [{"function_declarations": COPILOT_TOOL_DECLARATIONS}],
             "generationConfig": {
                 "temperature": 0.3,
-                "maxOutputTokens": 800
+                "maxOutputTokens": 900
             }
         }
 
         for model in model_candidates:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.gemini_api_key}"
             try:
-                resp = requests.post(url, json=payload, timeout=10)
+                resp = requests.post(url, json=payload, timeout=12)
                 if resp.status_code == 200:
                     data = resp.json()
                     candidates = data.get("candidates", [])
                     if candidates and "content" in candidates[0]:
                         parts = candidates[0]["content"].get("parts", [])
-                        if parts:
-                            return parts[0].get("text", "")
+                        if not parts:
+                            continue
+
+                        # Check for function/tool call
+                        has_function_call = False
+                        for p in parts:
+                            if "functionCall" in p:
+                                has_function_call = True
+                                fn = p["functionCall"]
+                                fn_name = fn.get("name")
+                                fn_args = fn.get("args", {})
+
+                                # Execute the quantitative tool
+                                tool_result = execute_copilot_tool(fn_name, fn_args)
+
+                                # Construct second turn payload with function result
+                                turn2_contents = list(contents)
+                                turn2_contents.append({"role": "model", "parts": [p]})
+                                turn2_contents.append({
+                                    "role": "user",
+                                    "parts": [{
+                                        "function_response": {
+                                            "name": fn_name,
+                                            "response": {
+                                                "name": fn_name,
+                                                "content": tool_result
+                                            }
+                                        }
+                                    }]
+                                })
+
+                                turn2_payload = {
+                                    "contents": turn2_contents,
+                                    "tools": [{"function_declarations": COPILOT_TOOL_DECLARATIONS}],
+                                    "generationConfig": {
+                                        "temperature": 0.3,
+                                        "maxOutputTokens": 900
+                                    }
+                                }
+
+                                resp2 = requests.post(url, json=turn2_payload, timeout=12)
+                                if resp2.status_code == 200:
+                                    data2 = resp2.json()
+                                    cand2 = data2.get("candidates", [])
+                                    if cand2 and "content" in cand2[0]:
+                                        parts2 = cand2[0]["content"].get("parts", [])
+                                        if parts2 and "text" in parts2[0]:
+                                            return parts2[0]["text"]
+                                break
+
+                        if not has_function_call and "text" in parts[0]:
+                            return parts[0]["text"]
             except Exception as ex:
                 continue
 
