@@ -51,6 +51,42 @@ The platform's trading models are grounded in empirical quantitative finance res
 
 ---
 
+## 🏛️ AlphaChanakya AI — Quantitative Financial Copilot (RAG Powered)
+
+SwingDesk Pro features **AlphaChanakya AI**, an interactive quantitative trading copilot grounded in the platform's multi-timeframe models, indicators, and real-time page context.
+
+```mermaid
+graph TD
+    A[User Query / Starter Chip] --> B[AlphaChanakya Guardrail & Multi-Turn History Extractor]
+    B --> C{Financial Topic?}
+    C -->|No / Off-Topic| D[Witty Chanakyan Financial Deflection]
+    C -->|Yes| E[RAG Engine: 45+ Indicator Knowledge Base + Active Screen Context]
+    E --> F{LLM Mode Selection}
+    F -->|GEMINI_API_KEY Configured| G[Google Gemini 1.5 Flash - Live Multi-Turn Inference]
+    F -->|No API Key / Offline| H[Local Semantic Quant RAG Synthesizer]
+    G & H --> I[Structured Markdown Response: Formulas, Numerical Trade Examples, 2R Targets]
+```
+
+### Key Capabilities
+* **Multi-Turn Conversational Memory**: Remembers previous turns and delivers detailed, concrete numerical trade walkthroughs upon request (e.g. *"Give details with an example"* provides exact entry, stop loss, 2R targets, and 1% risk sizing).
+* **Knowledge Base RAG Grounding**: Grounded in 45+ indicators (POC, VAH/VAL, Multi-Pivot AVWAPs, Hurst Exponent $H$, Mansfield RS, Chandelier Stops) and 12 strategies.
+* **Strict Financial Guardrails**: Intercepts off-topic queries (recipes, sports, poetry) and deflects with humorous Chanakyan trading aphorisms.
+* **Free LLM API Integration**: Connects with **Google Gemini 1.5 Flash** (Free Tier: 15 RPM, 1M TPM at $0 cost via [Google AI Studio](https://aistudio.google.com/app/apikey)) or **Groq Llama-3**, with an intelligent local quantitative fallback engine out of the box.
+
+```bash
+# Optional: Enable live Google Gemini 1.5 Flash in your .env file
+echo "GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere" >> .env
+```
+
+---
+
+## 📚 Centralized Knowledge Base & In-App Page Guides
+
+* **Instant Slide-Over Help Drawer**: Click `[ 📖 Page Guide ]` in the top navigation bar or press `?` anywhere to open the complete 3-tab guide (📍 *Page Blueprint*, 📚 *Jargon Dictionary with 45+ terms & formulas*, 🎯 *12 Strategy Playbooks*).
+* **Interactive Micro-Tooltips**: Hover over any complex metric across the application (e.g., *Hurst ($H$)*, *Estimated Runway*, *Alpha Fusion*, *Volume POC*, *Chandelier Stop*, *Half-Kelly*, *Weinstein Stage*) to see definitions, formulas, and click-through links.
+
+---
+
 ## 🔮 Kronos AI Foundation Model Financial Forecaster (AAAI 2026)
 
 SwingDesk Pro includes an integration of **Kronos**, an autoregressive foundation model for financial K-line time series trained on 12B+ candlestick tokens across 45 global exchanges (AAAI 2026). It treats continuous OHLCV data as discrete quantized tokens via **Binary Spherical Quantization (BSQuantizer)** and runs parallel Monte Carlo path simulation.
@@ -373,31 +409,42 @@ graph TD
 * Quality Scoring algorithm ($0\text{--}100$) evaluating volume expansion, candlestick structure, and momentum.
 * 1-Click drilldown navigation directly to **Chart Studio**, **Deep Scan**, **Risk Calculator**, and **Backtest**.
 
-### 2. Sector Pulse & Ranked Constituent Leaders
+### 2. Single Stock Comprehensive Deep Scan (360° Diagnostic)
+* **5-Step Diagnostic Protocol**: Synthesizes strategy technical triggers, neural forecasting, multi-timeframe trends, and institutional orderflow.
+* **Alpha Fusion Composite Scoring ($0–100$)**: 4-Pillar engine combining Rule Fulfillment ($30\%$), Kronos AI ($25\%$), Elder MTF ($25\%$), and Volume Profile ($20\%$).
+* **Volume Profile & Multi-Pivot AVWAPs**: Visualizes Volume Point of Control (POC), Value Area (VAH/VAL 70%), 52W High AVWAP, and Swing Low Demand AVWAP.
+* **Alexander Elder Triple Screen Matrix**: Audits Weekly Tide (13/26 EMA + MACD), Daily Wave (20/50 EMA + RSI cooling), and Micro Intraday Triggers.
+
+### 3. Sector Pulse & Ranked Constituent Leaders
 * **Top-Down Macro Sector Rotation**: Analyzes all 11 official Indian sector indices (`^NSEBANK`, `^CNXIT`, `^CNXAUTO`, `^CNXPHARMA`, `^CNXFMCG`, `^CNXMETAL`, `^CNXREALTY`, `^CNXENERGY`, `^CNXINFRA`, `^CNXPSUBANK`, `^CNXMEDIA`) and US SPDR sectors against the benchmark (`^NSEI` / `SPY`).
-* **Econometric Models**: Mansfield Relative Strength, Hurst Exponent ($H$), Markov transition regime durations, and Chronos-Bolt probabilistic exhaustion forecasting.
+* **Econometric Models**: Mansfield Relative Strength (MRS & 5D Slope), Hurst Exponent ($H$), Markov transition regime durations, and Chronos-Bolt probabilistic exhaustion forecasting.
+* **Regime Memory & Runway**: Tracks Current Regime Age, Expected Total Run length, and Estimated Runway (Days Remaining).
 * **Top Constituent Leaders by Technical Merit**:
   * Evaluates heavyweight liquid constituents per sector.
   * Sorts descending by **Merit Score (10–100)** incorporating distance above 50/200 EMA, RSI momentum, and active setup triggers.
-  * **Interactive Expandable Drawer**: Clean, uncluttered master table with inline expandable drawers on demand.
 
-### 3. TradingView Chart Studio
+### 4. Interactive Paper Trading Journal & Performance Analytics
+* Complete trade lifecycle logging: Entry, Stop Loss, Target 1/2, Actual Exit Price, and Exit Reason.
+* Real-time metrics: Total P&L (₹), Win Rate %, Profit Factor, Average R-Multiple, and Payoff Ratio.
+* 1-Click trade logging directly from Screener, Sector Pulse, and Deep Scan.
+
+### 5. TradingView Chart Studio
 * Powered by **TradingView Lightweight Charts** with an un-overlapped, clean canvas.
 * Overlays: 20 EMA (Cyan), 50 EMA (Amber), 200 EMA (Purple), Bollinger Bands, and Volume histogram.
 * Dedicated **RSI(14)** subchart with 70, 50, 30 reference levels.
 * Setup price geometry overlays: Entry (Cyan line), Stop Loss (Red line), Target 1 (Green line), Target 2 (Emerald line).
 
-### 4. Walk-Forward Backtest Studio
+### 6. Walk-Forward Backtest Studio
 * Event-driven bar-by-bar walk-forward simulation engine.
 * Realistic transaction cost models: **STT (Securities Transaction Tax)**, **Exchange Turnovers**, **SEBI Charges**, **Brokerage (₹20/order)**, **GST (18%)**, and **Slippage (0.08%)**.
 * Performance metrics: Net Profit (₹ and %), Total Trades, Win Rate %, Profit Factor, Payoff Ratio, Max Drawdown %, Sharpe Ratio, Sortino Ratio, CAGR %, and Trade Logs with CSV export.
 
-### 5. Institutional Position & Risk Sizer
+### 7. Institutional Position & Risk Sizer
 * Computes exact share quantities based on predefined portfolio risk budgets ($1\%-2\%$).
 * Implements safety guardrails: warns if single-position exposure exceeds **25% portfolio capital**.
 * Handles fractional share math, risk-reward ratios, and target profit forecasts.
 
-### 6. Custom Watchlists & Fuzzy Search Engine
+### 8. Custom Watchlists & Fuzzy Search Engine
 * SQLite persistent custom watchlists with batch real-time quote refresh.
 * Fuzzy search engine resolving company names with typos or spaces (e.g. `tata motors` $\rightarrow$ `TATAMOTORS.NS`, `state bank of india` $\rightarrow$ `SBIN.NS`, `confidence petro` $\rightarrow$ `CONFIPET.NS`).
 
@@ -405,21 +452,19 @@ graph TD
 
 ## 🧪 Automated Testing & Quality Assurance
 
-Run the complete automated pytest suite across strategies, econometric persistence, and data pipelines:
+Run the complete automated pytest suite across strategies, econometric persistence, AI copilot, and data pipelines:
 
 ```bash
-# Run all unit tests
+# Run all 31 automated tests
 python3 -m pytest tests/ -v
 ```
 
-All 12 automated test cases verify:
-* 52-Week High Breakout setup math, risk geometry ($SL < \text{Entry} < T_1 < T_2$), and signal generation
-* GMMA ribbon structure, weekly resampling, and backtest execution
-* Mansfield Relative Strength calculation
-* Hurst Exponent trending & mean-reversion boundaries
-* Markov regime duration modeling
-* Chronos foundation forecaster fallback
-* Strict JSON contract schema conformity
+All 31 automated test cases verify:
+* **AlphaChanakya AI Copilot**: Multi-turn conversational memory, financial RAG context extraction, and strict off-topic guardrail deflections.
+* **Centralized Knowledge Base**: 45+ terms, formulas, categories, 10 page workflows, and 12 strategy playbooks.
+* **Sector Pulse Persistence**: Mansfield Relative Strength, Hurst Exponent ($H$), Markov duration, and Weibull exhaustion hazard.
+* **Empirical Strategy Math**: 52-Week High Breakout, GMMA ribbons, Connors RSI(2), TTM Squeeze, Wyckoff Spring, NR7 expansion, RSI(28) divergence.
+* **Strict JSON Contract Schema Conformity**: Across all REST API routes.
 
 ---
 
