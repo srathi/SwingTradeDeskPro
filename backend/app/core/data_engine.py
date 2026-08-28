@@ -126,20 +126,27 @@ class DataEngine:
             return [q, f"{clean}.NS", f"{clean}.BO", clean]
 
         candidates = []
-        # If already formatted with suffix
+        # 1. If already formatted with suffix
         if q.upper().endswith(('.NS', '.BO')):
             candidates.append(q.upper())
 
-        # Standard suffixes fallback (only if not already suffixed)
+        # 2. Query SearchEngine for high-confidence fuzzy company/ticker matches
+        from backend.app.core.search_engine import SearchEngine
+        matches = SearchEngine.search(q, limit=5)
+        for m in matches:
+            if m.get("score", 0) >= 60:
+                sym = m["symbol"]
+                if sym not in candidates:
+                    candidates.append(sym)
+
+        # 3. Standard suffixes fallback (only if not already suffixed)
         q_upper = q.upper().replace(" ", "")
         if not q_upper.endswith(('.NS', '.BO')):
             for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
                 if fallback not in candidates:
                     candidates.append(fallback)
 
-        # Query SearchEngine for fuzzy company/ticker matches
-        from backend.app.core.search_engine import SearchEngine
-        matches = SearchEngine.search(q, limit=5)
+        # 4. Remaining SearchEngine matches
         for m in matches:
             sym = m["symbol"]
             if sym not in candidates:
