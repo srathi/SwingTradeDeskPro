@@ -459,7 +459,17 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
         rsiChartRef.current = null;
       }
     };
-  }, [chartData, showEMA20, showEMA50, showEMA200, showSetupLines]);
+  }, [
+    chartData, 
+    showEMA20, 
+    showEMA50, 
+    showEMA200, 
+    showSetupLines, 
+    showVolumeProfile, 
+    showAVWAP, 
+    showAIForecast, 
+    aiForecastData
+  ]);
 
   const setup = chartData ? (chartData.setup || chartData.active_setup) : null;
 
