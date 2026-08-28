@@ -63,7 +63,8 @@ def get_chart_data(
             "open": round(open_p, 2),
             "high": round(high_p, 2),
             "low": round(low_p, 2),
-            "close": round(close_p, 2)
+            "close": round(close_p, 2),
+            "volume": int(vol) if not math.isnan(vol) else 0
         })
 
         is_green = close_p >= open_p

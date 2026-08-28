@@ -181,17 +181,29 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
       const candleData = Array.from(dateMap.values()).sort((a, b) => (a.time > b.time ? 1 : -1));
       candleSeries.setData(candleData);
 
-      // Volume Series
+      // Volume Series (Overlay at bottom 20% of chart)
       const volumeSeries = chart.addHistogramSeries({
         priceFormat: { type: 'volume' },
         priceScaleId: '',
-        scaleMargins: { top: 0.8, bottom: 0 }
       });
-      const volumeData = chartData.candles.map(c => ({
-        time: c.time,
-        value: c.volume || 1000,
-        color: c.close >= c.open ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'
-      }));
+      volumeSeries.priceScale().applyOptions({
+        scaleMargins: {
+          top: 0.8,
+          bottom: 0
+        }
+      });
+
+      const volumeData = (chartData.volume && chartData.volume.length > 0)
+        ? chartData.volume.map(v => ({
+            time: v.time,
+            value: typeof v.value === 'number' ? v.value : 0,
+            color: v.color || 'rgba(16, 185, 129, 0.35)'
+          }))
+        : chartData.candles.map(c => ({
+            time: c.time,
+            value: typeof c.volume === 'number' ? c.volume : 0,
+            color: c.close >= c.open ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'
+          }));
       volumeSeries.setData(volumeData);
 
       // EMAs
