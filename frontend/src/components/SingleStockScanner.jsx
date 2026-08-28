@@ -307,14 +307,40 @@ export default function SingleStockScanner({
             {/* Left 2 Cols: Stock Info & Ranges */}
             <div className="lg:col-span-2 bg-gray-900/90 border border-gray-800 rounded-2xl p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-4">
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex items-center space-x-2.5 flex-wrap">
+                <div className="flex-1 min-w-0 pr-2 space-y-1.5">
+                  <div className="flex items-center space-x-2.5 flex-wrap gap-y-1.5">
                     <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight">{data.ticker}</h2>
                     <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold border border-cyan-500/20 uppercase tracking-wider">
                       {data.ticker.endsWith('.NS') ? 'NSE' : data.ticker.endsWith('.BO') ? 'BSE' : 'US Market'}
                     </span>
+
+                    {/* MTF Triple Screen Confluence Badge */}
+                    {data.mtf_confluence && (
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1 shadow-sm ${
+                        data.mtf_confluence.rating === 'TRIPLE_SCREEN_A_PLUS' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-purple-500/20' :
+                        data.mtf_confluence.rating === 'DOUBLE_SCREEN_B_PLUS' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/20' :
+                        data.mtf_confluence.rating === 'MODERATE_CONFLUENCE' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                        'bg-gray-800/80 text-gray-400 border-gray-700'
+                      }`}>
+                        <span>{data.mtf_confluence.badge}</span>
+                        <span className="text-[10px] opacity-75 font-mono">({data.mtf_confluence.confluence_score}/100)</span>
+                      </span>
+                    )}
+
+                    {/* Volume Profile POC Pill */}
+                    {data.volume_profile?.poc && (
+                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-mono shadow-sm">
+                        <span className="text-[10px] text-amber-400/80 uppercase">POC:</span>
+                        <span>₹{fmt(data.volume_profile.poc)}</span>
+                        {data.cmp && (
+                          <span className={`text-[10px] ${data.cmp >= data.volume_profile.poc ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            ({data.cmp >= data.volume_profile.poc ? '+' : ''}{((data.cmp - data.volume_profile.poc) / data.volume_profile.poc * 100).toFixed(1)}%)
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-200 mt-1 leading-snug whitespace-normal break-words">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-200 leading-snug whitespace-normal break-words">
                     {data.company_name}
                   </h3>
                 </div>
@@ -330,30 +356,44 @@ export default function SingleStockScanner({
                 </div>
               </div>
 
-              {/* Range & Volatility Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-gray-950/60 p-3 rounded-xl border border-gray-800/80">
+              {/* Range, Volume Profile & Volatility Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                   <span className="text-[10px] uppercase font-bold text-gray-500 block">52-Week Range</span>
                   <span className="text-xs font-mono font-bold text-gray-200 block mt-0.5">
                     ₹{fmt(data.range_52w.low)} – ₹{fmt(data.range_52w.high)}
                   </span>
                 </div>
 
-                <div className="bg-gray-950/60 p-3 rounded-xl border border-gray-800/80">
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                   <span className="text-[10px] uppercase font-bold text-gray-500 block">20-Day Range</span>
                   <span className="text-xs font-mono font-bold text-gray-200 block mt-0.5">
                     ₹{fmt(data.range_20d.low)} – ₹{fmt(data.range_20d.high)}
                   </span>
                 </div>
 
-                <div className="bg-gray-950/60 p-3 rounded-xl border border-gray-800/80">
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                  <span className="text-[10px] uppercase font-bold text-amber-400/90 block">Volume POC</span>
+                  <span className="text-xs font-mono font-bold text-amber-300 block mt-0.5">
+                    ₹{fmt(data.volume_profile?.poc)}
+                  </span>
+                </div>
+
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
+                  <span className="text-[10px] uppercase font-bold text-gray-500 block">Value Area (70%)</span>
+                  <span className="text-xs font-mono font-bold text-gray-300 block mt-0.5">
+                    ₹{fmt(data.volume_profile?.val)} – ₹{fmt(data.volume_profile?.vah)}
+                  </span>
+                </div>
+
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                   <span className="text-[10px] uppercase font-bold text-gray-500 block">Daily ATR (14)</span>
                   <span className="text-xs font-mono font-bold text-cyan-300 block mt-0.5">
                     ₹{fmt(data.atr_14)} ({data.atr_pct}%)
                   </span>
                 </div>
 
-                <div className="bg-gray-950/60 p-3 rounded-xl border border-gray-800/80">
+                <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
                   <span className="text-[10px] uppercase font-bold text-gray-500 block">Volume Surge</span>
                   <span className={`text-xs font-mono font-bold block mt-0.5 ${
                     data.oscillators.vol_ratio >= 1.2 ? 'text-emerald-400' : 'text-gray-300'
