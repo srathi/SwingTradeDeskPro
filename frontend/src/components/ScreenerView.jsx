@@ -12,9 +12,17 @@ import {
   AlertCircle,
   Bookmark,
   Compass,
-  CheckCircle2
+  CheckCircle2,
+  BookMarked
 } from 'lucide-react';
-import { fetchUniverses, fetchStrategies, fetchWatchlists, runScanSync, fetchAIForecast } from '../services/api';
+import { 
+  fetchUniverses, 
+  fetchStrategies, 
+  fetchWatchlists, 
+  runScanSync, 
+  fetchAIForecast,
+  logJournalTrade
+} from '../services/api';
 
 const fmt = (v, d = 2) => {
   if (typeof v === 'number' && !isNaN(v)) return v.toFixed(d);
@@ -77,6 +85,40 @@ export default function ScreenerView({
       setAiModalError(err.message || "Failed to generate AI forecast.");
     } finally {
       setAiModalLoading(false);
+    }
+  };
+
+  const [loggedTrades, setLoggedTrades] = useState({});
+
+  const handleLogTrade = async (setup) => {
+    const t = setup.ticker;
+    setLoggedTrades(prev => ({ ...prev, [t]: 'LOGGING' }));
+    try {
+      const entryPrice = parseFloat(setup.close) || 0;
+      const stopLoss = parseFloat(setup.stop_loss) || (entryPrice * 0.95);
+      const target1 = parseFloat(setup.target_1) || (entryPrice * 1.08);
+      const target2 = parseFloat(setup.target_2) || (entryPrice * 1.15);
+      const riskPerShare = Math.max(0.01, entryPrice - stopLoss);
+      const defaultShares = Math.max(1, Math.floor(5000 / riskPerShare));
+
+      await logJournalTrade({
+        ticker: t,
+        strategy: setup.strategy || selectedStrategy,
+        entry_price: entryPrice,
+        shares: defaultShares,
+        stop_loss: stopLoss,
+        target_1: target1,
+        target_2: target2,
+        notes: `Logged directly from Live Screener (${setup.strategy || selectedStrategy})`
+      });
+
+      setLoggedTrades(prev => ({ ...prev, [t]: 'LOGGED' }));
+      setTimeout(() => {
+        setLoggedTrades(prev => ({ ...prev, [t]: null }));
+      }, 4000);
+    } catch (err) {
+      alert("Failed to log trade: " + err.message);
+      setLoggedTrades(prev => ({ ...prev, [t]: null }));
     }
   };
 
@@ -525,36 +567,36 @@ export default function ScreenerView({
                 </div>
 
                 {/* Middle: Key Quantitative Indicators */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-950/60 px-4 py-2.5 rounded-lg border border-gray-800/80 text-xs">
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">20 EMA</span>
-                    <span className="font-mono text-cyan-300 font-medium">₹{fmt(setup.ema_20 ?? setup.indicators?.ema_20 ?? setup.indicators?.ema20)}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 bg-gray-950/80 px-4 py-3 rounded-xl border border-gray-800/90 text-xs min-w-0 flex-shrink-0">
+                  <div className="min-w-[70px]">
+                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">20 EMA</span>
+                    <span className="font-mono text-cyan-300 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.ema_20 ?? setup.indicators?.ema_20 ?? setup.indicators?.ema20)}</span>
                   </div>
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">
+                  <div className="min-w-[65px]">
+                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">
                       {setup.strategy_id === 'rsi28_divergence' ? 'RSI (28)' : 'RSI (14)'}
                     </span>
                     {(() => {
                       const rsiVal = setup.rsi ?? setup.indicators?.rsi ?? setup.indicators?.rsi_14 ?? setup.indicators?.rsi_28;
                       return (
-                        <span className={`font-mono font-medium ${rsiVal <= 45 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                        <span className={`font-mono font-bold whitespace-nowrap block mt-0.5 ${rsiVal <= 45 ? 'text-emerald-400' : 'text-yellow-400'}`}>
                           {fmt(rsiVal, 1)}
                         </span>
                       );
                     })()}
                   </div>
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">Stop Loss</span>
-                    <span className="font-mono text-red-400 font-semibold">₹{fmt(setup.stop_loss)}</span>
+                  <div className="min-w-[75px]">
+                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Stop Loss</span>
+                    <span className="font-mono text-red-400 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.stop_loss)}</span>
                   </div>
-                  <div>
-                    <span className="text-gray-500 block text-[10px] uppercase font-semibold">Target (2R)</span>
-                    <span className="font-mono text-emerald-400 font-semibold">₹{fmt(setup.target_1)}</span>
+                  <div className="min-w-[80px]">
+                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Target (2R)</span>
+                    <span className="font-mono text-emerald-400 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.target_1)}</span>
                   </div>
                 </div>
 
                 {/* Right: Actions */}
-                <div className="flex items-center space-x-2 self-end lg:self-center">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-2 justify-start lg:justify-end">
                   <button
                     onClick={() => handleOpenAIForecast(setup)}
                     className="flex items-center space-x-1.5 px-3 py-2 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800/80 hover:border-purple-500 rounded-lg text-xs font-semibold shadow-sm transition-all"
@@ -579,16 +621,26 @@ export default function ScreenerView({
                     title="Calculate Position Size"
                   >
                     <ShieldAlert className="w-3.5 h-3.5" />
-                    <span>Risk Calc</span>
+                    <span>Risk</span>
                   </button>
 
                   <button
-                    onClick={() => onOpenBacktest(setup.ticker, setup.strategy_id)}
-                    className="flex items-center space-x-1.5 px-3 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                    title="Run Historical Backtest"
+                    onClick={() => handleLogTrade(setup)}
+                    disabled={loggedTrades[setup.ticker] === 'LOGGING'}
+                    className="flex items-center space-x-1.5 px-3 py-2 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-800/80 hover:border-cyan-500 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    title="Log directly to Simulated Paper Journal"
                   >
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>Backtest</span>
+                    {loggedTrades[setup.ticker] === 'LOGGED' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Logged!</span>
+                      </>
+                    ) : (
+                      <>
+                        <BookMarked className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Log Trade</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
