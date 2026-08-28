@@ -78,3 +78,50 @@ def test_copilot_off_topic_guardrail_deflection():
     data_poem = resp_poem.json()
     assert data_poem["is_deflection"] is True
     assert "AlphaChanakya" in data_poem["reply"]
+
+
+def test_copilot_multiturn_context_awareness_and_examples():
+    """Verify follow-up questions with 'give details with an example' remember the previous topic."""
+    # Turn 1: User asks about Sector Runway
+    turn1_user = "What does Estimated Runway mean in Sector Pulse?"
+    resp1 = client.post("/api/ai/copilot/chat", json={
+        "message": turn1_user,
+        "history": [],
+        "active_tab": "sectors"
+    })
+    assert resp1.status_code == 200
+    turn1_reply = resp1.json()["reply"]
+
+    # Turn 2: User asks follow-up: "can you give details with an example?"
+    history = [
+        {"role": "user", "content": turn1_user},
+        {"role": "assistant", "content": turn1_reply}
+    ]
+    resp2 = client.post("/api/ai/copilot/chat", json={
+        "message": "can you give details with an example?",
+        "history": history,
+        "active_tab": "sectors"
+    })
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+    assert data2["is_deflection"] is False
+    # Turn 2 should connect to the previous topic (Hurst / Sector / Runway) and provide concrete example numbers
+    assert "NIFTY" in data2["reply"] or "Runway" in data2["reply"] or "AUTO" in data2["reply"]
+    assert "Days" in data2["reply"] or "Hurst" in data2["reply"]
+
+    # Turn 3: Follow-up on Alpha Fusion
+    history_fusion = [
+        {"role": "user", "content": "Explain Alpha Fusion score 85"},
+        {"role": "assistant", "content": "Alpha Fusion synthesizes 4 pillars..."}
+    ]
+    resp3 = client.post("/api/ai/copilot/chat", json={
+        "message": "give details with a real world numerical example",
+        "history": history_fusion,
+        "active_tab": "deepscan"
+    })
+    assert resp3.status_code == 200
+    data3 = resp3.json()
+    assert data3["is_deflection"] is False
+    assert "RELIANCE" in data3["reply"] or "Pillar" in data3["reply"] or "86" in data3["reply"]
+    assert "₹" in data3["reply"]
+
