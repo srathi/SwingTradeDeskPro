@@ -136,10 +136,23 @@ KB_CORPUS = {
 }
 
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 class AlphaChanakyaEngine:
     def __init__(self):
-        self.gemini_api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-        self.groq_api_key = os.environ.get("GROQ_API_KEY")
+        pass
+
+    @property
+    def gemini_api_key(self) -> Optional[str]:
+        return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+    @property
+    def groq_api_key(self) -> Optional[str]:
+        return os.environ.get("GROQ_API_KEY")
 
     def is_finance_related(self, text: str, history: List[Dict[str, str]] = None) -> bool:
         """Determines if query or conversation context contains financial keywords."""
