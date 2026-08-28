@@ -122,9 +122,11 @@ class DataEngine:
         if not q:
             return []
 
-        # If already formatted with official exchange suffix, return directly
+        # If already formatted with official exchange suffix, check matching exchange pair
         if q.upper().endswith(('.NS', '.BO')):
-            return [q.upper()]
+            clean = q.upper()
+            other = clean.replace('.NS', '.BO') if clean.endswith('.NS') else clean.replace('.BO', '.NS')
+            return [clean, other]
 
         # If index symbol with caret prefix, preserve exact ticker without fuzzy stock search
         if q.startswith("^"):
@@ -132,28 +134,21 @@ class DataEngine:
             return [q, f"{clean}.NS", f"{clean}.BO", clean]
 
         candidates = []
+        q_upper = q.upper().replace(" ", "")
 
-        # 2. Query SearchEngine for high-confidence fuzzy company/ticker matches
+        # 1. Query SearchEngine for high-confidence matches only (score >= 70)
         from backend.app.core.search_engine import SearchEngine
         matches = SearchEngine.search(q, limit=5)
         for m in matches:
-            if m.get("score", 0) >= 60:
+            if m.get("score", 0) >= 70:
                 sym = m["symbol"]
                 if sym not in candidates:
                     candidates.append(sym)
 
-        # 3. Standard suffixes fallback (only if not already suffixed)
-        q_upper = q.upper().replace(" ", "")
-        if not q_upper.endswith(('.NS', '.BO')):
-            for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
-                if fallback not in candidates:
-                    candidates.append(fallback)
-
-        # 4. Remaining SearchEngine matches
-        for m in matches:
-            sym = m["symbol"]
-            if sym not in candidates:
-                candidates.append(sym)
+        # 2. Standard suffixes fallback
+        for fallback in [f"{q_upper}.NS", f"{q_upper}.BO", q_upper]:
+            if fallback not in candidates:
+                candidates.append(fallback)
 
         return candidates
 
