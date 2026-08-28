@@ -55,6 +55,17 @@ def test_copilot_financial_query_response():
     assert data3["is_deflection"] is False
     assert "Chandelier" in data3["reply"] or "Stop" in data3["reply"] or "ATR" in data3["reply"]
 
+    # Test 4: Live Stock Price query for TCS
+    resp4 = client.post("/api/ai/copilot/chat", json={
+        "message": "what is stock price TCS today?",
+        "active_tab": "screener"
+    })
+    assert resp4.status_code == 200
+    data4 = resp4.json()
+    assert data4["is_deflection"] is False
+    assert "TCS" in data4["reply"]
+    assert "₹" in data4["reply"] or "2,342" in data4["reply"] or "CMP" in data4["reply"]
+
 
 def test_copilot_off_topic_guardrail_deflection():
     """Verify non-financial off-topic queries trigger witty financial deflections."""

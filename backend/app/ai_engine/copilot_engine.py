@@ -29,7 +29,9 @@ FINANCIAL_KEYWORDS = {
     "crabel", "nr7", "wyckoff", "elder", "triple screen", "tide", "wave", "candle",
     "chart", "support", "resistance", "dividend", "earnings", "valuation", "fund", "money",
     "rupeemap", "sandesh", "desk", "pro", "kronos", "forecast", "neural", "corridor",
-    "runway", "exhaustion", "weibull", "memory", "tata", "reliance", "hdfc", "infosys"
+    "runway", "exhaustion", "weibull", "memory", "tata", "reliance", "hdfc", "infosys",
+    "price", "cmp", "quote", "levels", "level", "tcs", "itc", "sbi", "sbin", "infy",
+    "wipro", "maruti", "titan", "lt", "zomato", "bse", "nse", "today", "yesterday", "rate"
 }
 
 NON_FINANCIAL_DEFLECTIONS = [
@@ -221,6 +223,120 @@ class AlphaChanakyaEngine:
 
         return "general"
 
+    def extract_and_fetch_market_snapshot(self, user_msg: str, history: List[Dict[str, str]] = None, context: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """Identifies any referenced stock ticker and pulls live price + indicators."""
+        context = context or {}
+        candidate_ticker = context.get("selectedTicker")
+
+        # 1. Direct symbol check from user message or common alias mapping
+        if not candidate_ticker:
+            TICKER_ALIAS_MAP = {
+                "TCS": "TCS.NS", "RELIANCE": "RELIANCE.NS", "INFY": "INFY.NS", "INFOSYS": "INFY.NS",
+                "HDFCBANK": "HDFCBANK.NS", "HDFC": "HDFCBANK.NS", "ICICIBANK": "ICICIBANK.NS", "ICICI": "ICICIBANK.NS",
+                "SBIN": "SBIN.NS", "SBI": "SBIN.NS", "TATAMOTORS": "TATAMOTORS.NS", "TATA MOTORS": "TATAMOTORS.NS",
+                "TATASTEEL": "TATASTEEL.NS", "TATA STEEL": "TATASTEEL.NS", "ITC": "ITC.NS", "LT": "LT.NS", "L&T": "LT.NS",
+                "NIFTY": "^NSEI", "NIFTY50": "^NSEI", "BANKNIFTY": "^NSEBANK", "VIX": "^INDIAVIX", "INDIAVIX": "^INDIAVIX",
+                "BHARTIARTL": "BHARTIARTL.NS", "AIRTEL": "BHARTIARTL.NS", "KOTAKBANK": "KOTAKBANK.NS", "KOTAK": "KOTAKBANK.NS",
+                "WIPRO": "WIPRO.NS", "ZOMATO": "ZOMATO.NS", "TITAN": "TITAN.NS", "MARUTI": "MARUTI.NS",
+                "SUNPHARMA": "SUNPHARMA.NS", "BAJFINANCE": "BAJFINANCE.NS", "HINDUNILVR": "HINDUNILVR.NS",
+                "HUL": "HINDUNILVR.NS", "AXISBANK": "AXISBANK.NS", "NTPC": "NTPC.NS", "ONGC": "ONGC.NS",
+                "COALINDIA": "COALINDIA.NS", "HCLTECH": "HCLTECH.NS", "ADANIENT": "ADANIENT.NS", "ADANIPORTS": "ADANIPORTS.NS"
+            }
+            words = re.findall(r'\b[A-Za-z0-9\.\^]{2,15}\b', user_msg)
+            for w in words:
+                w_upper = w.upper()
+                if w_upper in TICKER_ALIAS_MAP:
+                    candidate_ticker = TICKER_ALIAS_MAP[w_upper]
+                    break
+                elif w_upper.endswith(".NS") or w_upper.endswith(".BO") or w_upper.startswith("^"):
+                    candidate_ticker = w_upper
+                    break
+
+        # 2. Check search engine if company name was mentioned
+        if not candidate_ticker:
+            try:
+                from backend.app.core.search_engine import SearchEngine
+                tokens = re.findall(r'\b[A-Za-z]{3,15}\b', user_msg)
+                for t in tokens:
+                    if t.lower() not in {"what", "is", "stock", "price", "today", "how", "give", "tell", "show", "current", "trend", "share", "value", "rate", "cost", "levels"}:
+                        res = SearchEngine.search(t)
+                        if res and len(res) > 0 and res[0].get("score", 0) >= 75:
+                            candidate_ticker = res[0]["symbol"]
+                            break
+            except Exception:
+                pass
+
+        if not candidate_ticker:
+            return None
+
+        # 3. Fetch real-time market data from DataEngine
+        try:
+            from backend.app.core.data_engine import data_engine
+            from backend.app.core.indicator_engine import compute_all_indicators
+
+            df = data_engine.fetch_ticker_data(candidate_ticker, period="1y", interval="1d")
+            if df is None or len(df) < 5:
+                return None
+
+            data = compute_all_indicators(df)
+            latest = data.iloc[-1]
+            prev = data.iloc[-2]
+
+            close = round(float(latest['Close']), 2)
+            prev_close = round(float(prev['Close']), 2)
+            chg_val = round(close - prev_close, 2)
+            chg_pct = round((chg_val / prev_close) * 100.0, 2) if prev_close > 0 else 0.0
+
+            high = round(float(latest['High']), 2)
+            low = round(float(latest['Low']), 2)
+            vol = int(latest['Volume'])
+            vol_20_sma = int(data['Volume'].tail(20).mean())
+            rvol = round(vol / max(1, vol_20_sma), 2)
+
+            ema20 = round(float(latest.get('EMA_20', close)), 2)
+            ema50 = round(float(latest.get('EMA_50', close)), 2)
+            ema200 = round(float(latest.get('EMA_200', close)), 2)
+            rsi14 = round(float(latest.get('RSI_14', 50.0)), 1)
+            atr14 = round(float(latest.get('ATR_14', close * 0.02)), 2)
+
+            high_52w = round(float(data['High'].max()), 2)
+            low_52w = round(float(data['Low'].min()), 2)
+
+            date_str = str(latest.name).split()[0] if hasattr(latest, 'name') else "Current Session"
+
+            if close >= ema20 >= ema50 >= ema200:
+                stage = "Stage 2 (Strong Bullish Markup)"
+            elif close >= ema50:
+                stage = "Healthy Uptrend (Above 50 EMA)"
+            elif close >= ema200:
+                stage = "Correction / Value Area (Above 200 EMA)"
+            else:
+                stage = "Stage 4 (Downtrend / Below 200 EMA)"
+
+            return {
+                "symbol": candidate_ticker,
+                "cmp": close,
+                "prev_close": prev_close,
+                "change": chg_val,
+                "change_pct": chg_pct,
+                "high": high,
+                "low": low,
+                "volume": vol,
+                "rvol": rvol,
+                "ema20": ema20,
+                "ema50": ema50,
+                "ema200": ema200,
+                "rsi14": rsi14,
+                "atr14": atr14,
+                "high_52w": high_52w,
+                "low_52w": low_52w,
+                "date": date_str,
+                "stage": stage
+            }
+        except Exception as e:
+            print(f"[AlphaChanakya] Live ticker fetch error for {candidate_ticker}: {e}")
+            return None
+
     def retrieve_relevant_rag_context(self, combined_query: str, active_tab: str = "") -> str:
         """Retrieves top matching glossary definitions and strategy playbooks."""
         query_lower = combined_query.lower()
@@ -251,32 +367,53 @@ class AlphaChanakyaEngine:
                 "reply": NON_FINANCIAL_DEFLECTIONS[idx],
                 "is_deflection": True,
                 "suggested_topics": [
+                    "What is the stock price of TCS today?",
                     "Explain Alpha Fusion Score 85 vs 60 with an example",
                     "What does 16 Days Runway mean in Sector Pulse?",
-                    "How to set an ATR Chandelier Stop (3x) on a live trade?",
-                    "How to calculate position sizing using 1% risk and Half-Kelly?"
+                    "How to set an ATR Chandelier Stop (3x) on a live trade?"
                 ]
             }
 
-        # 2. Extract conversation topic across history
+        # 2. Extract live market data snapshot if a stock ticker is referenced
+        market_snapshot = self.extract_and_fetch_market_snapshot(user_msg, history, context)
+        
+        # 3. Extract conversation topic across history
         topic = self.extract_conversation_topic(user_msg, history)
         combined_context_query = f"{topic} {user_msg}"
         rag_context = self.retrieve_relevant_rag_context(combined_context_query, active_tab)
 
-        # 3. If LLM API Key is configured, make live multi-turn call to Gemini Flash
+        if market_snapshot:
+            snapshot_text = (
+                f"\n\n=== LIVE REAL-TIME MARKET DATA SNAPSHOT (FROM SWINGDESK PRO DATA ENGINE) ===\n"
+                f"- Ticker: {market_snapshot['symbol']}\n"
+                f"- Current Market Price (CMP): ₹{market_snapshot['cmp']:,.2f} ({'+' if market_snapshot['change_pct'] >= 0 else ''}{market_snapshot['change_pct']}% today, ₹{'+' if market_snapshot['change'] >= 0 else ''}{market_snapshot['change']:.2f})\n"
+                f"- Session Date: {market_snapshot['date']}\n"
+                f"- Session High / Low: High ₹{market_snapshot['high']:,.2f} | Low ₹{market_snapshot['low']:,.2f}\n"
+                f"- 20 EMA (Short-term Dynamic Support): ₹{market_snapshot['ema20']:,.2f}\n"
+                f"- 50 EMA (Medium-term Dynamic Support): ₹{market_snapshot['ema50']:,.2f}\n"
+                f"- 200 EMA (Macro Baseline / Overhead Resistance): ₹{market_snapshot['ema200']:,.2f}\n"
+                f"- RSI(14) Momentum: {market_snapshot['rsi14']}\n"
+                f"- ATR(14) Daily Range: ₹{market_snapshot['atr14']:,.2f}\n"
+                f"- 52-Week Range: Low ₹{market_snapshot['low_52w']:,.2f} — High ₹{market_snapshot['high_52w']:,.2f}\n"
+                f"- Relative Volume (RVOL): {market_snapshot['rvol']}x 20D SMA\n"
+                f"- Technical Stage: {market_snapshot['stage']}"
+            )
+            rag_context = f"{rag_context}{snapshot_text}"
+
+        # 4. If LLM API Key is configured, make live multi-turn call to Gemini Flash
         if self.gemini_api_key:
             try:
-                llm_reply = self._call_gemini(user_msg, history, rag_context, active_tab, context)
+                llm_reply = self._call_gemini(user_msg, history, rag_context, active_tab, context, market_snapshot)
                 if llm_reply:
                     return {"reply": llm_reply, "is_deflection": False}
             except Exception as e:
                 print(f"[AlphaChanakya] Gemini API call error: {e}. Falling back to multi-turn local RAG synthesis.")
 
-        # 4. Fallback: Intelligent Multi-Turn Local Semantic Synthesis with Concrete Examples
-        local_reply = self._generate_local_synthesis(user_msg, history, topic, rag_context, active_tab, context)
+        # 5. Fallback: Intelligent Multi-Turn Local Semantic Synthesis with Concrete Examples
+        local_reply = self._generate_local_synthesis(user_msg, history, topic, rag_context, active_tab, context, market_snapshot)
         return {"reply": local_reply, "is_deflection": False}
 
-    def _call_gemini(self, user_msg: str, history: List[Dict[str, str]], rag_context: str, active_tab: str, context: Dict[str, Any]) -> Optional[str]:
+    def _call_gemini(self, user_msg: str, history: List[Dict[str, str]], rag_context: str, active_tab: str, context: Dict[str, Any], market_snapshot: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """Calls Google Gemini model endpoints with full multi-turn conversational history."""
         model_candidates = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash", "gemini-2.5-flash-lite"]
         
@@ -286,12 +423,15 @@ class AlphaChanakyaEngine:
             "rigor, 1% risk management, Volume Profile (POC/VAH/VAL), Alexander Elder Triple Screen, and Market Regimes.\n\n"
             "STRICT OPERATIONAL RULES:\n"
             "1. Answer ONLY finance, swing trading, technical analysis, and platform-related queries.\n"
-            "2. When a user asks for examples or follow-up details, provide concrete real-world numerical trade examples (e.g. Reliance at ₹1,305 or Nifty Auto at ₹24,000) showing exact entry, stop loss, 2R target, and position sizing calculation.\n"
-            "3. Maintain full awareness of previous conversation turns.\n"
-            "4. Format all formulas in clear LaTeX/code blocks and keep responses structured with bullet points."
+            "2. When a user asks for stock prices, current levels, or technical analysis on any stock, YOU MUST USE THE PROVIDED "
+            "REAL-TIME MARKET DATA SNAPSHOT under '=== LIVE REAL-TIME MARKET DATA SNAPSHOT ===' to cite the exact CMP (₹), today's % change, "
+            "20/50/200 EMAs, RSI, and 52-week range with high precision. NEVER claim you cannot provide real-time stock prices when snapshot data is present in your context!\n"
+            "3. When a user asks for examples or follow-up details, provide concrete real-world numerical trade examples (e.g. Reliance at ₹1,305 or Nifty Auto at ₹24,000) showing exact entry, stop loss, 2R target, and position sizing calculation.\n"
+            "4. Maintain full awareness of previous conversation turns.\n"
+            "5. Format all formulas in clear LaTeX/code blocks and keep responses structured with bullet points."
         )
 
-        system_intro_text = f"{system_instruction}\n\n=== RELEVANT PLATFORM KNOWLEDGE BASE ===\n{rag_context}\n\nActive Tab: {active_tab.upper()}, Ticker: {context.get('selectedTicker') or 'None'}"
+        system_intro_text = f"{system_instruction}\n\n=== RELEVANT PLATFORM KNOWLEDGE BASE ===\n{rag_context}\n\nActive Tab: {active_tab.upper()}, Ticker: {context.get('selectedTicker') or (market_snapshot.get('symbol') if market_snapshot else 'None')}"
 
         contents = [
             {"role": "user", "parts": [{"text": system_intro_text}]},
@@ -332,10 +472,36 @@ class AlphaChanakyaEngine:
 
         return None
 
-    def _generate_local_synthesis(self, user_msg: str, history: List[Dict[str, str]], topic: str, rag_context: str, active_tab: str, context: Dict[str, Any]) -> str:
+    def _generate_local_synthesis(self, user_msg: str, history: List[Dict[str, str]], topic: str, rag_context: str, active_tab: str, context: Dict[str, Any], market_snapshot: Optional[Dict[str, Any]] = None) -> str:
         """Deterministic, rich multi-turn quantitative synthesis with exhaustive real-world examples."""
         msg_lower = user_msg.lower()
         is_example = any(w in msg_lower for w in ["example", "details", "detail", "number", "numbers", "calculate", "walk through", "show me", "case study", "practical", "how to"])
+
+        # --- 0. LIVE STOCK QUOTE & TECHNICAL SNAPSHOT ---
+        if market_snapshot and any(w in msg_lower for w in ["price", "cmp", "quote", "rate", "cost", "today", "analysis", "level", "levels", "trend", "target", "support", "tcs", "reliance", "infy", "sbi", "stock"]):
+            s = market_snapshot
+            return (
+                f"🏛️ **AlphaChanakya's Real-Time Market Intelligence for {s['symbol']}:**\n\n"
+                f"**1. Current Market Price (CMP) & Performance:**\n"
+                f"• **Current Price**: **₹{s['cmp']:,.2f}** ({'+' if s['change_pct'] >= 0 else ''}{s['change_pct']}% today, ₹{'+' if s['change'] >= 0 else ''}{s['change']:.2f})\n"
+                f"• **Session Range**: Low ₹{s['low']:,.2f} — High ₹{s['high']:,.2f}\n"
+                f"• **52-Week Range**: Low ₹{s['low_52w']:,.2f} — High ₹{s['high_52w']:,.2f}\n"
+                f"• **Relative Volume (RVOL)**: {s['rvol']}x 20-Day Average Volume\n\n"
+                f"**2. Key Quantitative Levels & Moving Averages:**\n"
+                f"• **20 EMA (Short-term Dynamic Support)**: ₹{s['ema20']:,.2f} "
+                f"({'🟢 Price Above' if s['cmp'] >= s['ema20'] else '🔴 Price Below'})\n"
+                f"• **50 EMA (Intermediate Trend Filter)**: ₹{s['ema50']:,.2f} "
+                f"({'🟢 Price Above' if s['cmp'] >= s['ema50'] else '🔴 Price Below'})\n"
+                f"• **200 EMA (Macro Baseline / Institutional Line)**: ₹{s['ema200']:,.2f} "
+                f"({'🟢 Stage 2 Bullish' if s['cmp'] >= s['ema200'] else '🔴 Stage 4 / Macro Resistance'})\n"
+                f"• **RSI(14) Momentum**: {s['rsi14']} "
+                f"({'Overbought > 70' if s['rsi14'] > 70 else 'Oversold < 35' if s['rsi14'] < 35 else 'Healthy Momentum Zone'})\n"
+                f"• **ATR(14) Volatility**: ₹{s['atr14']:,.2f}\n\n"
+                f"**3. Quantitative Playbook & Setup Geometry:**\n"
+                f"• **Structure**: {s['stage']}\n"
+                f"• **Suggested Trailing Stop Loss (2.5x ATR)**: ₹{max(0.0, s['cmp'] - 2.5 * s['atr14']):,.2f}\n"
+                f"• **2R Asymmetric Target**: ₹{s['cmp'] + 2.0 * (2.5 * s['atr14']):,.2f} (+{round(2.0 * 2.5 * s['atr14'] / s['cmp'] * 100, 1)}% Upside)"
+            )
 
         # --- 1. HURST EXPONENT & SECTOR RUNWAY ---
         if topic == "hurst_runway":
