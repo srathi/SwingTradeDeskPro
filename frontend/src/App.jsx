@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import ScreenerView from './components/ScreenerView';
@@ -11,6 +12,7 @@ import WatchlistView from './components/WatchlistView';
 import StrategyGuideView from './components/StrategyGuideView';
 import AIForecastStudio from './components/AIForecastStudio';
 import TradeJournalView from './components/TradeJournalView';
+import ContextualHelpDrawer from './components/ContextualHelpDrawer';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -21,6 +23,33 @@ export default function App() {
   const [riskSetup, setRiskSetup] = useState(null);
   const [presetUniverse, setPresetUniverse] = useState(null);
   const [presetCustomTickers, setPresetCustomTickers] = useState(null);
+
+  // Global Contextual Help & Jargon Drawer states
+  const [helpDrawerOpen, setHelpDrawerOpen] = useState(false);
+  const [helpDrawerTerm, setHelpDrawerTerm] = useState(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Toggle help drawer on '?' key if not in form input
+      if (e.key === '?' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        e.preventDefault();
+        setHelpDrawerOpen(prev => !prev);
+      }
+    };
+    const handleCustomOpen = (e) => {
+      if (e.detail?.term) {
+        setHelpDrawerTerm(e.detail.term);
+      }
+      setHelpDrawerOpen(true);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-help-drawer', handleCustomOpen);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-help-drawer', handleCustomOpen);
+    };
+  }, []);
 
   // Sidebar responsive states
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -96,6 +125,7 @@ export default function App() {
           activeTab={activeTab}
           onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onSelectTicker={handleSelectTicker}
+          onOpenHelpDrawer={() => { setHelpDrawerTerm(null); setHelpDrawerOpen(true); }}
         />
 
         {/* Scrollable Canvas View */}
@@ -209,6 +239,25 @@ export default function App() {
         </main>
 
       </div>
+
+      {/* Global Contextual Page Guide & Jargon Drawer */}
+      <ContextualHelpDrawer
+        isOpen={helpDrawerOpen}
+        onClose={() => { setHelpDrawerOpen(false); setHelpDrawerTerm(null); }}
+        activeTab={activeTab}
+        initialTerm={helpDrawerTerm}
+      />
+
+      {/* Floating Help Trigger Button */}
+      <button
+        onClick={() => { setHelpDrawerTerm(null); setHelpDrawerOpen(true); }}
+        className="fixed bottom-5 right-5 z-40 p-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-full shadow-2xl flex items-center space-x-1.5 transition-all hover:scale-105 border border-cyan-400/40 group cursor-pointer"
+        title="Open Page Guide & Jargon Dictionary (or press '?')"
+      >
+        <BookOpen className="w-4 h-4 group-hover:rotate-12 transition-transform text-cyan-200" />
+        <span className="text-xs font-bold font-mono pr-1 hidden sm:inline">Guide & Jargon</span>
+        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-cyan-200 border border-white/20">?</span>
+      </button>
 
     </div>
   );

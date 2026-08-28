@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { fetchDeepScan, searchStocks, fetchAIForecast, fetchAlphaFusion, logJournalTrade } from '../services/api';
 import StockSearchInput from './StockSearchInput';
+import JargonTooltip from './JargonTooltip';
 
 const fmt = (v, d = 2) => {
   if (typeof v === 'number' && !isNaN(v)) return v.toFixed(d);
@@ -316,28 +317,32 @@ export default function SingleStockScanner({
 
                     {/* MTF Triple Screen Confluence Badge */}
                     {data.mtf_confluence && (
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1 shadow-sm ${
-                        data.mtf_confluence.rating === 'TRIPLE_SCREEN_A_PLUS' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-purple-500/20' :
-                        data.mtf_confluence.rating === 'DOUBLE_SCREEN_B_PLUS' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/20' :
-                        data.mtf_confluence.rating === 'MODERATE_CONFLUENCE' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
-                        'bg-gray-800/80 text-gray-400 border-gray-700'
-                      }`}>
-                        <span>{data.mtf_confluence.badge}</span>
-                        <span className="text-[10px] opacity-75 font-mono">({data.mtf_confluence.confluence_score}/100)</span>
-                      </span>
+                      <JargonTooltip termKey="elder_triple_screen">
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1 shadow-sm ${
+                          data.mtf_confluence.rating === 'TRIPLE_SCREEN_A_PLUS' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-purple-500/20' :
+                          data.mtf_confluence.rating === 'DOUBLE_SCREEN_B_PLUS' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/20' :
+                          data.mtf_confluence.rating === 'MODERATE_CONFLUENCE' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                          'bg-gray-800/80 text-gray-400 border-gray-700'
+                        }`}>
+                          <span>{data.mtf_confluence.badge}</span>
+                          <span className="text-[10px] opacity-75 font-mono">({data.mtf_confluence.confluence_score}/100)</span>
+                        </span>
+                      </JargonTooltip>
                     )}
 
                     {/* Volume Profile POC Pill */}
                     {data.volume_profile?.poc && (
-                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-mono shadow-sm">
-                        <span className="text-[10px] text-amber-400/80 uppercase">POC:</span>
-                        <span>₹{fmt(data.volume_profile.poc)}</span>
-                        {data.cmp && (
-                          <span className={`text-[10px] ${data.cmp >= data.volume_profile.poc ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            ({data.cmp >= data.volume_profile.poc ? '+' : ''}{((data.cmp - data.volume_profile.poc) / data.volume_profile.poc * 100).toFixed(1)}%)
-                          </span>
-                        )}
-                      </span>
+                      <JargonTooltip termKey="poc">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-mono shadow-sm">
+                          <span className="text-[10px] text-amber-400/80 uppercase">POC:</span>
+                          <span>₹{fmt(data.volume_profile.poc)}</span>
+                          {data.cmp && (
+                            <span className={`text-[10px] ${data.cmp >= data.volume_profile.poc ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              ({data.cmp >= data.volume_profile.poc ? '+' : ''}{((data.cmp - data.volume_profile.poc) / data.volume_profile.poc * 100).toFixed(1)}%)
+                            </span>
+                          )}
+                        </span>
+                      </JargonTooltip>
                     )}
                   </div>
                   <h3 className="text-sm sm:text-base font-semibold text-gray-200 leading-snug whitespace-normal break-words">
@@ -373,21 +378,27 @@ export default function SingleStockScanner({
                 </div>
 
                 <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
-                  <span className="text-[10px] uppercase font-bold text-amber-400/90 block">Volume POC</span>
+                  <JargonTooltip termKey="poc">
+                    <span className="text-[10px] uppercase font-bold text-amber-400/90 block">Volume POC</span>
+                  </JargonTooltip>
                   <span className="text-xs font-mono font-bold text-amber-300 block mt-0.5">
                     ₹{fmt(data.volume_profile?.poc)}
                   </span>
                 </div>
 
                 <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
-                  <span className="text-[10px] uppercase font-bold text-gray-500 block">Value Area (70%)</span>
+                  <JargonTooltip termKey="vah">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Value Area (70%)</span>
+                  </JargonTooltip>
                   <span className="text-xs font-mono font-bold text-gray-300 block mt-0.5">
                     ₹{fmt(data.volume_profile?.val)} – ₹{fmt(data.volume_profile?.vah)}
                   </span>
                 </div>
 
                 <div className="bg-gray-950/60 p-2.5 rounded-xl border border-gray-800/80">
-                  <span className="text-[10px] uppercase font-bold text-gray-500 block">Daily ATR (14)</span>
+                  <JargonTooltip termKey="chandelier_exit">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Daily ATR (14)</span>
+                  </JargonTooltip>
                   <span className="text-xs font-mono font-bold text-cyan-300 block mt-0.5">
                     ₹{fmt(data.atr_14)} ({data.atr_pct}%)
                   </span>
@@ -765,7 +776,9 @@ export default function SingleStockScanner({
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>Alpha Fusion Ensemble</span>
+                      <JargonTooltip termKey="alpha_fusion">
+                        <span>Alpha Fusion Ensemble</span>
+                      </JargonTooltip>
                       <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono uppercase font-bold border ${alphaFusionData.composite_alpha_score >= 75 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : alphaFusionData.composite_alpha_score >= 55 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>
                         {alphaFusionData.badge}
                       </span>
@@ -823,7 +836,9 @@ export default function SingleStockScanner({
 
                 {/* Pillar 4: Statistical Expectancy */}
                 <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
-                  <span className="text-gray-500 text-[10px] uppercase font-bold block">Statistical Expectancy</span>
+                  <JargonTooltip termKey="ev_r">
+                    <span className="text-gray-500 text-[10px] uppercase font-bold block">Statistical Expectancy</span>
+                  </JargonTooltip>
                   <span className={`text-base font-bold font-mono block mt-1 ${alphaFusionData.statistical_expectancy_ev_r >= 0.5 ? 'text-emerald-400' : 'text-amber-400'}`}>
                     +{alphaFusionData.statistical_expectancy_ev_r} EV / R
                   </span>
@@ -968,7 +983,9 @@ export default function SingleStockScanner({
                 </div>
 
                 <div className="bg-gray-950/60 p-3 rounded-xl border border-gray-800/80">
-                  <span className="text-[10px] uppercase font-bold text-gray-500 block">Profit Factor</span>
+                  <JargonTooltip termKey="profit_factor">
+                    <span className="text-[10px] uppercase font-bold text-gray-500 block">Profit Factor</span>
+                  </JargonTooltip>
                   <span className="text-base font-bold font-mono text-emerald-400 block mt-0.5">
                     {data.backtest_snapshot.profit_factor}
                   </span>
@@ -1038,11 +1055,15 @@ export default function SingleStockScanner({
                   <span className="font-semibold text-red-400">₹{(data.position_sizing?.total_risk_amount || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-300">
-                  <span>ATR Chandelier Stop (3x):</span>
+                  <JargonTooltip termKey="chandelier_exit">
+                    <span>ATR Chandelier Stop (3x):</span>
+                  </JargonTooltip>
                   <span className="font-semibold text-amber-300">₹{fmt(data.cmp - (3.0 * data.atr_14))}</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-300 pt-1 border-t border-gray-800">
-                  <span>Target 1 Profit (2R):</span>
+                  <JargonTooltip termKey="r_multiple">
+                    <span>Target 1 Profit (2R):</span>
+                  </JargonTooltip>
                   <span className="font-bold text-emerald-400">+₹{(data.position_sizing?.potential_profit_target_1 || 0).toLocaleString()}</span>
                 </div>
 

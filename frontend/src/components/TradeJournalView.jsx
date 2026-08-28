@@ -22,6 +22,7 @@ import {
   closeJournalTrade, 
   deleteJournalTrade 
 } from '../services/api';
+import JargonTooltip from './JargonTooltip';
 
 export default function TradeJournalView({ onOpenChart, onOpenDeepScan, onOpenAIForecast }) {
   const [data, setData] = useState(null);
@@ -221,7 +222,9 @@ export default function TradeJournalView({ onOpenChart, onOpenDeepScan, onOpenAI
 
         {/* Profit Factor */}
         <div className="bg-gray-950/80 border border-gray-800/90 rounded-xl p-3.5 shadow-sm">
-          <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Profit Factor</span>
+          <JargonTooltip termKey="profit_factor">
+            <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Profit Factor</span>
+          </JargonTooltip>
           <div className="text-lg font-bold font-mono text-purple-300 mt-1">
             {summary.profit_factor}
           </div>
@@ -230,7 +233,9 @@ export default function TradeJournalView({ onOpenChart, onOpenDeepScan, onOpenAI
 
         {/* Avg R-Multiple */}
         <div className="bg-gray-950/80 border border-gray-800/90 rounded-xl p-3.5 shadow-sm">
-          <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Avg R-Multiple</span>
+          <JargonTooltip termKey="r_multiple">
+            <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block">Avg R-Multiple</span>
+          </JargonTooltip>
           <div className="text-lg font-bold font-mono text-amber-300 mt-1">
             {summary.avg_r_multiple > 0 ? '+' : ''}{summary.avg_r_multiple} R
           </div>

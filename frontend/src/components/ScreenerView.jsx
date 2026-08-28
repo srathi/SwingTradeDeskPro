@@ -23,6 +23,7 @@ import {
   fetchAIForecast,
   logJournalTrade
 } from '../services/api';
+import JargonTooltip from './JargonTooltip';
 
 const fmt = (v, d = 2) => {
   if (typeof v === 'number' && !isNaN(v)) return v.toFixed(d);
@@ -532,16 +533,18 @@ export default function ScreenerView({
                 
                 {/* Left: Ticker & Strategy info */}
                 <div className="flex items-start space-x-3 min-w-[240px]">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs border ${
-                    setup.score >= 80 
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
-                      : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
-                  }`}>
-                    <div className="text-center">
-                      <div className="text-[9px] uppercase tracking-tighter text-gray-400">Score</div>
-                      <div className="text-sm font-bold leading-none">{setup.score}</div>
+                  <JargonTooltip termKey="alpha_fusion">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs border ${
+                      setup.score >= 80 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                        : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                    }`}>
+                      <div className="text-center">
+                        <div className="text-[9px] uppercase tracking-tighter text-gray-400">Score</div>
+                        <div className="text-sm font-bold leading-none">{setup.score}</div>
+                      </div>
                     </div>
-                  </div>
+                  </JargonTooltip>
 
                   <div>
                     <div className="flex items-center space-x-2 flex-wrap gap-y-1">
@@ -552,14 +555,18 @@ export default function ScreenerView({
                         ₹{fmt(setup.close)}
                       </span>
                       {setup.mtf_confluence?.badge && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border ${setup.mtf_confluence.confluence_score >= 80 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
-                          {setup.mtf_confluence.badge}
-                        </span>
+                        <JargonTooltip termKey="elder_triple_screen">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border ${setup.mtf_confluence.confluence_score >= 80 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
+                            {setup.mtf_confluence.badge}
+                          </span>
+                        </JargonTooltip>
                       )}
                       {setup.volume_profile?.poc && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-300 font-mono border border-cyan-800/60">
-                          POC: ₹{fmt(setup.volume_profile.poc)}
-                        </span>
+                        <JargonTooltip termKey="poc">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-300 font-mono border border-cyan-800/60">
+                            POC: ₹{fmt(setup.volume_profile.poc)}
+                          </span>
+                        </JargonTooltip>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">{setup.setup_summary || (setup.reasons && setup.reasons.length > 0 ? setup.reasons[0] : "") || `${setup.strategy} Setup`}</p>
@@ -569,13 +576,17 @@ export default function ScreenerView({
                 {/* Middle: Key Quantitative Indicators */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 bg-gray-950/80 px-4 py-3 rounded-xl border border-gray-800/90 text-xs min-w-0 flex-shrink-0">
                   <div className="min-w-[70px]">
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">20 EMA</span>
+                    <JargonTooltip termKey="ema_20_50_200">
+                      <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">20 EMA</span>
+                    </JargonTooltip>
                     <span className="font-mono text-cyan-300 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.ema_20 ?? setup.indicators?.ema_20 ?? setup.indicators?.ema20)}</span>
                   </div>
                   <div className="min-w-[65px]">
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">
-                      {setup.strategy_id === 'rsi28_divergence' ? 'RSI (28)' : 'RSI (14)'}
-                    </span>
+                    <JargonTooltip termKey="rsi_14">
+                      <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">
+                        {setup.strategy_id === 'rsi28_divergence' ? 'RSI (28)' : 'RSI (14)'}
+                      </span>
+                    </JargonTooltip>
                     {(() => {
                       const rsiVal = setup.rsi ?? setup.indicators?.rsi ?? setup.indicators?.rsi_14 ?? setup.indicators?.rsi_28;
                       return (
@@ -586,11 +597,15 @@ export default function ScreenerView({
                     })()}
                   </div>
                   <div className="min-w-[75px]">
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Stop Loss</span>
+                    <JargonTooltip termKey="chandelier_exit">
+                      <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Stop Loss</span>
+                    </JargonTooltip>
                     <span className="font-mono text-red-400 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.stop_loss)}</span>
                   </div>
                   <div className="min-w-[80px]">
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Target (2R)</span>
+                    <JargonTooltip termKey="r_multiple">
+                      <span className="text-gray-400 block text-[10px] uppercase font-semibold tracking-wider whitespace-nowrap">Target (2R)</span>
+                    </JargonTooltip>
                     <span className="font-mono text-emerald-400 font-bold whitespace-nowrap block mt-0.5">₹{fmt(setup.target_1)}</span>
                   </div>
                 </div>

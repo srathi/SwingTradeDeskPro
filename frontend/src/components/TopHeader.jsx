@@ -23,7 +23,8 @@ import StockSearchInput from './StockSearchInput';
 export default function TopHeader({ 
   activeTab, 
   onToggleMobileSidebar, 
-  onSelectTicker 
+  onSelectTicker,
+  onOpenHelpDrawer 
 }) {
   const [regimeData, setRegimeData] = useState(null);
   const [isRegimeModalOpen, setIsRegimeModalOpen] = useState(false);
@@ -129,6 +130,17 @@ export default function TopHeader({
               className="w-full text-xs"
             />
           </div>
+
+          {/* Page Guide & Jargon Trigger Button */}
+          <button
+            onClick={onOpenHelpDrawer}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 bg-gradient-to-r from-cyan-950/60 to-blue-950/40 hover:from-cyan-900/80 hover:to-blue-900/60 text-cyan-300 border border-cyan-700/60 hover:border-cyan-400 rounded-lg text-xs font-semibold shadow-sm transition-all group"
+            title="Open Page Guide & Jargon Playbook (or press '?')"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Page Guide</span>
+            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-gray-900 text-gray-400 border border-gray-700 hidden md:inline">?</span>
+          </button>
 
           {/* Live Market Indicator Badge */}
           <div className="hidden lg:flex items-center space-x-2 bg-gray-950 border border-gray-800/90 px-2.5 py-1 rounded-lg text-[11px] font-mono text-gray-300">

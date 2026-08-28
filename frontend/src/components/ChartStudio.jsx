@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { fetchChartData, searchStocks, fetchAIForecast } from '../services/api';
 import StockSearchInput from './StockSearchInput';
+import JargonTooltip from './JargonTooltip';
 
 const fmt = (v, d = 2) => {
   if (typeof v === 'number' && !isNaN(v)) return v.toFixed(d);
@@ -604,28 +605,36 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
               >
                 200 EMA
               </button>
-              <button
-                onClick={() => setShowVolumeProfile(!showVolumeProfile)}
-                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showVolumeProfile ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
-                title="Toggle Volume Profile (POC, VAH, VAL)"
-              >
-                Vol Profile
-              </button>
-              <button
-                onClick={() => setShowAVWAP(!showAVWAP)}
-                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showAVWAP ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
-                title="Toggle Multi-Pivot Anchored VWAP"
-              >
-                AVWAP
-              </button>
-              <button
-                onClick={() => setShowAIForecast(!showAIForecast)}
-                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] flex items-center space-x-1 ${showAIForecast ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
-                title="Toggle Kronos Neural 15-Day Forecast Funnel"
-              >
-                {aiForecastLoading ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
-                <span>AI Forecast</span>
-              </button>
+              <JargonTooltip termKey="poc">
+                <button
+                  onClick={() => setShowVolumeProfile(!showVolumeProfile)}
+                  className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showVolumeProfile ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                  title="Toggle Volume Profile (POC, VAH, VAL)"
+                >
+                  Vol Profile
+                </button>
+              </JargonTooltip>
+
+              <JargonTooltip termKey="avwap">
+                <button
+                  onClick={() => setShowAVWAP(!showAVWAP)}
+                  className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showAVWAP ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                  title="Toggle Multi-Pivot Anchored VWAP"
+                >
+                  AVWAP
+                </button>
+              </JargonTooltip>
+
+              <JargonTooltip termKey="kronos_neural_forecast">
+                <button
+                  onClick={() => setShowAIForecast(!showAIForecast)}
+                  className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] flex items-center space-x-1 ${showAIForecast ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                  title="Toggle Kronos Neural 15-Day Forecast Funnel"
+                >
+                  {aiForecastLoading ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
+                  <span>AI Forecast</span>
+                </button>
+              </JargonTooltip>
 
               <button
                 onClick={() => setIsFullscreen(true)}
