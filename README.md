@@ -51,30 +51,51 @@ The platform's trading models are grounded in empirical quantitative finance res
 
 ---
 
-## 🏛️ AlphaChanakya AI — Quantitative Financial Copilot (RAG Powered)
+## 🏛️ AlphaChanakya AI — Quantitative Trading Copilot & Agentic Tool Execution
 
-SwingDesk Pro features **AlphaChanakya AI**, an interactive quantitative trading copilot grounded in the platform's multi-timeframe models, indicators, and real-time page context.
+SwingDesk Pro features **AlphaChanakya AI**, an institutional-grade quantitative trading copilot and autonomous terminal operator grounded in the platform's multi-timeframe models, indicators, real-time market data feeds, and native **Function Calling / Tool Execution Layer**.
 
 ```mermaid
 graph TD
-    A[User Query / Starter Chip] --> B[AlphaChanakya Guardrail & Multi-Turn History Extractor]
-    B --> C{Financial Topic?}
-    C -->|No / Off-Topic| D[Witty Chanakyan Financial Deflection]
-    C -->|Yes| E[RAG Engine: 45+ Indicator Knowledge Base + Active Screen Context]
-    E --> F{LLM Mode Selection}
-    F -->|GEMINI_API_KEY Configured| G[Google Gemini 1.5 Flash - Live Multi-Turn Inference]
-    F -->|No API Key / Offline| H[Local Semantic Quant RAG Synthesizer]
-    G & H --> I[Structured Markdown Response: Formulas, Numerical Trade Examples, 2R Targets]
+    UserQuery["User Prompt: 'Calculate position size for ₹10L account buying Reliance at 1287 with 1250 stop'"] --> Router["AlphaChanakya Engine (Gemini / Local Dispatcher)"]
+    
+    subgraph Native Quantitative Execution Tools
+        Router -->|tool_scan_screener| T1["ScreenerEngine.scan()"]
+        Router -->|tool_deep_scan_stock| T2["AlphaFusionEngine.evaluate_alpha_fusion()"]
+        Router -->|tool_kronos_ai_forecast| T3["KronosForecaster.forecast()"]
+        Router -->|tool_run_backtest| T4["BacktestEngine.run_single()"]
+        Router -->|tool_calculate_position_size| T5["RiskCalculator.calculate_position_sizing()"]
+        Router -->|tool_get_sector_pulse| T6["SectorPulseEngine.run_multi_sector_pipeline()"]
+        Router -->|tool_get_sector_constituents| T7["SectorPulseEngine.get_sector_top_constituents()"]
+        Router -->|tool_log_paper_trade| T8["TradeJournalEngine.add_trade()"]
+    end
+    
+    T1 & T2 & T3 & T4 & T5 & T6 & T7 & T8 --> LiveFeeds["Real-Time NSE/BSE Market Snapshot Engine"]
+    LiveFeeds --> Synthesis["Chanakyan Synthesis Core (LaTeX, Tables, Exact Numbers)"]
+    Synthesis --> Output["Interactive Response with Concrete Trade Blueprints"]
 ```
 
-### Key Capabilities
+### Key Capabilities & 8 Native Tools:
+
+| # | Native Tool | Underlying Engine | Action & Capabilities |
+| :---: | :--- | :--- | :--- |
+| **1** | `tool_scan_screener` | [`ScreenerEngine`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/api/screener_routes.py) | Executes live scans across `NIFTY_50`, `NIFTY_500`, `BSE_30` for 12 swing setups (52W Breakouts, Connors RSI, Pullbacks). |
+| **2** | `tool_deep_scan_stock` | [`AlphaFusionEngine`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/core/alpha_fusion.py) | Computes 0–100 Alpha Fusion, Elder Triple Screen, Volume POC/VAH/VAL, and Multi-Pivot AVWAPs. |
+| **3** | `tool_kronos_ai_forecast` | [`KronosForecaster`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/ai_engine/kronos_forecaster.py) | Generates Monte Carlo candlestick neural paths, $P(\text{Up})$, and 90% confidence corridors. |
+| **4** | `tool_run_backtest` | [`BacktestEngine`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/backtester/engine.py) | Walk-forward simulation with STT, turnover charges, and slippage. |
+| **5** | `tool_calculate_position_size` | [`RiskCalculator`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/core/risk_calculator.py) | Institutional 1% risk budgeting, exact shares, and >25% portfolio exposure audits. |
+| **6** | `tool_get_sector_pulse` | [`SectorPulseEngine`](file:///Users/sandesh/antigravity/SwingTrades/sectorpulse/engine.py) | Mansfield RS, Hurst Exponent ($H$), Markov Runway, and Exhaustion Hazard across 11 sectors. |
+| **7** | `tool_get_sector_constituents` | [`SectorPulseEngine`](file:///Users/sandesh/antigravity/SwingTrades/sectorpulse/constituents.py) | Ranked constituent leaderboards with Technical Merit Scores ($10–100$). |
+| **8** | `tool_log_paper_trade` | [`TradeJournalEngine`](file:///Users/sandesh/antigravity/SwingTrades/backend/app/core/trade_journal.py) | Logs active paper trades with targets, stop loss, and trade notes into SQLite. |
+
+### Real-Time Live Market Ingestion & Ticker Snapshot:
+* **Real-Time Price & Level Ingestion**: Automatically resolves ticker aliases (`TCS`, `RELIANCE`, `INFY`, `TATAMOTORS`) and injects real-time CMP, session change (₹ and %), 20/50/200 EMAs, RSI(14), ATR(14), 52-week range, and Weinstein stage directly into the copilot's context.
 * **Multi-Turn Conversational Memory**: Remembers previous turns and delivers detailed, concrete numerical trade walkthroughs upon request (e.g. *"Give details with an example"* provides exact entry, stop loss, 2R targets, and 1% risk sizing).
-* **Knowledge Base RAG Grounding**: Grounded in 45+ indicators (POC, VAH/VAL, Multi-Pivot AVWAPs, Hurst Exponent $H$, Mansfield RS, Chandelier Stops) and 12 strategies.
-* **Strict Financial Guardrails**: Intercepts off-topic queries (recipes, sports, poetry) and deflects with humorous Chanakyan trading aphorisms.
-* **Free LLM API Integration**: Connects with **Google Gemini 1.5 Flash** (Free Tier: 15 RPM, 1M TPM at $0 cost via [Google AI Studio](https://aistudio.google.com/app/apikey)) or **Groq Llama-3**, with an intelligent local quantitative fallback engine out of the box.
+* **Multi-Model Google Gemini Integration**: Fully supports `gemini-2.5-flash-lite`, `gemini-flash-latest`, `gemini-2.5-flash`, and `gemini-1.5-flash` with dynamic fallback to local deterministic quantitative synthesis.
+* **Strict Financial Guardrails**: Intercepts off-topic queries (recipes, sports, poetry) and deflects with witty Chanakyan trading aphorisms.
 
 ```bash
-# Optional: Enable live Google Gemini 1.5 Flash in your .env file
+# Optional: Enable live Google Gemini in your .env file
 echo "GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere" >> .env
 ```
 
@@ -452,19 +473,21 @@ graph TD
 
 ## 🧪 Automated Testing & Quality Assurance
 
-Run the complete automated pytest suite across strategies, econometric persistence, AI copilot, and data pipelines:
+Run the complete automated pytest suite across strategies, econometric persistence, AI copilot, tool calling, and data pipelines:
 
 ```bash
-# Run all 31 automated tests
+# Run all 39 automated tests
 python3 -m pytest tests/ -v
 ```
 
-All 31 automated test cases verify:
-* **AlphaChanakya AI Copilot**: Multi-turn conversational memory, financial RAG context extraction, and strict off-topic guardrail deflections.
-* **Centralized Knowledge Base**: 45+ terms, formulas, categories, 10 page workflows, and 12 strategy playbooks.
-* **Sector Pulse Persistence**: Mansfield Relative Strength, Hurst Exponent ($H$), Markov duration, and Weibull exhaustion hazard.
-* **Empirical Strategy Math**: 52-Week High Breakout, GMMA ribbons, Connors RSI(2), TTM Squeeze, Wyckoff Spring, NR7 expansion, RSI(28) divergence.
-* **Strict JSON Contract Schema Conformity**: Across all REST API routes.
+All 39 automated test cases verify:
+* **AlphaChanakya Native Tool Calling (`tests/test_copilot_tools.py`)**: Validates JSON schema declarations and execution across all 8 quantitative tools (`screener`, `deep_scan`, `kronos_forecast`, `backtest`, `position_sizing`, `sector_pulse`, `constituents`, `journal`).
+* **AlphaChanakya AI Copilot (`tests/test_copilot.py`)**: Multi-turn conversational memory, live real-time market quote injection, and strict off-topic guardrail deflections.
+* **Macro Regime & Market Breadth (`tests/test_regime.py`)**: Evaluates 200 EMA breadth calculations, quality ratings, and Rule of 16 daily move expectations.
+* **Centralized Knowledge Base (`tests/test_knowledge_base.py`)**: 45+ terms, formulas, categories, 10 page workflows, and 12 strategy playbooks.
+* **Sector Pulse Persistence (`tests/test_sectorpulse.py`)**: Mansfield Relative Strength, Hurst Exponent ($H$), Markov duration, and Weibull exhaustion hazard.
+* **Empirical Strategy Math (`tests/test_*_strategy.py`)**: 52-Week High Breakout, GMMA ribbons, Connors RSI(2), TTM Squeeze, Wyckoff Spring, NR7 expansion, RSI(28) divergence.
+* **Strict JSON Contract Schema Conformity**: Across all REST API endpoints.
 
 ---
 
