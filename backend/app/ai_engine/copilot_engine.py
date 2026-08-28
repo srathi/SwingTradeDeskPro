@@ -277,8 +277,8 @@ class AlphaChanakyaEngine:
         return {"reply": local_reply, "is_deflection": False}
 
     def _call_gemini(self, user_msg: str, history: List[Dict[str, str]], rag_context: str, active_tab: str, context: Dict[str, Any]) -> Optional[str]:
-        """Calls Google Gemini 1.5 Flash endpoint with full multi-turn conversational history."""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.gemini_api_key}"
+        """Calls Google Gemini model endpoints with full multi-turn conversational history."""
+        model_candidates = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash", "gemini-2.5-flash-lite"]
         
         system_instruction = (
             "You are AlphaChanakya, the wise, disciplined, and witty quantitative trading AI copilot for SwingTradeDesk Pro "
@@ -316,14 +316,20 @@ class AlphaChanakyaEngine:
             }
         }
 
-        resp = requests.post(url, json=payload, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            if candidates and "content" in candidates[0]:
-                parts = candidates[0]["content"].get("parts", [])
-                if parts:
-                    return parts[0].get("text", "")
+        for model in model_candidates:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.gemini_api_key}"
+            try:
+                resp = requests.post(url, json=payload, timeout=10)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "")
+            except Exception as ex:
+                continue
+
         return None
 
     def _generate_local_synthesis(self, user_msg: str, history: List[Dict[str, str]], topic: str, rag_context: str, active_tab: str, context: Dict[str, Any]) -> str:
