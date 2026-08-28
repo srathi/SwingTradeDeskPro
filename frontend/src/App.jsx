@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import ScreenerView from './components/ScreenerView';
@@ -13,6 +12,7 @@ import StrategyGuideView from './components/StrategyGuideView';
 import AIForecastStudio from './components/AIForecastStudio';
 import TradeJournalView from './components/TradeJournalView';
 import ContextualHelpDrawer from './components/ContextualHelpDrawer';
+import AlphaChanakyaDrawer from './components/AlphaChanakyaDrawer';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -248,16 +248,11 @@ export default function App() {
         initialTerm={helpDrawerTerm}
       />
 
-      {/* Floating Help Trigger Button */}
-      <button
-        onClick={() => { setHelpDrawerTerm(null); setHelpDrawerOpen(true); }}
-        className="fixed bottom-5 right-5 z-40 p-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-full shadow-2xl flex items-center space-x-1.5 transition-all hover:scale-105 border border-cyan-400/40 group cursor-pointer"
-        title="Open Page Guide & Jargon Dictionary (or press '?')"
-      >
-        <BookOpen className="w-4 h-4 group-hover:rotate-12 transition-transform text-cyan-200" />
-        <span className="text-xs font-bold font-mono pr-1 hidden sm:inline">Guide & Jargon</span>
-        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-cyan-200 border border-white/20">?</span>
-      </button>
+      {/* AlphaChanakya AI Financial Copilot Interactive Widget */}
+      <AlphaChanakyaDrawer
+        activeTab={activeTab}
+        selectedTicker={selectedTicker || deepScanTicker}
+      />
 
     </div>
   );

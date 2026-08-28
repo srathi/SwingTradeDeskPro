@@ -219,3 +219,23 @@ export async function deleteJournalTrade(tradeId) {
   return res.json();
 }
 
+export async function sendCopilotMessage(message, history = [], activeTab = "screener", context = {}) {
+  const res = await fetch(`${API_BASE}/ai/copilot/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history, active_tab: activeTab, context })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to communicate with AlphaChanakya");
+  }
+  return res.json();
+}
+
+export async function fetchCopilotStatus() {
+  const res = await fetch(`${API_BASE}/ai/copilot/status`);
+  if (!res.ok) throw new Error("Failed to fetch AlphaChanakya status");
+  return res.json();
+}
+
+

@@ -20,6 +20,7 @@ from backend.app.api.sector_routes import router as sector_router
 from backend.app.api.ai_routes import router as ai_router
 from backend.app.api.regime_routes import router as regime_router
 from backend.app.api.journal_routes import router as journal_router
+from backend.app.api.copilot_routes import router as copilot_router
 
 app = FastAPI(
     title="SwingDesk Pro — rupeemap.in labs (by Sandesh Rathi)",
@@ -52,6 +53,7 @@ app.include_router(sector_router)
 app.include_router(ai_router)
 app.include_router(regime_router)
 app.include_router(journal_router)
+app.include_router(copilot_router)
 
 
 @app.get("/api/health")
