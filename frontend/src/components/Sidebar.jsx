@@ -10,6 +10,7 @@ import {
   BookOpen,
   Compass,
   Sparkles,
+  BookMarked,
   ChevronLeft,
   ChevronRight,
   X
@@ -37,6 +38,7 @@ export default function Sidebar({
       items: [
         { id: 'chart', label: 'Chart Studio', icon: BarChart2 },
         { id: 'aiforecast', label: 'AI Forecaster', icon: Sparkles, badge: 'Kronos' },
+        { id: 'journal', label: 'Paper Journal', icon: BookMarked, badge: 'Forward Test' },
         { id: 'backtest', label: 'Backtest Studio', icon: TrendingUp },
         { id: 'risk', label: 'Risk Calculator', icon: ShieldAlert },
       ]

@@ -41,6 +41,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
   const [showEMA50, setShowEMA50] = useState(true);
   const [showEMA200, setShowEMA200] = useState(true);
   const [showSetupLines, setShowSetupLines] = useState(true);
+  const [showVolumeProfile, setShowVolumeProfile] = useState(true);
+  const [showAVWAP, setShowAVWAP] = useState(true);
 
   // AI Forecast state
   const [showAIForecast, setShowAIForecast] = useState(false);
@@ -261,6 +263,63 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
             lineWidth: 1,
             lineStyle: 2,
             title: 'TARGET 2 (3R)'
+          });
+        }
+      }
+
+      // Volume Profile Price Lines (POC, VAH, VAL)
+      if (showVolumeProfile && chartData.volume_profile) {
+        const vp = chartData.volume_profile;
+        if (vp.poc) {
+          candleSeries.createPriceLine({
+            price: vp.poc,
+            color: '#F59E0B',
+            lineWidth: 2,
+            lineStyle: 0,
+            title: 'POC'
+          });
+        }
+        if (vp.vah) {
+          candleSeries.createPriceLine({
+            price: vp.vah,
+            color: '#06B6D4',
+            lineWidth: 1,
+            lineStyle: 1,
+            title: 'VAH (70%)'
+          });
+        }
+        if (vp.val) {
+          candleSeries.createPriceLine({
+            price: vp.val,
+            color: '#3B82F6',
+            lineWidth: 1,
+            lineStyle: 1,
+            title: 'VAL (70%)'
+          });
+        }
+      }
+
+      // Anchored VWAPs
+      if (showAVWAP && chartData.anchored_vwaps) {
+        const av = chartData.anchored_vwaps;
+        const avwapHigh = av.avwap_52w_high?.current_val || av.avwap_52w_high?.price;
+        const avwapLow = av.avwap_swing_low?.current_val || av.avwap_swing_low?.price;
+        if (avwapHigh) {
+          candleSeries.createPriceLine({
+            price: avwapHigh,
+            color: '#EAB308',
+            lineWidth: 1.5,
+            lineStyle: 3,
+            title: 'AVWAP 52W-H'
+          });
+        }
+        if (avwapLow) {
+          candleSeries.createPriceLine({
+            price: avwapLow,
+            color: '#10B981',
+            lineWidth: 1.5,
+            lineStyle: 3,
+            title: 'AVWAP Low'
           });
         }
       }
@@ -498,6 +557,20 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
                 className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showEMA200 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : 'text-gray-500'}`}
               >
                 200 EMA
+              </button>
+              <button
+                onClick={() => setShowVolumeProfile(!showVolumeProfile)}
+                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showVolumeProfile ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                title="Toggle Volume Profile (POC, VAH, VAL)"
+              >
+                Vol Profile
+              </button>
+              <button
+                onClick={() => setShowAVWAP(!showAVWAP)}
+                className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showAVWAP ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'text-gray-500 hover:text-gray-300'}`}
+                title="Toggle Multi-Pivot Anchored VWAP"
+              >
+                AVWAP
               </button>
               <button
                 onClick={() => setShowAIForecast(!showAIForecast)}

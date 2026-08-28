@@ -10,6 +10,7 @@ import RiskCalculator from './components/RiskCalculator';
 import WatchlistView from './components/WatchlistView';
 import StrategyGuideView from './components/StrategyGuideView';
 import AIForecastStudio from './components/AIForecastStudio';
+import TradeJournalView from './components/TradeJournalView';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -152,6 +153,17 @@ export default function App() {
                 <BacktestStudio
                   initialTicker={selectedTicker}
                   initialStrategy={backtestStrategy}
+                />
+              )}
+
+              {activeTab === 'journal' && (
+                <TradeJournalView
+                  onOpenChart={handleSelectTicker}
+                  onOpenDeepScan={(t) => {
+                    setDeepScanTicker(t);
+                    setActiveTab('deepscan');
+                  }}
+                  onOpenAIForecast={handleOpenAIForecast}
                 />
               )}
 

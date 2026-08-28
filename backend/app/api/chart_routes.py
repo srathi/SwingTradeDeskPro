@@ -8,6 +8,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 from backend.app.core.data_engine import data_engine
 from backend.app.core.indicator_engine import compute_all_indicators
+from backend.app.core.volume_profile import compute_volume_profile, compute_institutional_avwaps
 from backend.app.strategies import STRATEGY_REGISTRY
 
 router = APIRouter(prefix="/api/chart", tags=["Chart"])
@@ -101,6 +102,10 @@ def get_chart_data(
     latest_volume = float(latest_bar['Volume']) if ('Volume' in latest_bar and not pd.isna(latest_bar['Volume']) and not math.isnan(float(latest_bar['Volume']))) else 0
     latest_atr = round(float(latest_bar['ATR_14']), 2) if ('ATR_14' in latest_bar and not pd.isna(latest_bar['ATR_14']) and not math.isnan(float(latest_bar['ATR_14']))) else None
 
+    # Compute Volume Profile and Anchored VWAPs
+    vol_profile = compute_volume_profile(df, num_bins=35)
+    inst_avwaps = compute_institutional_avwaps(df)
+
     return {
         "ticker": ticker,
         "latest_close": latest_close,
@@ -116,6 +121,8 @@ def get_chart_data(
         "bb_upper": bb_upper_series,
         "bb_lower": bb_lower_series,
         "rsi": rsi_series,
+        "volume_profile": vol_profile,
+        "anchored_vwaps": inst_avwaps,
         "active_setup": active_setup,
         "setup": active_setup,
         "indicators": {

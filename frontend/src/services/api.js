@@ -165,3 +165,57 @@ export async function fetchAIModelStatus() {
   return res.json();
 }
 
+export async function fetchMarketRegime(market = "NSE") {
+  const res = await fetch(`${API_BASE}/market-regime/current?market=${encodeURIComponent(market)}`);
+  if (!res.ok) throw new Error("Failed to fetch market regime");
+  return res.json();
+}
+
+export async function fetchAlphaFusion(ticker, period = "1y", strategyId = null) {
+  let url = `${API_BASE}/ai/alpha-fusion/${encodeURIComponent(ticker)}?period=${period}`;
+  if (strategyId) url += `&strategy_id=${encodeURIComponent(strategyId)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch alpha fusion");
+  return res.json();
+}
+
+export async function fetchJournalSummary() {
+  const res = await fetch(`${API_BASE}/journal/summary`);
+  if (!res.ok) throw new Error("Failed to fetch journal summary");
+  return res.json();
+}
+
+export async function logJournalTrade(payload) {
+  const res = await fetch(`${API_BASE}/journal/trade`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to log trade");
+  }
+  return res.json();
+}
+
+export async function closeJournalTrade(tradeId, payload) {
+  const res = await fetch(`${API_BASE}/journal/trade/${tradeId}/close`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to close trade");
+  }
+  return res.json();
+}
+
+export async function deleteJournalTrade(tradeId) {
+  const res = await fetch(`${API_BASE}/journal/trade/${tradeId}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to delete trade");
+  return res.json();
+}
+

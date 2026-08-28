@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from backend.app.core.index_manager import IndexManager
 from backend.app.core.data_engine import data_engine
+from backend.app.core.mtf_engine import MTFConfluenceEngine
+from backend.app.core.volume_profile import compute_volume_profile
 from backend.app.strategies import get_strategy, list_strategies, STRATEGY_REGISTRY
 
 router = APIRouter(prefix="/api/screener", tags=["Screener"])
@@ -67,6 +69,23 @@ def run_screener_sync(req: ScanRequest):
     for ticker, df in batch_df.items():
         res = strat.evaluate_setup(df, ticker, req.params)
         if res:
+            # Multi-Timeframe Confluence & Volume Profile Enrichment
+            try:
+                mtf = MTFConfluenceEngine.evaluate_triple_screen(df, ticker)
+                res["mtf_confluence"] = {
+                    "score": mtf["confluence_score"],
+                    "rating": mtf["rating"],
+                    "badge": mtf["badge"],
+                    "weekly_trend": mtf["screen_1_weekly"]["trend"]
+                }
+                vp = compute_volume_profile(df, num_bins=20)
+                res["volume_profile"] = {
+                    "poc": vp["poc"],
+                    "vah": vp["vah"],
+                    "val": vp["val"]
+                }
+            except Exception:
+                pass
             clean_res = sanitize_for_json(res)
             matches.append(clean_res)
 
@@ -124,6 +143,22 @@ async def screener_websocket(websocket: WebSocket):
                 if df is not None:
                     res = strat.evaluate_setup(df, ticker, params)
                     if res:
+                        try:
+                            mtf = MTFConfluenceEngine.evaluate_triple_screen(df, ticker)
+                            res["mtf_confluence"] = {
+                                "score": mtf["confluence_score"],
+                                "rating": mtf["rating"],
+                                "badge": mtf["badge"],
+                                "weekly_trend": mtf["screen_1_weekly"]["trend"]
+                            }
+                            vp = compute_volume_profile(df, num_bins=20)
+                            res["volume_profile"] = {
+                                "poc": vp["poc"],
+                                "vah": vp["vah"],
+                                "val": vp["val"]
+                            }
+                        except Exception:
+                            pass
                         clean_res = sanitize_for_json(res)
                         matches.append(clean_res)
                         await websocket.send_json({

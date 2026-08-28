@@ -12,6 +12,8 @@ from fastapi import APIRouter, HTTPException, Query
 from backend.app.core.data_engine import data_engine
 from backend.app.core.search_engine import LOCAL_STOCK_MASTER, SearchEngine
 from backend.app.core.indicator_engine import compute_all_indicators, macd
+from backend.app.core.volume_profile import compute_volume_profile, compute_institutional_avwaps
+from backend.app.core.mtf_engine import MTFConfluenceEngine
 from backend.app.strategies import STRATEGY_REGISTRY
 from backend.app.backtester.engine import BacktestEngine
 from backend.app.backtester.analytics import compute_performance_metrics
@@ -194,7 +196,10 @@ def run_single_stock_deep_scan(
     elif cmp < ema200:
         verdict_title = "Bearish / Below 200 EMA"
         verdict_type = "BEARISH"
-        verdict_text = f"Trading {calc_dist(ema200)}% below 200 EMA (₹{ema200:.2f}). Swing trend strategies are currently filtered out."
+    # Compute Volume Profile, Anchored VWAPs, and MTF Triple Screen Confluence
+    vol_profile = compute_volume_profile(df, num_bins=35)
+    inst_avwaps = compute_institutional_avwaps(df)
+    mtf_confluence = MTFConfluenceEngine.evaluate_triple_screen(df, clean_ticker)
 
     return {
         "ticker": clean_ticker,
@@ -226,6 +231,9 @@ def run_single_stock_deep_scan(
             "vol_sma20": int(vol_sma),
             "vol_ratio": round(vol_ratio, 2)
         },
+        "volume_profile": vol_profile,
+        "anchored_vwaps": inst_avwaps,
+        "mtf_confluence": mtf_confluence,
         "strategy_evaluations": strategy_evaluations,
         "active_setup": primary_setup,
         "position_sizing": {

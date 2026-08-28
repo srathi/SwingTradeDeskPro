@@ -90,3 +90,20 @@ async def generate_ai_forecast(req: ForecastRequest):
             status_code=500,
             detail=f"AI Forecast calculation failed for '{ticker}': {str(e)}"
         )
+
+
+@router.get("/alpha-fusion/{ticker:path}")
+def get_alpha_fusion_score(
+    ticker: str,
+    period: str = "1y",
+    strategy_id: Optional[str] = None
+):
+    """
+    Returns unified Composite Alpha Score, Statistical Expectancy (EV/R),
+    and AI-Quant Confluence metrics for a stock.
+    """
+    from backend.app.core.alpha_fusion import AlphaFusionEngine
+    res = AlphaFusionEngine.evaluate_alpha_fusion(ticker, period=period, strategy_id=strategy_id)
+    if "error" in res:
+        raise HTTPException(status_code=404, detail=res["error"])
+    return res

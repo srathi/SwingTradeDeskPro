@@ -14,9 +14,13 @@ import {
   Layers, 
   Award,
   Search,
-  Building2
+  Building2,
+  BookMarked,
+  CheckCircle2,
+  Target,
+  Compass
 } from 'lucide-react';
-import { fetchDeepScan, searchStocks, fetchAIForecast } from '../services/api';
+import { fetchDeepScan, searchStocks, fetchAIForecast, fetchAlphaFusion, logJournalTrade } from '../services/api';
 import StockSearchInput from './StockSearchInput';
 
 const fmt = (v, d = 2) => {
@@ -55,6 +59,8 @@ export default function SingleStockScanner({
   
   const [aiForecast, setAiForecast] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [alphaFusionData, setAlphaFusionData] = useState(null);
+  const [logTradeStatus, setLogTradeStatus] = useState(null);
 
   useEffect(() => {
     if (initialTicker && initialTicker.trim()) {
@@ -83,6 +89,11 @@ export default function SingleStockScanner({
         .catch(() => setAiForecast(null))
         .finally(() => setAiLoading(false));
 
+      // Auto-trigger Alpha Fusion Engine
+      fetchAlphaFusion(res.ticker)
+        .then(fusionRes => setAlphaFusionData(fusionRes))
+        .catch(() => setAlphaFusionData(null));
+
     } catch (err) {
       setErrorMsg(err.message || `Could not run deep scan on '${symToScan}'`);
       try {
@@ -91,6 +102,37 @@ export default function SingleStockScanner({
       } catch (e) {}
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogTradeToJournal = async () => {
+    if (!data) return;
+    try {
+      setLogTradeStatus('LOGGING');
+      const sizing = data.position_sizing || {};
+      const activeSetup = data.active_setup;
+      const strategyName = activeSetup ? (activeSetup.strategy || activeSetup.strategy_name || "Deep Scan Setup") : "Deep Scan Swing";
+      const stopLoss = sizing.stop_loss || (data.cmp * 0.95);
+      const target1 = sizing.target_1 || (data.cmp * 1.06);
+      const target2 = sizing.target_2 || (data.cmp * 1.10);
+      const shares = sizing.shares || 10;
+
+      await logJournalTrade({
+        ticker: data.ticker,
+        strategy: strategyName,
+        entry_price: data.cmp,
+        shares: shares,
+        stop_loss: stopLoss,
+        target_1: target1,
+        target_2: target2,
+        notes: `Logged directly from Deep Scan. Alpha Score: ${alphaFusionData?.composite_alpha_score || 'N/A'}/100. MTF: ${data.mtf_confluence?.badge || 'N/A'}`
+      });
+
+      setLogTradeStatus('LOGGED');
+      setTimeout(() => setLogTradeStatus(null), 4000);
+    } catch (err) {
+      alert("Failed to log trade to paper journal: " + err.message);
+      setLogTradeStatus(null);
     }
   };
 
@@ -347,6 +389,23 @@ export default function SingleStockScanner({
                   >
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Backtest</span>
+                  </button>
+                  <button
+                    onClick={handleLogTradeToJournal}
+                    disabled={logTradeStatus === 'LOGGING'}
+                    className="px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm"
+                  >
+                    {logTradeStatus === 'LOGGED' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Logged to Journal!</span>
+                      </>
+                    ) : (
+                      <>
+                        <BookMarked className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Log to Journal</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -656,6 +715,192 @@ export default function SingleStockScanner({
             )}
           </div>
 
+          {/* Section 3.6: Alpha Fusion & Institutional Quantitative Confluence */}
+          {alphaFusionData && (
+            <div className="bg-gradient-to-r from-amber-950/20 via-gray-900/90 to-cyan-950/20 border border-amber-500/30 rounded-2xl p-5 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300">
+                    <Award className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <span>Alpha Fusion Ensemble</span>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono uppercase font-bold border ${alphaFusionData.composite_alpha_score >= 75 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : alphaFusionData.composite_alpha_score >= 55 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>
+                        {alphaFusionData.badge}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Blended institutional alpha synthesis: Rule-Based Setup (30%) + Kronos AI (25%) + MTF Confluence (25%) + Volume Profile (20%)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline space-x-2 font-mono self-start sm:self-auto">
+                  <span className="text-xs text-gray-400">Composite Alpha:</span>
+                  <span className={`text-2xl font-extrabold ${alphaFusionData.composite_alpha_score >= 75 ? 'text-emerald-400' : alphaFusionData.composite_alpha_score >= 55 ? 'text-amber-400' : 'text-rose-400'}`}>
+                    {alphaFusionData.composite_alpha_score}
+                  </span>
+                  <span className="text-xs text-gray-400">/ 100</span>
+                </div>
+              </div>
+
+              {/* 4-Pillar Decomposition Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                
+                {/* Pillar 1: Strategy Score */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                  <span className="text-gray-500 text-[10px] uppercase font-bold block">1. Strategy Setup (30%)</span>
+                  <span className="text-sm font-bold text-cyan-300 block mt-1 truncate">
+                    {alphaFusionData.components?.strategy?.name || 'Rule-Based'}
+                  </span>
+                  <span className="text-xs font-mono text-gray-300 block mt-0.5">
+                    Score: {alphaFusionData.components?.strategy?.score}/100
+                  </span>
+                </div>
+
+                {/* Pillar 2: Kronos AI Upside */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                  <span className="text-gray-500 text-[10px] uppercase font-bold block">2. Kronos AI (25%)</span>
+                  <span className="text-sm font-bold text-purple-300 block mt-1 font-mono">
+                    {alphaFusionData.components?.kronos_ai?.prob_upside_pct}% P(Upside)
+                  </span>
+                  <span className="text-xs font-mono text-gray-300 block mt-0.5">
+                    Target: ₹{alphaFusionData.components?.kronos_ai?.target_price}
+                  </span>
+                </div>
+
+                {/* Pillar 3: MTF Score */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                  <span className="text-gray-500 text-[10px] uppercase font-bold block">3. MTF Confluence (25%)</span>
+                  <span className="text-sm font-bold text-emerald-300 block mt-1">
+                    {alphaFusionData.components?.mtf_confluence?.badge}
+                  </span>
+                  <span className="text-xs font-mono text-gray-300 block mt-0.5">
+                    Score: {alphaFusionData.components?.mtf_confluence?.score}/100
+                  </span>
+                </div>
+
+                {/* Pillar 4: Statistical Expectancy */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800">
+                  <span className="text-gray-500 text-[10px] uppercase font-bold block">Statistical Expectancy</span>
+                  <span className={`text-base font-bold font-mono block mt-1 ${alphaFusionData.statistical_expectancy_ev_r >= 0.5 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    +{alphaFusionData.statistical_expectancy_ev_r} EV / R
+                  </span>
+                  <span className="text-[10px] text-gray-400 block mt-0.5">
+                    Regime: {alphaFusionData.components?.market_regime?.title}
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Recommendation Strip */}
+              <div className="p-3 bg-gray-950/90 rounded-xl border border-gray-800/80 flex items-center justify-between text-xs font-mono text-gray-300">
+                <span className="text-gray-400">Institutional Synthesis:</span>
+                <span className="font-semibold text-white ml-2">{alphaFusionData.recommendation}</span>
+              </div>
+
+            </div>
+          )}
+
+          {/* Section 3.7 & 3.8: Multi-Timeframe Matrix & Volume Profile */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* MTF Triple Screen Confluence Matrix */}
+            <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <div className="flex items-center space-x-2">
+                  <Compass className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">Alexander Elder Triple-Screen Matrix</h3>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-xs font-bold font-mono border ${data.mtf_confluence?.confluence_score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : data.mtf_confluence?.confluence_score >= 50 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                  {data.mtf_confluence?.badge || 'Triple Screen'}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs font-mono">
+                {/* Screen 1: Weekly Tide */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 1: Weekly Tide</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_1_weekly?.bias}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_1_weekly?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                    {data.mtf_confluence?.screen_1_weekly?.bullish ? '✅ Bullish Tide' : '❌ Bearish Tide'}
+                  </span>
+                </div>
+
+                {/* Screen 2: Daily Wave */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 2: Daily Wave</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_2_daily?.bias}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_2_daily?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                    {data.mtf_confluence?.screen_2_daily?.bullish ? '✅ Favorable Wave' : '⚠️ Pullback Pending'}
+                  </span>
+                </div>
+
+                {/* Screen 3: Micro Timing */}
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 3: Micro Timing</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_3_timing?.bias}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_3_timing?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-400'}`}>
+                    {data.mtf_confluence?.screen_3_timing?.bullish ? '⚡ Trigger Ready' : '⏳ Awaiting Pivot'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Volume Profile & Anchored VWAPs */}
+            <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <div className="flex items-center space-x-2">
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">Volume Profile & Anchored VWAPs</h3>
+                </div>
+                <span className="text-xs text-gray-400 font-mono">Institutional Order Flow</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-xs font-mono text-center">
+                <div className="bg-gray-950/80 p-2.5 rounded-xl border border-gray-800">
+                  <span className="text-[10px] text-amber-400 font-bold uppercase block">POC</span>
+                  <span className="font-bold text-white text-sm mt-0.5 block">₹{fmt(data.volume_profile?.poc)}</span>
+                  <span className="text-[10px] text-gray-500">Point of Control</span>
+                </div>
+                <div className="bg-gray-950/80 p-2.5 rounded-xl border border-gray-800">
+                  <span className="text-[10px] text-cyan-400 font-bold uppercase block">VAH (70%)</span>
+                  <span className="font-bold text-white text-sm mt-0.5 block">₹{fmt(data.volume_profile?.vah)}</span>
+                  <span className="text-[10px] text-gray-500">Value Area High</span>
+                </div>
+                <div className="bg-gray-950/80 p-2.5 rounded-xl border border-gray-800">
+                  <span className="text-[10px] text-blue-400 font-bold uppercase block">VAL (70%)</span>
+                  <span className="font-bold text-white text-sm mt-0.5 block">₹{fmt(data.volume_profile?.val)}</span>
+                  <span className="text-[10px] text-gray-500">Value Area Low</span>
+                </div>
+              </div>
+
+              {/* Anchored VWAPs */}
+              {data.anchored_vwaps && (
+                <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 space-y-2 text-xs font-mono">
+                  <span className="text-[10px] text-gray-400 uppercase font-bold block">Institutional Anchor Levels:</span>
+                  <div className="flex justify-between text-gray-300">
+                    <span>52-Week High AVWAP:</span>
+                    <span className="text-amber-300 font-bold">₹{fmt(data.anchored_vwaps.avwap_52w_high?.current_val || data.anchored_vwaps.avwap_52w_high?.price)} ({data.anchored_vwaps.avwap_52w_high?.price_vs_avwap_pct >= 0 ? '+' : ''}{data.anchored_vwaps.avwap_52w_high?.price_vs_avwap_pct}%)</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Recent Swing Low AVWAP:</span>
+                    <span className="text-emerald-300 font-bold">₹{fmt(data.anchored_vwaps.avwap_swing_low?.current_val || data.anchored_vwaps.avwap_swing_low?.price)} ({data.anchored_vwaps.avwap_swing_low?.price_vs_avwap_pct >= 0 ? '+' : ''}{data.anchored_vwaps.avwap_swing_low?.price_vs_avwap_pct}%)</span>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+
           {/* Section 4: 2-Year Historical Strategy Performance & Position Sizing */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
@@ -752,10 +997,33 @@ export default function SingleStockScanner({
                   <span>Max Risk Budget:</span>
                   <span className="font-semibold text-red-400">₹{(data.position_sizing?.total_risk_amount || 0).toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between items-center text-gray-300">
+                  <span>ATR Chandelier Stop (3x):</span>
+                  <span className="font-semibold text-amber-300">₹{fmt(data.cmp - (3.0 * data.atr_14))}</span>
+                </div>
                 <div className="flex justify-between items-center text-gray-300 pt-1 border-t border-gray-800">
                   <span>Target 1 Profit (2R):</span>
                   <span className="font-bold text-emerald-400">+₹{(data.position_sizing?.potential_profit_target_1 || 0).toLocaleString()}</span>
                 </div>
+
+                {/* Log to Paper Journal Button */}
+                <button
+                  onClick={handleLogTradeToJournal}
+                  disabled={logTradeStatus === 'LOGGING'}
+                  className="w-full mt-2 py-2 px-3 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs font-mono transition shadow-lg shadow-cyan-900/20 flex items-center justify-center space-x-2"
+                >
+                  {logTradeStatus === 'LOGGED' ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                      <span>Saved to Paper Journal Studio!</span>
+                    </>
+                  ) : (
+                    <>
+                      <BookMarked className="w-4 h-4" />
+                      <span>Log this Setup to Paper Journal</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 

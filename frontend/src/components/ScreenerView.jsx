@@ -472,13 +472,23 @@ export default function ScreenerView({
                   </div>
 
                   <div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                       <span className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
                         {setup.ticker}
                       </span>
                       <span className="text-[11px] px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono border border-gray-700">
                         ₹{fmt(setup.close)}
                       </span>
+                      {setup.mtf_confluence?.badge && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold border ${setup.mtf_confluence.confluence_score >= 80 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
+                          {setup.mtf_confluence.badge}
+                        </span>
+                      )}
+                      {setup.volume_profile?.poc && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-300 font-mono border border-cyan-800/60">
+                          POC: ₹{fmt(setup.volume_profile.poc)}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">{setup.setup_summary || (setup.reasons && setup.reasons.length > 0 ? setup.reasons[0] : "") || `${setup.strategy} Setup`}</p>
                   </div>
