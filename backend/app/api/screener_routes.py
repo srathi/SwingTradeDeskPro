@@ -126,8 +126,8 @@ async def screener_websocket(websocket: WebSocket):
         })
 
         matches = []
-        # Process in chunks of 5 symbols asynchronously
-        chunk_size = 5
+        # Process in parallel chunks of 15 symbols asynchronously
+        chunk_size = 15
         for i in range(0, total, chunk_size):
             chunk = tickers[i:i + chunk_size]
             batch_df = await asyncio.to_thread(
@@ -135,7 +135,7 @@ async def screener_websocket(websocket: WebSocket):
                 chunk,
                 period="1y",
                 interval="1d",
-                max_workers=5
+                max_workers=10
             )
 
             for ticker in chunk:

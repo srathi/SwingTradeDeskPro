@@ -138,15 +138,42 @@ export default function ScreenerView({
     const wsUrl = `${protocol}//${host}/api/screener/ws`;
 
     let ws = null;
+    let watchdogTimer = null;
+
+    const resetWatchdog = () => {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      watchdogTimer = setTimeout(async () => {
+        console.warn("WebSocket watchdog timeout. Auto-falling back to high-speed batch sync...");
+        try {
+          if (ws) {
+            ws.onclose = null;
+            ws.onerror = null;
+            ws.close();
+          }
+          const res = await runScanSync(payload);
+          setResults(res.results || []);
+          setProgress(100);
+          setScannedCount(res.scanned_count || 0);
+          setTotalCount(res.scanned_count || 0);
+        } catch (httpErr) {
+          setErrorMsg(httpErr.message || "Scan completion error");
+        } finally {
+          setScanning(false);
+        }
+      }, 12000);
+    };
 
     try {
       ws = new WebSocket(wsUrl);
+      resetWatchdog();
 
       ws.onopen = () => {
+        resetWatchdog();
         ws.send(JSON.stringify(payload));
       };
 
       ws.onmessage = (event) => {
+        resetWatchdog();
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'START') {
@@ -161,11 +188,13 @@ export default function ScreenerView({
             setScannedCount(data.scanned);
             setProgress(data.progress_pct);
           } else if (data.type === 'COMPLETE') {
+            if (watchdogTimer) clearTimeout(watchdogTimer);
             setScanning(false);
             setProgress(100);
             setResults(data.results || []);
             try { ws.close(); } catch (e) {}
           } else if (data.type === 'ERROR') {
+            if (watchdogTimer) clearTimeout(watchdogTimer);
             setErrorMsg(data.message);
             setScanning(false);
             try { ws.close(); } catch (e) {}
@@ -176,6 +205,7 @@ export default function ScreenerView({
       };
 
       ws.onerror = async (err) => {
+        if (watchdogTimer) clearTimeout(watchdogTimer);
         console.warn("WebSocket stream fallback to HTTP scan:", err);
         try {
           const res = await runScanSync(payload);

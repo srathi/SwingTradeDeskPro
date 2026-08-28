@@ -86,7 +86,9 @@ class DataEngine:
                 period=period,
                 interval=interval,
                 auto_adjust=False,
-                progress=False
+                progress=False,
+                threads=False,
+                timeout=7.0
             )
             if df.empty or len(df) < 15:
                 return None
@@ -114,11 +116,15 @@ class DataEngine:
 
     def resolve_symbol(self, query: str) -> List[str]:
         """
-        Resolves natural company names and un-suffixed tickers to candidate stock symbols.
+        Resolves input symbol / query to candidate symbols.
         """
-        q = query.strip()
+        q = (query or "").strip()
         if not q:
             return []
+
+        # If already formatted with official exchange suffix, return directly
+        if q.upper().endswith(('.NS', '.BO')):
+            return [q.upper()]
 
         # If index symbol with caret prefix, preserve exact ticker without fuzzy stock search
         if q.startswith("^"):
@@ -126,9 +132,6 @@ class DataEngine:
             return [q, f"{clean}.NS", f"{clean}.BO", clean]
 
         candidates = []
-        # 1. If already formatted with suffix
-        if q.upper().endswith(('.NS', '.BO')):
-            candidates.append(q.upper())
 
         # 2. Query SearchEngine for high-confidence fuzzy company/ticker matches
         from backend.app.core.search_engine import SearchEngine
