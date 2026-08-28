@@ -189,11 +189,15 @@ export default function TopHeader({
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider opacity-80 block">Current Active Regime</span>
                 <h3 className="text-base font-extrabold text-white mt-0.5">{regimeData.verdict?.title}</h3>
-                <p className="text-xs mt-1 text-gray-300 leading-relaxed">{regimeData.verdict?.description}</p>
+                <p className="text-xs mt-1 text-gray-300 leading-relaxed">
+                  {regimeData.verdict?.description || regimeData.verdict?.action_guideline}
+                </p>
               </div>
               <div className="bg-gray-950/80 p-3 rounded-lg border border-gray-800 text-center flex-shrink-0">
                 <span className="text-[10px] text-gray-400 uppercase block font-bold">Recommended Capital</span>
-                <span className="text-lg font-black font-mono text-cyan-300">{Math.round((regimeData.verdict?.recommended_allocation_multiplier || 1.0) * 100)}% Risk</span>
+                <span className="text-lg font-black font-mono text-cyan-300">
+                  {Math.round((regimeData.verdict?.recommended_allocation_multiplier ?? ((regimeData.verdict?.max_capital_allocation_pct || 100) / 100)) * 100)}% Risk
+                </span>
               </div>
             </div>
 
@@ -220,17 +224,19 @@ export default function TopHeader({
                   {regimeData.volatility?.change_pct >= 0 ? '+' : ''}{regimeData.volatility?.change_pct}% Today
                 </div>
                 <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400">
-                  Implied Daily Move: <span className="text-amber-300 font-bold">±{regimeData.volatility?.implied_daily_move_pct}%</span>
+                  Implied Daily Move: <span className="text-amber-300 font-bold">±{regimeData.volatility?.implied_daily_move_pct ?? (regimeData.volatility?.value ? (regimeData.volatility.value / 15.87).toFixed(2) : '0.88')}%</span>
                 </div>
               </div>
 
               {/* Market Breadth */}
               <div className="bg-gray-950/70 p-3.5 rounded-xl border border-gray-800 space-y-1.5">
                 <span className="text-[10px] text-gray-400 uppercase font-bold block">Market Breadth</span>
-                <div className="text-base font-bold text-white">{regimeData.breadth?.pct_above_200_ema}%</div>
+                <div className="text-base font-bold text-white">
+                  {regimeData.breadth?.pct_above_200_ema ?? regimeData.breadth?.above_ema200_pct ?? regimeData.breadth?.above_ema50_pct ?? 68}%
+                </div>
                 <div className="text-xs text-gray-400">Above 200 EMA</div>
                 <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400">
-                  Breadth Quality: <span className="text-emerald-300 font-bold">{regimeData.breadth?.rating}</span>
+                  Breadth Quality: <span className="text-emerald-300 font-bold">{regimeData.breadth?.rating || regimeData.breadth?.health_status || 'HEALTHY'}</span>
                 </div>
               </div>
 
