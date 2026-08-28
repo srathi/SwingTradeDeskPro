@@ -51,6 +51,16 @@ export default function AlphaChanakyaDrawer({ activeTab = 'screener', selectedTi
     fetchCopilotStatus()
       .then(data => setStatusInfo(data))
       .catch(() => setStatusInfo({ status: 'ONLINE', provider: 'Quant RAG Engine' }));
+
+    const handleOpen = () => setIsOpen(true);
+    const handleToggle = () => setIsOpen(prev => !prev);
+    window.addEventListener('open-alphachanakya', handleOpen);
+    window.addEventListener('toggle-alphachanakya', handleToggle);
+
+    return () => {
+      window.removeEventListener('open-alphachanakya', handleOpen);
+      window.removeEventListener('toggle-alphachanakya', handleToggle);
+    };
   }, []);
 
   useEffect(() => {
@@ -187,10 +197,10 @@ export default function AlphaChanakyaDrawer({ activeTab = 'screener', selectedTi
     <>
       {/* Floating Trigger Button (Bottom Right) */}
       {!isOpen && (
-        <div className="fixed bottom-5 right-5 z-40">
+        <div className="fixed bottom-20 lg:bottom-5 right-4 lg:right-5 z-30 lg:z-40">
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 hover:from-cyan-500 hover:to-indigo-600 text-white shadow-2xl shadow-cyan-600/30 border border-cyan-400/40 transition-all duration-200 hover:scale-105 active:scale-95"
+            className="group relative flex items-center gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 hover:from-cyan-500 hover:to-indigo-600 text-white shadow-2xl shadow-cyan-600/30 border border-cyan-400/40 transition-all duration-200 hover:scale-105 active:scale-95"
             title="Ask AlphaChanakya AI Quantitative Copilot"
           >
             {/* Animated Pulse Ring */}
@@ -210,7 +220,7 @@ export default function AlphaChanakyaDrawer({ activeTab = 'screener', selectedTi
                   AI
                 </span>
               </div>
-              <div className="text-[10px] text-cyan-200/80 font-mono">
+              <div className="text-[10px] text-cyan-200/80 font-mono hidden sm:block">
                 Quantitative Copilot
               </div>
             </div>
@@ -220,7 +230,7 @@ export default function AlphaChanakyaDrawer({ activeTab = 'screener', selectedTi
 
       {/* Slide-over / Modal Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-50 w-[95vw] sm:w-[480px] h-[600px] max-h-[90vh] bg-[#080d1a]/95 backdrop-blur-2xl border border-cyan-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="fixed inset-x-2 bottom-2 sm:inset-auto sm:bottom-4 sm:right-4 z-50 w-auto sm:w-[480px] h-[82vh] sm:h-[600px] max-h-[92vh] bg-[#080d1a]/95 backdrop-blur-2xl border border-cyan-500/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           
           {/* Header Bar */}
           <div className="bg-gradient-to-r from-[#0c1427] via-[#091122] to-[#080d1a] border-b border-gray-800/80 p-3.5 flex items-center justify-between">

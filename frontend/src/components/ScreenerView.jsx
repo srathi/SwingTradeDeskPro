@@ -611,10 +611,10 @@ export default function ScreenerView({
                 </div>
 
                 {/* Right: Actions */}
-                <div className="flex items-center space-x-2 flex-wrap gap-y-2 justify-start lg:justify-end">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-2 lg:space-x-2 w-full lg:w-auto justify-start lg:justify-end">
                   <button
                     onClick={() => handleOpenAIForecast(setup)}
-                    className="flex items-center space-x-1.5 px-3 py-2 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800/80 hover:border-purple-500 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800/80 hover:border-purple-500 rounded-lg text-xs font-semibold shadow-sm transition-all min-h-[38px]"
                     title="Run Kronos AI Foundation Forecast"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-purple-400" />
@@ -623,7 +623,7 @@ export default function ScreenerView({
 
                   <button
                     onClick={() => onSelectTicker(setup.ticker)}
-                    className="flex items-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-medium transition-colors"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-medium transition-colors min-h-[38px]"
                     title="Open in Chart Studio"
                   >
                     <BarChart2 className="w-3.5 h-3.5" />
@@ -632,7 +632,7 @@ export default function ScreenerView({
 
                   <button
                     onClick={() => onOpenRisk(setup)}
-                    className="flex items-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-amber-300 border border-gray-700 hover:border-amber-500/50 rounded-lg text-xs font-medium transition-colors"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-amber-300 border border-gray-700 hover:border-amber-500/50 rounded-lg text-xs font-medium transition-colors min-h-[38px]"
                     title="Calculate Position Size"
                   >
                     <ShieldAlert className="w-3.5 h-3.5" />
@@ -642,7 +642,7 @@ export default function ScreenerView({
                   <button
                     onClick={() => handleLogTrade(setup)}
                     disabled={loggedTrades[setup.ticker] === 'LOGGING'}
-                    className="flex items-center space-x-1.5 px-3 py-2 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-800/80 hover:border-cyan-500 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    className="flex items-center justify-center space-x-1.5 px-3 py-2 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-800/80 hover:border-cyan-500 rounded-lg text-xs font-semibold shadow-sm transition-all min-h-[38px]"
                     title="Log directly to Simulated Paper Journal"
                   >
                     {loggedTrades[setup.ticker] === 'LOGGED' ? (

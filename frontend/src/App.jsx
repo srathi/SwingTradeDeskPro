@@ -13,6 +13,7 @@ import AIForecastStudio from './components/AIForecastStudio';
 import TradeJournalView from './components/TradeJournalView';
 import ContextualHelpDrawer from './components/ContextualHelpDrawer';
 import AlphaChanakyaDrawer from './components/AlphaChanakyaDrawer';
+import MobileBottomDock from './components/MobileBottomDock';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
@@ -129,7 +130,7 @@ export default function App() {
         />
 
         {/* Scrollable Canvas View */}
-        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-5">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 py-5 pb-24 lg:pb-6">
           <div className="max-w-7xl mx-auto space-y-6">
             <ErrorBoundary>
               {activeTab === 'screener' && (
@@ -252,6 +253,13 @@ export default function App() {
       <AlphaChanakyaDrawer
         activeTab={activeTab}
         selectedTicker={selectedTicker || deepScanTicker}
+      />
+
+      {/* Floating Bottom Quick-Dock Navigation on Mobile Devices */}
+      <MobileBottomDock
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onToggleCopilot={() => window.dispatchEvent(new CustomEvent('toggle-alphachanakya'))}
       />
 
     </div>
