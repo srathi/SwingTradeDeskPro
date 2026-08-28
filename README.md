@@ -9,6 +9,7 @@
 An institutional-grade quantitative swing trading suite designed for Indian equities (NSE & BSE) and global markets by [rupeemap.in labs](https://www.rupeemap.in). Features automated multi-strategy screening across 8 research-backed models, top-down macro sector rotation, ranked sector constituent leaders, realistic walk-forward backtesting with Indian tax/slippage models, interactive TradingView charts, and exact risk-managed position sizing.
 
 🌐 **Live Web Application**: **[https://swingtradedeskpro.onrender.com](https://swingtradedeskpro.onrender.com)**  
+📘 **Trader's Master User Guide**: **[USER_GUIDE.md](USER_GUIDE.md)**  
 📖 **Interactive API Docs (Swagger)**: **[https://swingtradedeskpro.onrender.com/docs](https://swingtradedeskpro.onrender.com/docs)**
 
 ---
