@@ -39,6 +39,7 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
   const [metrics, setMetrics] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [tradeFilter, setTradeFilter] = useState('ALL'); // ALL, WIN, LOSS
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
   useEffect(() => {
     fetchStrategies().then(setStrategies).catch(console.error);
@@ -58,6 +59,7 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
     }
     setLoading(true);
     setErrorMsg(null);
+    setHoveredPoint(null);
     try {
       const res = await runBacktest({
         ticker: ticker.trim(),
@@ -76,7 +78,7 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
     }
   };
 
-  // Render Equity Curve via Lightweight Charts with strict deduplication
+  // Render Equity Curve via Lightweight Charts with strict deduplication & trade markers
   useEffect(() => {
     if (!chartContainerRef.current || !metrics || !metrics.equity_curve || metrics.equity_curve.length === 0) return;
 
@@ -87,12 +89,13 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
 
     const container = chartContainerRef.current;
     const initialWidth = container.clientWidth || 700;
+    const isProfitable = metrics.net_profit >= 0;
 
     let chart = null;
     try {
       chart = createChart(container, {
         width: initialWidth,
-        height: 280,
+        height: 290,
         layout: {
           background: { color: '#0B0F19' },
           textColor: '#9CA3AF',
@@ -110,6 +113,9 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
         rightPriceScale: {
           borderColor: '#374151',
           scaleMargins: { top: 0.1, bottom: 0.1 }
+        },
+        localization: {
+          priceFormatter: (price) => '₹' + Math.round(price).toLocaleString('en-IN')
         }
       });
       chartRef.current = chart;
@@ -119,7 +125,8 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
       metrics.equity_curve
         .filter(p => p.date && p.date !== 'Start' && p.date.includes('-'))
         .forEach(p => {
-          dateMap.set(p.date, p.equity);
+          const cleanDate = p.date.split(' ')[0].split('T')[0];
+          dateMap.set(cleanDate, p.equity);
         });
 
       const equityData = Array.from(dateMap.entries())
@@ -128,20 +135,86 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
 
       if (equityData.length > 0) {
         const areaSeries = chart.addAreaSeries({
-          topColor: 'rgba(6, 182, 212, 0.4)',
-          bottomColor: 'rgba(6, 182, 212, 0.0)',
-          lineColor: '#06B6D4',
+          topColor: isProfitable ? 'rgba(16, 185, 129, 0.35)' : 'rgba(244, 63, 94, 0.35)',
+          bottomColor: isProfitable ? 'rgba(16, 185, 129, 0.0)' : 'rgba(244, 63, 94, 0.0)',
+          lineColor: isProfitable ? '#10B981' : '#F43F5E',
           lineWidth: 2,
           title: 'Portfolio Equity (₹)'
         });
         areaSeries.setData(equityData);
 
+        // Initial capital baseline
         areaSeries.createPriceLine({
           price: metrics.initial_capital,
           color: '#6B7280',
           lineWidth: 1,
           lineStyle: 2,
-          title: 'INITIAL CAPITAL'
+          title: 'INITIAL CAPITAL (₹' + metrics.initial_capital.toLocaleString('en-IN') + ')'
+        });
+
+        // Add trade entry and exit markers on equity curve
+        if (metrics.trades && metrics.trades.length > 0) {
+          const markers = [];
+          metrics.trades.forEach(t => {
+            if (t.entry_date) {
+              const d = t.entry_date.split(' ')[0].split('T')[0];
+              markers.push({
+                time: d,
+                position: 'belowBar',
+                color: '#38BDF8',
+                shape: 'arrowUp',
+                text: `#${t.trade_no} Buy`
+              });
+            }
+            if (t.exit_date) {
+              const d = t.exit_date.split(' ')[0].split('T')[0];
+              markers.push({
+                time: d,
+                position: 'aboveBar',
+                color: t.is_win ? '#34D399' : '#F87171',
+                shape: t.is_win ? 'circle' : 'arrowDown',
+                text: t.is_win ? `+₹${Math.round(t.net_pnl)}` : `-₹${Math.abs(Math.round(t.net_pnl))}`
+              });
+            }
+          });
+
+          markers.sort((a, b) => (a.time > b.time ? 1 : -1));
+          // Deduplicate markers on same timestamp and shape
+          const uniqueMarkers = [];
+          const seen = new Set();
+          markers.forEach(m => {
+            const k = `${m.time}-${m.shape}`;
+            if (!seen.has(k)) {
+              seen.add(k);
+              uniqueMarkers.push(m);
+            }
+          });
+
+          if (uniqueMarkers.length > 0) {
+            areaSeries.setMarkers(uniqueMarkers);
+          }
+        }
+
+        // Crosshair hover listener for inspection
+        chart.subscribeCrosshairMove((param) => {
+          if (!param || !param.time || param.point === undefined || !param.seriesData) {
+            setHoveredPoint(null);
+            return;
+          }
+          const price = param.seriesData.get(areaSeries);
+          if (price !== undefined) {
+            const timeStr = typeof param.time === 'string' 
+              ? param.time 
+              : `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}`;
+            const pointData = metrics.equity_curve.find(p => (p.date || '').startsWith(timeStr));
+            setHoveredPoint({
+              date: timeStr,
+              equity: price,
+              inTrade: pointData ? pointData.in_trade : false,
+              pnl: price - metrics.initial_capital,
+              pnlPct: ((price - metrics.initial_capital) / metrics.initial_capital) * 100.0
+            });
+          }
         });
       }
     } catch (e) {
@@ -405,16 +478,50 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
 
           {/* Equity Curve Chart */}
           <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-5 shadow-xl space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-800/80 pb-3">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-mono">
                   Portfolio Equity Curve ({metrics.ticker})
                 </h3>
               </div>
-              <div className="text-xs text-gray-400 font-mono">
-                Initial: ₹{metrics.initial_capital.toLocaleString()} ➔ Final: ₹{metrics.final_capital.toLocaleString()}
-              </div>
+
+              {/* Live Hover Inspection Bar */}
+              {hoveredPoint ? (
+                <div className="flex items-center space-x-3 bg-gray-950 px-3 py-1 rounded-lg border border-cyan-500/40 text-xs font-mono">
+                  <span className="text-gray-400">{hoveredPoint.date}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className="text-white font-bold">₹{Math.round(hoveredPoint.equity).toLocaleString('en-IN')}</span>
+                  <span className="text-gray-600">|</span>
+                  <span className={`font-bold ${hoveredPoint.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {hoveredPoint.pnl >= 0 ? '+' : ''}₹{Math.round(hoveredPoint.pnl).toLocaleString('en-IN')} ({hoveredPoint.pnlPct >= 0 ? '+' : ''}{hoveredPoint.pnlPct.toFixed(2)}%)
+                  </span>
+                  <span className="text-gray-600">|</span>
+                  <span className={hoveredPoint.inTrade ? 'text-cyan-400 font-semibold' : 'text-gray-500'}>
+                    {hoveredPoint.inTrade ? '⚡ In Position' : 'Cash'}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-400 font-mono">
+                  Initial: ₹{metrics.initial_capital.toLocaleString('en-IN')} ➔ Final: ₹{metrics.final_capital.toLocaleString('en-IN')}
+                </div>
+              )}
+            </div>
+
+            {/* Visual Markers Legend */}
+            <div className="flex items-center space-x-4 text-[11px] font-mono text-gray-400 px-1">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>🔵 Buy Entry</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>🟢 Win Exit</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span>🔴 Stop Loss Exit</span>
+              </span>
             </div>
 
             <div ref={chartContainerRef} className="w-full rounded-xl overflow-hidden" />
