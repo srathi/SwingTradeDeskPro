@@ -114,10 +114,43 @@ export default function TopHeader({
                 </span>
               </div>
 
+              <span className="text-gray-700 hidden sm:inline">|</span>
+
+              {/* Benchmark RSI */}
+              <div className="hidden sm:flex items-center space-x-1">
+                <span className="text-gray-400">RSI:</span>
+                <span className={`font-bold ${regimeData.benchmark?.rsi <= 40 ? 'text-emerald-400' : regimeData.benchmark?.rsi >= 70 ? 'text-rose-400' : 'text-cyan-300'}`}>
+                  {regimeData.benchmark?.rsi ?? 43.5}
+                </span>
+              </div>
+
               <span className="text-gray-700 hidden md:inline">|</span>
 
+              {/* Market Mood Index (MMI - Tickertape Sentiment Gauge) */}
+              <div className="hidden md:flex items-center space-x-1.5 bg-gray-900/90 px-2 py-0.5 rounded border border-gray-800">
+                <span className="text-gray-400 font-bold">MMI:</span>
+                <span className={`font-mono font-bold ${
+                  (regimeData.mmi?.value ?? 62) < 30 ? 'text-rose-400' :
+                  (regimeData.mmi?.value ?? 62) < 50 ? 'text-amber-400' :
+                  (regimeData.mmi?.value ?? 62) < 70 ? 'text-cyan-400' :
+                  'text-emerald-400'
+                }`}>
+                  {regimeData.mmi?.value ?? 62.3}
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                  (regimeData.mmi?.value ?? 62) < 30 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                  (regimeData.mmi?.value ?? 62) < 50 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                  (regimeData.mmi?.value ?? 62) < 70 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' :
+                  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                }`}>
+                  {regimeData.mmi?.label || 'Greed'}
+                </span>
+              </div>
+
+              <span className="text-gray-700 hidden lg:inline">|</span>
+
               {/* Regime Verdict Badge */}
-              <div className={`px-2 py-0.5 rounded text-[10px] font-bold border hidden md:flex items-center gap-1 ${regimeData.verdict?.code === 'RISK_ON_EXPANSION' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : regimeData.verdict?.code === 'SELECTIVE_PULLBACKS' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : regimeData.verdict?.code === 'HIGH_CHOP_MEAN_REVERSION' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+              <div className={`px-2 py-0.5 rounded text-[10px] font-bold border hidden lg:flex items-center gap-1 ${regimeData.verdict?.code === 'RISK_ON_EXPANSION' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : regimeData.verdict?.code === 'SELECTIVE_PULLBACKS' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : regimeData.verdict?.code === 'HIGH_CHOP_MEAN_REVERSION' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                 <ShieldCheck className="w-3 h-3" />
                 <span>{regimeData.verdict?.title}</span>
               </div>
@@ -243,6 +276,87 @@ export default function TopHeader({
               </div>
 
             </div>
+
+            {/* Market Mood Index (MMI Gauge - Tickertape Style) */}
+            {regimeData.mmi && (
+              <div className="bg-gray-950/80 p-4 rounded-xl border border-gray-800 space-y-3 font-mono">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Market Mood Index (MMI Sentiment Gauge)
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-400">Score:</span>
+                    <span className="text-base font-black text-cyan-300">{regimeData.mmi.value} / 100</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                      regimeData.mmi.value < 30 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                      regimeData.mmi.value < 50 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                      regimeData.mmi.value < 70 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' :
+                      'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    }`}>
+                      {regimeData.mmi.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Visual Gradient Bar & Needle Pointer */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="relative h-4 rounded-full bg-gradient-to-r from-rose-600 via-amber-500 via-cyan-500 to-emerald-500 overflow-hidden shadow-inner">
+                    {/* Tickertape Zone Dividers */}
+                    <div className="absolute top-0 bottom-0 left-[30%] w-0.5 bg-gray-950/80"></div>
+                    <div className="absolute top-0 bottom-0 left-[50%] w-0.5 bg-gray-950/80"></div>
+                    <div className="absolute top-0 bottom-0 left-[70%] w-0.5 bg-gray-950/80"></div>
+                  </div>
+
+                  {/* Needle Marker Indicator */}
+                  <div className="relative h-4">
+                    <div 
+                      className="absolute -top-1 transform -translate-x-1/2 flex flex-col items-center transition-all duration-500"
+                      style={{ left: `${Math.max(2, Math.min(98, regimeData.mmi.value))}%` }}
+                    >
+                      <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[6px] border-b-white"></div>
+                      <span className="text-[9px] font-bold text-white bg-gray-900 px-1 rounded border border-gray-700 shadow-sm mt-0.5">
+                        ▲ {regimeData.mmi.value}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 4 Zone Labels */}
+                  <div className="flex justify-between text-[9px] uppercase font-bold text-gray-400 px-1 pt-1">
+                    <span className="text-rose-400">Extreme Fear (&lt;30)</span>
+                    <span className="text-amber-400">Fear (30-50)</span>
+                    <span className="text-cyan-400">Greed (50-70)</span>
+                    <span className="text-emerald-400">Extreme Greed (&gt;70)</span>
+                  </div>
+                </div>
+
+                {/* 4 Factor Sub-Scores & Description */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-800 text-[11px]">
+                  <div className="bg-gray-900/60 p-2 rounded-lg border border-gray-800/80">
+                    <span className="text-[10px] text-gray-500 block">VIX Sentiment</span>
+                    <span className="font-bold text-cyan-300">{regimeData.mmi.components?.vix_sentiment ?? '—'}</span>
+                  </div>
+                  <div className="bg-gray-900/60 p-2 rounded-lg border border-gray-800/80">
+                    <span className="text-[10px] text-gray-500 block">Market Breadth</span>
+                    <span className="font-bold text-emerald-300">{regimeData.mmi.components?.market_breadth ?? '—'}</span>
+                  </div>
+                  <div className="bg-gray-900/60 p-2 rounded-lg border border-gray-800/80">
+                    <span className="text-[10px] text-gray-500 block">RSI Momentum</span>
+                    <span className="font-bold text-indigo-300">{regimeData.mmi.components?.momentum_rsi ?? '—'}</span>
+                  </div>
+                  <div className="bg-gray-900/60 p-2 rounded-lg border border-gray-800/80">
+                    <span className="text-[10px] text-gray-500 block">Trend Strength</span>
+                    <span className="font-bold text-amber-300">{regimeData.mmi.components?.trend_strength ?? '—'}</span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-gray-300 bg-gray-900/40 p-2.5 rounded-lg border border-gray-800/50 leading-relaxed font-sans">
+                  💡 <strong className="text-cyan-300">Actionable MMI Playbook:</strong> {regimeData.mmi.description}
+                </p>
+              </div>
+            )}
 
             {/* The 4 Regime Playbook Guide */}
             <div className="bg-gray-950/60 p-4 rounded-xl border border-gray-800 space-y-2">

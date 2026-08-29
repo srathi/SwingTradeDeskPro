@@ -41,6 +41,12 @@ def test_market_regime_engine_direct():
     assert "description" in res["verdict"]
     assert "recommended_allocation_multiplier" in res["verdict"]
 
+    # 5. Market Mood Index (MMI)
+    assert "mmi" in res
+    assert 0.0 <= res["mmi"]["value"] <= 100.0
+    assert res["mmi"]["zone"] in ["EXTREME_FEAR", "FEAR", "GREED", "EXTREME_GREED"]
+    assert "components" in res["mmi"]
+
 
 def test_market_regime_api_endpoint():
     """Verify GET /api/market-regime/current returns valid JSON structure."""
@@ -49,6 +55,8 @@ def test_market_regime_api_endpoint():
     data = resp.json()
 
     assert data["market"] == "NSE"
+    assert "mmi" in data
+    assert 0.0 <= data["mmi"]["value"] <= 100.0
     assert data["breadth"]["pct_above_200_ema"] is not None
     assert data["breadth"]["rating"] is not None
     assert data["volatility"]["implied_daily_move_pct"] is not None

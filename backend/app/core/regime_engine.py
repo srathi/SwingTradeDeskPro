@@ -202,8 +202,57 @@ class MarketRegimeEngine:
         # Implied 1-Day Volatility Move (Rule of 16: VIX / sqrt(252))
         implied_daily_move = round(vix_val / 15.87, 2)
 
+        # 6. Market Mood Index (MMI - 0 to 100 Institutional Sentiment Engine)
+        # Factor 1: VIX Sentiment (Inverse scale: VIX 10 -> 100, VIX 30 -> 0)
+        s_vix = max(0.0, min(100.0, 100.0 - ((vix_val - 10.0) / 20.0) * 100.0))
+        # Factor 2: Market Breadth (% above 200 EMA and 50 EMA)
+        s_breadth = max(0.0, min(100.0, 0.6 * pct_200 + 0.4 * pct_50))
+        # Factor 3: Benchmark RSI Momentum
+        s_rsi = max(0.0, min(100.0, bench_rsi))
+        # Factor 4: Moving Average Distance & Trend Strength
+        delta_pct = ((bench_close - bench_ema50) / bench_ema50) * 100.0 if bench_ema50 > 0 else 0.0
+        s_trend = max(0.0, min(100.0, 50.0 + delta_pct * 10.0))
+
+        # Composite MMI Score
+        mmi_value = round(0.30 * s_breadth + 0.25 * s_vix + 0.25 * s_rsi + 0.20 * s_trend, 1)
+
+        # MMI Zone Classification (Standardized Tickertape Hierarchy)
+        if mmi_value < 30.0:
+            mmi_zone = "EXTREME_FEAR"
+            mmi_label = "Extreme Fear"
+            mmi_color = "rose"
+            mmi_desc = "Market is in deep panic / oversold. High probability bottoming & accumulation zone."
+        elif mmi_value < 50.0:
+            mmi_zone = "FEAR"
+            mmi_label = "Fear"
+            mmi_color = "amber"
+            mmi_desc = "Cautious market sentiment. Focus on selective pullbacks and dynamic support bounces."
+        elif mmi_value < 70.0:
+            mmi_zone = "GREED"
+            mmi_label = "Greed"
+            mmi_color = "cyan"
+            mmi_desc = "Healthy bullish momentum. Trend-following and breakout setups have strong statistical edge."
+        else:
+            mmi_zone = "EXTREME_GREED"
+            mmi_label = "Extreme Greed"
+            mmi_color = "emerald"
+            mmi_desc = "Market is euphoric / overbought. Tighten trailing stop-losses; avoid chasing fresh breakouts."
+
         result = {
             "market": market,
+            "mmi": {
+                "value": mmi_value,
+                "zone": mmi_zone,
+                "label": mmi_label,
+                "color": mmi_color,
+                "description": mmi_desc,
+                "components": {
+                    "vix_sentiment": round(s_vix, 1),
+                    "market_breadth": round(s_breadth, 1),
+                    "momentum_rsi": round(s_rsi, 1),
+                    "trend_strength": round(s_trend, 1)
+                }
+            },
             "benchmark": {
                 "name": bench_name,
                 "symbol": bench_sym,
