@@ -107,3 +107,51 @@ def get_alpha_fusion_score(
     if "error" in res:
         raise HTTPException(status_code=404, detail=res["error"])
     return res
+
+
+class MacroAlignmentRequest(BaseModel):
+    ticker: str = Field(..., description="NSE ticker symbol (e.g. RELIANCE.NS, TCS.NS) or company name")
+    forward_horizon: int = Field(default=5, ge=2, le=30, description="Forward directional forecast horizon in trading days")
+    target_threshold_pct: float = Field(default=0.5, ge=0.1, le=10.0, description="Minimum price movement threshold in %")
+    period: str = Field(default="2y", description="Historical lookback period")
+
+
+@router.get("/macro-alignment/factors")
+async def get_macro_alignment_factors():
+    """Return live Indian macroeconomic factors (RBI Repo Rate, CPI, 10Y Yield) with zero-lookahead dates."""
+    from backend.app.ai_engine.macro_alignment_engine import IndianMacroCalendar
+    return IndianMacroCalendar.get_latest_macro_hud()
+
+
+@router.post("/macro-alignment/run")
+async def run_macro_factor_alignment(req: MacroAlignmentRequest):
+    """
+    Execute two-stage Macro-Factor Alignment Pipeline:
+    1. PyTorch Causal Transformer dense market embedding extraction (64D)
+    2. Zero-Lookahead calendar synchronization with RBI Repo Rate & MoSPI CPI Inflation
+    3. Downstream chronological ensemble swing directional prediction
+    """
+    from backend.app.ai_engine.macro_alignment_engine import macro_alignment_engine
+
+    clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(req.ticker, period=req.period, interval="1d")
+    if df is None or len(df) < 55:
+        clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(req.ticker, period="5y", interval="1d")
+
+    if df is None or len(df) < 55:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Insufficient price history found for '{req.ticker}' (minimum 55 bars required for transformer embedding lookback)."
+        )
+
+    try:
+        result = macro_alignment_engine.run_pipeline(
+            df=df,
+            ticker=clean_ticker,
+            forward_horizon=req.forward_horizon,
+            target_threshold_pct=req.target_threshold_pct
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Macro alignment error for {req.ticker}: {e}")
+        raise HTTPException(status_code=500, detail=f"Macro-Factor alignment failed: {str(e)}")
+

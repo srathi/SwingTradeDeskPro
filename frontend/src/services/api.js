@@ -238,4 +238,23 @@ export async function fetchCopilotStatus() {
   return res.json();
 }
 
+export async function fetchMacroFactors() {
+  const res = await fetch(`${API_BASE}/ai/macro-alignment/factors`);
+  if (!res.ok) throw new Error("Failed to fetch macroeconomic factors");
+  return res.json();
+}
+
+export async function runMacroAlignment(payload) {
+  const res = await fetch(`${API_BASE}/ai/macro-alignment/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to execute macro-factor alignment");
+  }
+  return res.json();
+}
+
 

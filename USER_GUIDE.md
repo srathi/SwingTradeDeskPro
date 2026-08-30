@@ -238,7 +238,15 @@ When you expand a leading sector card, the constituents are ranked by their **Te
 
 ---
 
-## 7. Kronos AI Foundation Candlestick Forecaster (AAAI 2026)
+## 7. Kronos AI Foundation Model & Macro-Factor Alignment Studio
+
+The AI Forecast workspace contains two independent institutional workflows:
+1. **🔮 K-Line Candlestick Forecaster**: Autoregressive multi-path Monte Carlo price trajectory simulation.
+2. **🏛️ Macro-Factor Alignment Studio**: PyTorch Causal Transformer embeddings fused with zero-lookahead Indian macroeconomic data (RBI Repo Rate, MoSPI CPI Inflation, 10Y Sovereign Yield, USD/INR).
+
+---
+
+### 7.1 K-Line Candlestick Forecaster (AAAI 2026)
 
 **Kronos** is an autoregressive foundational transformer trained on 12B+ candlestick tokens across global financial markets. It generates 20 to 30 parallel Monte Carlo future price paths for any stock over the next 15 trading days.
 
@@ -254,7 +262,7 @@ Price (₹)
  ₹2,200 ------------------------------------ [p10 Lower Corridor: ₹2,260]
 ```
 
-### How to Interpret Kronos AI Metrics:
+#### How to Interpret K-Line AI Metrics:
 
 | AI Output Metric | 🟢 Bullish / Safe | 🟡 Neutral | 🔴 Bearish / High Risk |
 | :--- | :--- | :--- | :--- |
@@ -262,6 +270,32 @@ Price (₹)
 | **Expected 15-Day Return** | **$> +4.0\%$** expected capital gain | **$+1.0\%$ to $+3.9\%$** | **$\le 0.0\%$** (Flat or negative trajectory) |
 | **90% Confidence Corridor $[p_{10}, p_{90}]$**| Target 1 is well inside $p_{90}$ | Target 1 touches $p_{90}$ | Stop loss is inside tight $p_{10}$ range |
 | **Volatility Amplification Factor** | **$< 0.90\times$** (Coiling for breakout)| **$0.90\times - 1.30\times$** (Normal) | **$> 1.60\times$** (Extreme erratic turbulence) |
+
+---
+
+### 7.2 Two-Stage Macro-Factor Alignment Studio (Kronos + RBI Macro)
+
+This institutional pipeline solves the fundamental disconnect between **daily equity price action** and **monthly macroeconomic policy cycles** with **strict zero-lookahead bias**.
+
+```mermaid
+flowchart LR
+    A["20-Day 6D Market Data<br>(OHLCVA)"] --> B["Stage 1: PyTorch Causal Transformer<br>Extracts Dense 64D Embedding ht"]
+    C["Indian Macro Factors<br>(RBI Repo + MoSPI CPI + 10Y Yield)"] --> D["Stage 2: Zero-Lookahead Synchronization<br>Statutory 12-Day Lag Respected"]
+    B & D --> E["Stage 3: Chronological Random Forest Ensemble<br>(80% Historical Train / 20% Test)"]
+    E --> F["Forward 5-Day Swing Probability %<br>+ Factor Attribution Breakdown"]
+```
+
+#### Understanding the Macro HUD & Alignment Metrics:
+
+| Macro & Alignment Metric | Value Meaning | Trading Interpretation & Action |
+| :--- | :--- | :--- |
+| **RBI Repo Rate (%)** | Monetary policy benchmark rate (e.g. 5.75% / 6.50%). | Rate cuts / pauses expand equity valuation multiples and spur swing breakout momentum. |
+| **MoSPI CPI Inflation (%)** | Official Consumer Price Index (Target: $4.0\% \pm 2\%$). | Inflation cooling towards $<4.5\%$ signals macroeconomic stability and favorable holding environments. |
+| **Zero-Lookahead Verification** | Strict backward-looking publication lag enforcement. | Guarantees the model never trains on unannounced economic data, ensuring authentic backtest integrity. |
+| **Forward Breakout Probability** | Likelihood of stock gaining $> +0.5\%$ over next $5$ trading days. | **$\ge 65\%$ (🟢 Strong Green Light)**; **$50\%-64\%$ (🔵 Selective)**; **$<40\%$ (🔴 Avoid/Defensive)**. |
+| **Factor Attribution Breakdown** | Relative contribution of Technical Embeddings vs Macro Factors. | Dissects whether a stock's edge is propelled by pure price coiling ($h_t$) or macroeconomic liquidity tailwinds. |
+
+---
 
 ---
 
