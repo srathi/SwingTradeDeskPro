@@ -284,6 +284,13 @@ class KronosEngine:
         
         p10_close = float(p10_path[-1, 3])
         p90_close = float(p90_path[-1, 3])
+        p10_chg_pct = float(((p10_close - last_close) / last_close) * 100.0)
+        p90_chg_pct = float(((p90_close - last_close) / last_close) * 100.0)
+        dispersion_spread = float(p90_close - p10_close)
+        corridor_bandwidth_pct = float((dispersion_spread / last_close) * 100.0)
+
+        overall_low = float(np.min(p10_path[:, 2]))
+        overall_high = float(np.max(p90_path[:, 1]))
 
         hist_ret = np.diff(np.log(np.maximum(clean_df["close"].values[-30:], 1e-5)))
         hist_vol = float(np.std(hist_ret)) if len(hist_ret) > 1 else 0.015
@@ -337,6 +344,12 @@ class KronosEngine:
             "expected_change_pct": round(expected_chg_pct, 2),
             "p10_close": round(p10_close, 2),
             "p90_close": round(p90_close, 2),
+            "p10_change_pct": round(p10_chg_pct, 2),
+            "p90_change_pct": round(p90_chg_pct, 2),
+            "dispersion_spread": round(dispersion_spread, 2),
+            "corridor_bandwidth_pct": round(corridor_bandwidth_pct, 2),
+            "overall_projected_low": round(overall_low, 2),
+            "overall_projected_high": round(overall_high, 2),
             "volatility_amplification": round(vol_amp, 2),
             "regime": regime,
             "confluence_badge": confluence_badge,

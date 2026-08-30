@@ -410,18 +410,28 @@ export default function AIForecastStudio({
                   </span>
                 </div>
 
-                {/* 90% Confidence Corridor */}
+                {/* Predicted Future Stock Range (90% Confidence Corridor) */}
                 <div className="bg-gray-900/90 p-4 rounded-xl border border-gray-800 shadow-md">
-                  <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider block mb-1">
-                    90% Confidence Corridor [p10, p90]
-                  </span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider block">
+                      Predicted Future Stock Range
+                    </span>
+                    <span className="text-[9px] text-cyan-400 font-mono font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                      90% Conf. [p10, p90]
+                    </span>
+                  </div>
                   <div className="text-sm font-black font-mono text-gray-200 mt-1 flex items-baseline space-x-1.5 flex-wrap">
                     <span className="text-rose-300">₹{forecastData.p10_close?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     <span className="text-gray-500 font-normal text-xs">to</span>
                     <span className="text-emerald-300">₹{forecastData.p90_close?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="text-[10px] text-gray-400 mt-2 flex items-center justify-between font-mono">
-                    <span>Spread: ₹{(forecastData.p90_close - forecastData.p10_close).toFixed(2)}</span>
+                    <span className="text-rose-400 font-medium">
+                      Floor: {forecastData.p10_change_pct >= 0 ? `+${forecastData.p10_change_pct}%` : `${forecastData.p10_change_pct}%`}
+                    </span>
+                    <span className="text-emerald-400 font-medium">
+                      Ceiling: {forecastData.p90_change_pct >= 0 ? `+${forecastData.p90_change_pct}%` : `${forecastData.p90_change_pct}%`}
+                    </span>
                     <span className="text-cyan-400 font-semibold">
                       ±{(((forecastData.p90_close - forecastData.p10_close) / (2 * (forecastData.last_close || 1))) * 100).toFixed(1)}% Band
                     </span>
@@ -455,7 +465,7 @@ export default function AIForecastStudio({
                       <span>Autoregressive Trajectory &amp; 90% Confidence Funnel</span>
                     </h3>
                     <p className="text-xs text-gray-400">
-                      Mean trajectory (cyan) surrounded by shaded 90% confidence corridor ($p_{10}$ to $p_{90}$).
+                      Mean trajectory (cyan) surrounded by shaded 90% confidence corridor (p10 to p90).
                     </p>
                   </div>
 
@@ -469,12 +479,47 @@ export default function AIForecastStudio({
                       <span>Chart Studio</span>
                     </button>
                     <button
-                      onClick={exportForecastCSV}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 hover:border-gray-500 rounded-lg text-xs font-medium transition-colors"
+                      onClick={handleExportCsv}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 hover:border-gray-600 rounded-lg text-xs font-medium transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Export CSV</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* Target Price & Range Channel Ribbon */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-950/70 p-3.5 rounded-xl border border-gray-800/80 text-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider block">Current Market Price</span>
+                    <div className="text-sm font-bold font-mono text-white">₹{forecastData.last_close?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-rose-400 font-semibold uppercase tracking-wider block">10th Pct Floor (p10)</span>
+                    <div className="text-sm font-bold font-mono text-rose-300">
+                      ₹{forecastData.p10_close?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <span className="text-[10px] ml-1 text-rose-400 font-normal">
+                        ({forecastData.p10_change_pct >= 0 ? `+${forecastData.p10_change_pct}%` : `${forecastData.p10_change_pct}%`})
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block">Expected Mean Target</span>
+                    <div className="text-sm font-bold font-mono text-cyan-300">
+                      ₹{forecastData.expected_close?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <span className="text-[10px] ml-1 text-cyan-400 font-normal">
+                        ({forecastData.expected_change_pct >= 0 ? `+${forecastData.expected_change_pct}%` : `${forecastData.expected_change_pct}%`})
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider block">90th Pct Ceiling (p90)</span>
+                    <div className="text-sm font-bold font-mono text-emerald-300">
+                      ₹{forecastData.p90_close?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <span className="text-[10px] ml-1 text-emerald-400 font-normal">
+                        ({forecastData.p90_change_pct >= 0 ? `+${forecastData.p90_change_pct}%` : `${forecastData.p90_change_pct}%`})
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -601,8 +646,9 @@ export default function AIForecastStudio({
                         <th className="pb-2">High</th>
                         <th className="pb-2">Low</th>
                         <th className="pb-2">Expected Close</th>
-                        <th className="pb-2">10th Pct Low</th>
-                        <th className="pb-2">90th Pct High</th>
+                        <th className="pb-2 text-rose-400">10th Pct Low</th>
+                        <th className="pb-2 text-emerald-400">90th Pct High</th>
+                        <th className="pb-2 text-cyan-400">Projected Range [p10 – p90]</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800/60 font-mono">
@@ -614,8 +660,12 @@ export default function AIForecastStudio({
                           <td className="py-2 text-emerald-400">₹{c.high.toFixed(2)}</td>
                           <td className="py-2 text-red-400">₹{c.low.toFixed(2)}</td>
                           <td className="py-2 text-white font-bold">₹{c.close.toFixed(2)}</td>
-                          <td className="py-2 text-gray-500">₹{c.band_low.toFixed(2)}</td>
-                          <td className="py-2 text-gray-500">₹{c.band_high.toFixed(2)}</td>
+                          <td className="py-2 text-rose-300 font-medium">₹{c.band_low.toFixed(2)}</td>
+                          <td className="py-2 text-emerald-300 font-medium">₹{c.band_high.toFixed(2)}</td>
+                          <td className="py-2 text-cyan-300 font-bold">
+                            ₹{c.band_low.toFixed(2)} <span className="text-gray-500 font-normal">to</span> ₹{c.band_high.toFixed(2)}
+                            <span className="text-[10px] text-gray-400 ml-1.5 font-normal">(Δ ₹{(c.band_high - c.band_low).toFixed(2)})</span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
