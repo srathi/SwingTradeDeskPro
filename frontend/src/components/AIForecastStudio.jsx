@@ -415,12 +415,17 @@ export default function AIForecastStudio({
                   <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider block mb-1">
                     90% Confidence Corridor [p10, p90]
                   </span>
-                  <div className="text-sm font-black font-mono text-gray-200 mt-1">
-                    ₹{forecastData.p10_close?.toLocaleString('en-IN')} <span className="text-gray-500 font-normal">to</span> ₹{forecastData.p90_close?.toLocaleString('en-IN')}
+                  <div className="text-sm font-black font-mono text-gray-200 mt-1 flex items-baseline space-x-1.5 flex-wrap">
+                    <span className="text-rose-300">₹{forecastData.p10_close?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-gray-500 font-normal text-xs">to</span>
+                    <span className="text-emerald-300">₹{forecastData.p90_close?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
-                  <span className="text-[10px] text-gray-500 mt-2 block">
-                    Dispersion Spread: ₹{(forecastData.p90_close - forecastData.p10_close).toFixed(2)}
-                  </span>
+                  <div className="text-[10px] text-gray-400 mt-2 flex items-center justify-between font-mono">
+                    <span>Spread: ₹{(forecastData.p90_close - forecastData.p10_close).toFixed(2)}</span>
+                    <span className="text-cyan-400 font-semibold">
+                      ±{(((forecastData.p90_close - forecastData.p10_close) / (2 * (forecastData.last_close || 1))) * 100).toFixed(1)}% Band
+                    </span>
+                  </div>
                 </div>
 
                 {/* Volatility Amplification */}
