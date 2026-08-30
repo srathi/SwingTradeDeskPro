@@ -1,6 +1,6 @@
 """
 Two-Stage Macro-Factor Alignment Engine for Indian Equity Markets.
-Fuses PyTorch Causal Transformer Market Embeddings (Kronos) with Zero-Lookahead
+Fuses PyTorch / NumPy Causal Transformer Market Embeddings (Kronos) with Zero-Lookahead
 RBI Repo Rate, MoSPI CPI Inflation, and Sovereign Bond Yields for Downstream Swing Prediction.
 """
 
@@ -11,43 +11,153 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 
 logger = logging.getLogger("macro_alignment_engine")
 
+try:
+    import torch
+    import torch.nn as nn
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    nn = None
+    TORCH_AVAILABLE = False
+
+try:
+    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
 
 # ==============================================================================
-# STAGE 1: DENSE MARKET EMBEDDING EXTRACTION (PYTORCH KRONOS FEATURE EXTRACTOR)
+# STAGE 1: DENSE MARKET EMBEDDING EXTRACTION (PYTORCH / NUMPY CAUSAL TRANSFORMER)
 # ==============================================================================
-class KronosFeatureExtractor(nn.Module):
+class KronosFeatureExtractor:
     """
     Temporal Causal Transformer Encoder.
     Maps a historical 20-day window of standardized 6D OHLCVA data
     into a dense, denoised 64-dimensional latent state vector (h_t).
+    Works with PyTorch when available, or ultra-fast vectorized NumPy.
     """
     def __init__(self, input_dim: int = 6, embedding_dim: int = 64, num_heads: int = 4, hidden_dim: int = 128):
-        super().__init__()
-        self.input_projection = nn.Linear(input_dim, embedding_dim)
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=embedding_dim,
-            nhead=num_heads,
-            dim_feedforward=hidden_dim,
-            batch_first=True,
-            activation="gelu"
-        )
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=2)
+        self.input_dim = input_dim
+        self.embedding_dim = embedding_dim
+        self.num_heads = num_heads
+        self.hidden_dim = hidden_dim
+        self.torch_model = None
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Input shape: [Batch_Size, Lookback_Window, 6]
-        projected = self.input_projection(x)
-        encoded = self.transformer_encoder(projected)
-        # Extract the final sequence step's hidden state as the temporal market embedding (h_t)
-        h_t = encoded[:, -1, :]
+        if TORCH_AVAILABLE:
+            try:
+                class _TorchTransformer(nn.Module):
+                    def __init__(self, in_d, emb_d, n_h, hid_d):
+                        super().__init__()
+                        self.input_projection = nn.Linear(in_d, emb_d)
+                        encoder_layer = nn.TransformerEncoderLayer(
+                            d_model=emb_d,
+                            nhead=n_h,
+                            dim_feedforward=hid_d,
+                            batch_first=True,
+                            activation="gelu"
+                        )
+                        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=2)
+
+                    def forward(self, x):
+                        proj = self.input_projection(x)
+                        enc = self.transformer_encoder(proj)
+                        return enc[:, -1, :]
+
+                self.torch_model = _TorchTransformer(input_dim, embedding_dim, num_heads, hidden_dim)
+                self.torch_model.eval()
+            except Exception as e:
+                logger.warning(f"PyTorch Transformer initialization fallback to NumPy: {e}")
+                self.torch_model = None
+
+    def eval(self):
+        if self.torch_model is not None and hasattr(self.torch_model, "eval"):
+            self.torch_model.eval()
+        return self
+
+    def to(self, device):
+        if self.torch_model is not None and hasattr(self.torch_model, "to"):
+            self.torch_model.to(device)
+        return self
+
+    def __call__(self, x):
+        if TORCH_AVAILABLE and isinstance(x, torch.Tensor):
+            if self.torch_model is not None:
+                return self.torch_model(x)
+            else:
+                x_np = x.detach().cpu().numpy()
+                out_np = self.extract_embeddings(x_np)
+                return torch.tensor(out_np, dtype=torch.float32)
+        elif isinstance(x, np.ndarray):
+            return self.extract_embeddings(x)
+        return self.extract_embeddings(np.array(x, dtype=np.float32))
+
+    def extract_embeddings(self, windows_np: np.ndarray, device: str = "cpu") -> np.ndarray:
+        """
+        Extracts 64D dense embeddings from a batch of [N, Lookback, 6] windows.
+        """
+        if self.torch_model is not None and TORCH_AVAILABLE:
+            try:
+                with torch.no_grad():
+                    inp_tensor = torch.tensor(windows_np, dtype=torch.float32)
+                    if device != "cpu" and hasattr(self.torch_model, "to"):
+                        self.torch_model.to(device)
+                        inp_tensor = inp_tensor.to(device)
+                    out = self.torch_model(inp_tensor)
+                    if device != "cpu":
+                        out = out.cpu()
+                    return out.numpy().astype(np.float32)
+            except Exception as e:
+                logger.warning(f"PyTorch embedding extraction error, falling back to NumPy: {e}")
+
+        # Vectorized NumPy Causal Transformer Forward Pass
+        B, L, D_in = windows_np.shape
+        np.random.seed(42)
+        W_in = np.random.randn(D_in, self.embedding_dim) * 0.1
+        b_in = np.zeros(self.embedding_dim)
+
+        proj = np.dot(windows_np, W_in) + b_in
+
+        # Positional Encoding
+        pos = np.arange(L)[:, np.newaxis]
+        div_term = np.exp(np.arange(0, self.embedding_dim, 2) * -(np.log(10000.0) / self.embedding_dim))
+        pe = np.zeros((L, self.embedding_dim))
+        pe[:, 0::2] = np.sin(pos * div_term)
+        pe[:, 1::2] = np.cos(pos * div_term)
+        hidden = proj + pe
+
+        for _ in range(2):
+            d_k = self.embedding_dim // self.num_heads
+            scores = np.matmul(hidden, hidden.transpose(0, 2, 1)) / np.sqrt(d_k)
+            causal_mask = np.triu(np.ones((L, L)), k=1) * -1e9
+            masked = scores + causal_mask
+            exp_s = np.exp(masked - np.max(masked, axis=-1, keepdims=True))
+            attn_weights = exp_s / (np.sum(exp_s, axis=-1, keepdims=True) + 1e-8)
+            attn_out = np.matmul(attn_weights, hidden)
+
+            hidden = hidden + attn_out
+            mean = np.mean(hidden, axis=-1, keepdims=True)
+            std = np.std(hidden, axis=-1, keepdims=True) + 1e-5
+            hidden = (hidden - mean) / std
+
+            mlp_w1 = np.random.randn(self.embedding_dim, self.hidden_dim) * 0.1
+            mlp_w2 = np.random.randn(self.hidden_dim, self.embedding_dim) * 0.1
+            ff1 = np.dot(hidden, mlp_w1)
+            gelu = 0.5 * ff1 * (1.0 + np.tanh(np.sqrt(2.0 / np.pi) * (ff1 + 0.044715 * np.power(ff1, 3))))
+            ff2 = np.dot(gelu, mlp_w2)
+            hidden = hidden + ff2
+            mean = np.mean(hidden, axis=-1, keepdims=True)
+            std = np.std(hidden, axis=-1, keepdims=True) + 1e-5
+            hidden = (hidden - mean) / std
+
+        h_t = hidden[:, -1, :].astype(np.float32)
         return h_t
+
 
 
 # ==============================================================================
@@ -209,20 +319,14 @@ class IndianMacroCalendar:
 class MacroAlignmentEngine:
     """
     Orchestrates:
-    1. PyTorch Causal Transformer Embedding Extraction (64D)
+    1. PyTorch / NumPy Causal Transformer Embedding Extraction (64D)
     2. Zero-Lookahead Macroeconomic Calendar Synchronization
     3. Multi-Factor Fusion & Downstream Ensemble Signal Generation
     """
 
     def __init__(self):
         self._extractor = KronosFeatureExtractor()
-        self._extractor.eval()
-        self._device = "cuda:0" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")
-        try:
-            self._extractor.to(self._device)
-        except Exception:
-            self._device = "cpu"
-            self._extractor.to("cpu")
+        self._device = "cuda:0" if (TORCH_AVAILABLE and torch.cuda.is_available()) else ("mps" if (TORCH_AVAILABLE and getattr(torch.backends, "mps", None) and torch.backends.mps.is_available()) else "cpu")
 
     def run_pipeline(
         self,
@@ -258,15 +362,20 @@ class MacroAlignmentEngine:
                 data.index = pd.date_range(end=datetime.now(), periods=len(data), freq="B")
 
         raw_ohlcva = data[["Open", "High", "Low", "Close", "Volume", "Amount"]].values.astype(np.float32)
+        raw_ohlcva = np.nan_to_num(raw_ohlcva, nan=0.0, posinf=0.0, neginf=0.0)
 
         # Standardize market variables
-        scaler_ohlcva = StandardScaler()
-        scaled_ohlcva = scaler_ohlcva.fit_transform(raw_ohlcva)
+        if SKLEARN_AVAILABLE:
+            scaler_ohlcva = StandardScaler()
+            scaled_ohlcva = scaler_ohlcva.fit_transform(raw_ohlcva)
+        else:
+            mean_vals = np.mean(raw_ohlcva, axis=0)
+            std_vals = np.std(raw_ohlcva, axis=0) + 1e-5
+            scaled_ohlcva = (raw_ohlcva - mean_vals) / std_vals
 
         # ----------------------------------------------------------------------
         # 1. STAGE 1: Extract Dense Causal Transformer Embeddings
         # ----------------------------------------------------------------------
-        embeddings_list = []
         n_samples = len(scaled_ohlcva)
 
         # Prepare rolling window batches
@@ -275,13 +384,8 @@ class MacroAlignmentEngine:
             window = scaled_ohlcva[idx - lookback_window + 1 : idx + 1]
             windows.append(window)
 
-        windows_tensor = torch.tensor(np.array(windows), dtype=torch.float32).to(self._device)
-
-        with torch.no_grad():
-            embs_tensor = self._extractor(windows_tensor)
-            if self._device != "cpu":
-                embs_tensor = embs_tensor.cpu()
-            valid_embs = embs_tensor.numpy()
+        windows_np = np.array(windows, dtype=np.float32)
+        valid_embs = self._extractor.extract_embeddings(windows_np, device=self._device)
 
         # Pad initial lookback days with zeros
         pad = np.zeros((lookback_window - 1, 64), dtype=np.float32)
@@ -324,38 +428,72 @@ class MacroAlignmentEngine:
         # Chronological Split (80% historical train / 20% out-of-sample test)
         split_idx = int(len(X) * 0.80)
         if split_idx < 10:
-            split_idx = len(X) - 5
+            split_idx = max(5, len(X) - 5)
 
         X_train, X_test = X[:split_idx], X[split_idx:]
         y_train, y_test = y[:split_idx], y[split_idx:]
 
         # Joint standardization across diverse physical units
-        final_scaler = StandardScaler()
-        X_train_scaled = final_scaler.fit_transform(X_train)
-        X_test_scaled = final_scaler.transform(X_test)
+        if SKLEARN_AVAILABLE:
+            final_scaler = StandardScaler()
+            X_train_scaled = final_scaler.fit_transform(X_train)
+            X_test_scaled = final_scaler.transform(X_test)
 
-        # Train Downstream Ensemble (Random Forest + Gradient Boosting)
-        clf = RandomForestClassifier(n_estimators=100, max_depth=5, min_samples_leaf=2, random_state=42)
-        clf.fit(X_train_scaled, y_train)
+            # Train Downstream Ensemble (Random Forest)
+            clf = RandomForestClassifier(n_estimators=100, max_depth=5, min_samples_leaf=2, random_state=42)
+            clf.fit(X_train_scaled, y_train)
 
-        def _safe_predict_proba_class1(model, X_mat):
-            probas = model.predict_proba(X_mat)
-            if len(model.classes_) == 1:
-                return np.ones(len(X_mat), dtype=float) if model.classes_[0] == 1 else np.zeros(len(X_mat), dtype=float)
-            class_1_idx = list(model.classes_).index(1) if 1 in model.classes_ else 1
-            return probas[:, class_1_idx]
+            def _safe_predict_proba_class1(model, X_mat):
+                probas = model.predict_proba(X_mat)
+                if len(model.classes_) == 1:
+                    return np.ones(len(X_mat), dtype=float) if model.classes_[0] == 1 else np.zeros(len(X_mat), dtype=float)
+                class_1_idx = list(model.classes_).index(1) if 1 in model.classes_ else 1
+                return probas[:, class_1_idx]
 
-        # Test Evaluation
-        y_pred = clf.predict(X_test_scaled)
-        y_proba = _safe_predict_proba_class1(clf, X_test_scaled)
+            y_pred = clf.predict(X_test_scaled)
+            y_proba = _safe_predict_proba_class1(clf, X_test_scaled)
+            importances = clf.feature_importances_
 
-        acc = float(accuracy_score(y_test, y_pred))
-        prec = float(precision_score(y_test, y_pred, zero_division=0))
-        rec = float(recall_score(y_test, y_pred, zero_division=0))
-        f1 = float(f1_score(y_test, y_pred, zero_division=0))
+            latest_features = current_live_bar[feature_cols].values.astype(np.float32).reshape(1, -1)
+            latest_features = np.nan_to_num(latest_features, nan=0.0, posinf=0.0, neginf=0.0)
+            latest_scaled = final_scaler.transform(latest_features)
+            live_prob = float(_safe_predict_proba_class1(clf, latest_scaled)[0])
+        else:
+            # Fallback fast ridge logistic weights
+            mu = np.mean(X_train, axis=0)
+            sigma = np.std(X_train, axis=0) + 1e-5
+            X_train_scaled = (X_train - mu) / sigma
+            X_test_scaled = (X_test - mu) / sigma
+
+            # Simple ridge regression weights
+            ridge_lambda = 1.0
+            XTX = np.dot(X_train_scaled.T, X_train_scaled) + ridge_lambda * np.eye(X_train_scaled.shape[1])
+            w = np.linalg.solve(XTX, np.dot(X_train_scaled.T, y_train))
+            
+            # Sigmoid
+            z_test = np.dot(X_test_scaled, w)
+            y_proba = 1.0 / (1.0 + np.exp(-np.clip(z_test, -15, 15)))
+            y_pred = (y_proba >= 0.5).astype(int)
+
+            importances = np.abs(w) / (np.sum(np.abs(w)) + 1e-8)
+
+            latest_features = current_live_bar[feature_cols].values.astype(np.float32).reshape(1, -1)
+            latest_scaled = (latest_features - mu) / sigma
+            z_live = np.dot(latest_scaled, w)[0]
+            live_prob = float(1.0 / (1.0 + math.exp(-max(-15.0, min(15.0, z_live)))))
+
+        if len(y_test) > 0 and len(np.unique(y_test)) > 0:
+            acc = float(np.mean(y_test == y_pred))
+            tp = float(np.sum((y_test == 1) & (y_pred == 1)))
+            fp = float(np.sum((y_test == 0) & (y_pred == 1)))
+            fn = float(np.sum((y_test == 1) & (y_pred == 0)))
+            prec = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+            rec = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+            f1 = float(2 * prec * rec / (prec + rec)) if (prec + rec) > 0 else 0.0
+        else:
+            acc, prec, rec, f1 = 0.5, 0.5, 0.5, 0.5
 
         # Feature Importance Analysis (Top contributors)
-        importances = clf.feature_importances_
         feature_importance_list = []
         for name, imp in zip(feature_cols, importances):
             if name.startswith("emb_"):
@@ -392,13 +530,6 @@ class MacroAlignmentEngine:
         # ----------------------------------------------------------------------
         # 4. CURRENT LIVE PREDICTION FOR LATEST TRADING DAY
         # ----------------------------------------------------------------------
-        latest_features = current_live_bar[feature_cols].values.astype(np.float32).reshape(1, -1)
-        latest_features = np.nan_to_num(latest_features, nan=0.0, posinf=0.0, neginf=0.0)
-        latest_scaled = final_scaler.transform(latest_features)
-
-        live_prob = float(_safe_predict_proba_class1(clf, latest_scaled)[0])
-        live_pred = int(live_prob >= 0.50)
-
         confidence_score = round(abs(live_prob - 0.50) * 200.0, 1) # 0 to 100% confidence scale
 
         if live_prob >= 0.65:
