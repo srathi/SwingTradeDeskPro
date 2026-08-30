@@ -129,7 +129,11 @@ export default function AIForecastStudio({
   const handleSelectStock = (symbol, stockObj) => {
     setTickerInput(symbol);
     setActiveTicker(symbol);
-    runForecast(symbol, predLen, paths, modelType);
+    if (activeAiTab === 'kline') {
+      runForecast(symbol, predLen, paths, modelType);
+    } else {
+      runMacroPipeline(symbol, forwardHorizon, targetThresholdPct);
+    }
   };
 
   const exportForecastCSV = () => {
@@ -713,7 +717,11 @@ export default function AIForecastStudio({
                 <span className="text-gray-400 font-medium">Forward Horizon:</span>
                 <select
                   value={forwardHorizon}
-                  onChange={(e) => setForwardHorizon(Number(e.target.value))}
+                  onChange={(e) => {
+                    const h = Number(e.target.value);
+                    setForwardHorizon(h);
+                    runMacroPipeline(activeTicker, h, targetThresholdPct);
+                  }}
                   className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer font-mono"
                 >
                   <option value={2} className="bg-gray-900">2 Days (Momentum Scalp)</option>
@@ -728,7 +736,11 @@ export default function AIForecastStudio({
                 <span className="text-gray-400 font-medium">Target Threshold:</span>
                 <select
                   value={targetThresholdPct}
-                  onChange={(e) => setTargetThresholdPct(Number(e.target.value))}
+                  onChange={(e) => {
+                    const th = Number(e.target.value);
+                    setTargetThresholdPct(th);
+                    runMacroPipeline(activeTicker, forwardHorizon, th);
+                  }}
                   className="bg-transparent text-emerald-300 font-semibold focus:outline-none cursor-pointer font-mono"
                 >
                   <option value={0.5} className="bg-gray-900">&gt; +0.5% Breakout</option>

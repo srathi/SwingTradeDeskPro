@@ -2,6 +2,7 @@
 AI Engine API routes for Kronos Financial Foundation Model forecasting.
 """
 
+import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -9,6 +10,8 @@ from pydantic import BaseModel, Field
 from backend.app.core.data_engine import data_engine
 from backend.app.core.search_engine import SearchEngine
 from backend.app.ai_engine.kronos_engine import kronos_engine
+
+logger = logging.getLogger("ai_routes")
 
 router = APIRouter(prefix="/api/ai", tags=["AI Forecast"])
 
@@ -133,25 +136,45 @@ async def run_macro_factor_alignment(req: MacroAlignmentRequest):
     """
     from backend.app.ai_engine.macro_alignment_engine import macro_alignment_engine
 
-    clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(req.ticker, period=req.period, interval="1d")
+    raw_query = req.ticker.strip()
+    clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(raw_query, period=req.period, interval="1d")
+    
     if df is None or len(df) < 55:
-        clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(req.ticker, period="5y", interval="1d")
+        clean_ticker, df = data_engine.fetch_ticker_data_with_resolved_sym(raw_query, period="5y", interval="1d")
+
+    # If direct symbol fails, attempt fuzzy search via SearchEngine
+    if df is None or len(df) < 55:
+        suggestions = SearchEngine.search(raw_query, limit=5)
+        for cand in suggestions:
+            cand_sym = cand.get("symbol")
+            if cand_sym and cand_sym != raw_query:
+                c_clean, c_df = data_engine.fetch_ticker_data_with_resolved_sym(cand_sym, period="2y", interval="1d")
+                if c_df is not None and len(c_df) >= 55:
+                    clean_ticker = c_clean or cand_sym
+                    df = c_df
+                    break
 
     if df is None or len(df) < 55:
+        suggestions = SearchEngine.search(raw_query, limit=4)
+        suggested_names = [f"{s['symbol']} ({s['name']})" for s in suggestions]
+        detail_msg = f"Insufficient price history found for ticker '{raw_query}' (minimum 55 bars required for temporal embedding)."
+        if suggested_names:
+            detail_msg += f" Did you mean: {', '.join(suggested_names[:3])}?"
         raise HTTPException(
             status_code=404,
-            detail=f"Insufficient price history found for '{req.ticker}' (minimum 55 bars required for transformer embedding lookback)."
+            detail=detail_msg
         )
 
     try:
         result = macro_alignment_engine.run_pipeline(
             df=df,
-            ticker=clean_ticker,
+            ticker=clean_ticker or raw_query,
             forward_horizon=req.forward_horizon,
             target_threshold_pct=req.target_threshold_pct
         )
         return result
     except Exception as e:
-        logger.error(f"Macro alignment error for {req.ticker}: {e}")
+        logger.error(f"Macro alignment error for {req.ticker}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Macro-Factor alignment failed: {str(e)}")
+
 

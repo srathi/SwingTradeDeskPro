@@ -295,12 +295,12 @@ class MacroAlignmentEngine:
         # 2. STAGE 2: Zero-Lookahead Macro Synchronization
         # ----------------------------------------------------------------------
         macro_aligned = IndianMacroCalendar.build_macro_series(data.index)
-        macro_aligned.index = data.index
-
-        data["RBI_Repo_Rate"] = macro_aligned["RBI_Repo_Rate"]
-        data["India_CPI_Inflation"] = macro_aligned["India_CPI_Inflation"]
-        data["India_10Y_Yield"] = macro_aligned["India_10Y_Yield"]
-        data["USD_INR"] = macro_aligned["USD_INR"]
+        
+        # Use .values to prevent any timezone or frequency index misalignment
+        data["RBI_Repo_Rate"] = macro_aligned["RBI_Repo_Rate"].values
+        data["India_CPI_Inflation"] = macro_aligned["India_CPI_Inflation"].values
+        data["India_10Y_Yield"] = macro_aligned["India_10Y_Yield"].values
+        data["USD_INR"] = macro_aligned["USD_INR"].values
 
         # ----------------------------------------------------------------------
         # 3. STAGE 3: Supervised Target & Multi-Factor Ensemble Downstream
@@ -317,11 +317,15 @@ class MacroAlignmentEngine:
         macro_cols = ["RBI_Repo_Rate", "India_CPI_Inflation", "India_10Y_Yield", "USD_INR"]
         feature_cols = embedding_cols + macro_cols
 
-        X = modeling_df[feature_cols].values
-        y = modeling_df["Signal"].values
+        X = modeling_df[feature_cols].values.astype(np.float32)
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+        y = modeling_df["Signal"].values.astype(int)
 
         # Chronological Split (80% historical train / 20% out-of-sample test)
         split_idx = int(len(X) * 0.80)
+        if split_idx < 10:
+            split_idx = len(X) - 5
+
         X_train, X_test = X[:split_idx], X[split_idx:]
         y_train, y_test = y[:split_idx], y[split_idx:]
 
@@ -331,12 +335,19 @@ class MacroAlignmentEngine:
         X_test_scaled = final_scaler.transform(X_test)
 
         # Train Downstream Ensemble (Random Forest + Gradient Boosting)
-        clf = RandomForestClassifier(n_estimators=100, max_depth=5, min_samples_leaf=3, random_state=42)
+        clf = RandomForestClassifier(n_estimators=100, max_depth=5, min_samples_leaf=2, random_state=42)
         clf.fit(X_train_scaled, y_train)
+
+        def _safe_predict_proba_class1(model, X_mat):
+            probas = model.predict_proba(X_mat)
+            if len(model.classes_) == 1:
+                return np.ones(len(X_mat), dtype=float) if model.classes_[0] == 1 else np.zeros(len(X_mat), dtype=float)
+            class_1_idx = list(model.classes_).index(1) if 1 in model.classes_ else 1
+            return probas[:, class_1_idx]
 
         # Test Evaluation
         y_pred = clf.predict(X_test_scaled)
-        y_proba = clf.predict_proba(X_test_scaled)[:, 1]
+        y_proba = _safe_predict_proba_class1(clf, X_test_scaled)
 
         acc = float(accuracy_score(y_test, y_pred))
         prec = float(precision_score(y_test, y_pred, zero_division=0))
@@ -381,10 +392,11 @@ class MacroAlignmentEngine:
         # ----------------------------------------------------------------------
         # 4. CURRENT LIVE PREDICTION FOR LATEST TRADING DAY
         # ----------------------------------------------------------------------
-        latest_features = current_live_bar[feature_cols].values.reshape(1, -1)
+        latest_features = current_live_bar[feature_cols].values.astype(np.float32).reshape(1, -1)
+        latest_features = np.nan_to_num(latest_features, nan=0.0, posinf=0.0, neginf=0.0)
         latest_scaled = final_scaler.transform(latest_features)
 
-        live_prob = float(clf.predict_proba(latest_scaled)[0, 1])
+        live_prob = float(_safe_predict_proba_class1(clf, latest_scaled)[0])
         live_pred = int(live_prob >= 0.50)
 
         confidence_score = round(abs(live_prob - 0.50) * 200.0, 1) # 0 to 100% confidence scale
