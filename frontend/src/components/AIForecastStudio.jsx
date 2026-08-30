@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Search, TrendingUp, TrendingDown, ShieldAlert, 
   BarChart2, RefreshCw, Download, Layers, Activity, Cpu, 
