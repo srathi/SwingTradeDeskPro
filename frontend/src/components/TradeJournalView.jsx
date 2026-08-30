@@ -406,7 +406,7 @@ export default function TradeJournalView({ onOpenChart, onOpenDeepScan, onOpenAI
                 <tr>
                   <th className="py-3 px-4">Date / Ticker</th>
                   <th className="py-3 px-4">Strategy</th>
-                  <th className="py-3 px-4">Entry $\rightarrow$ Exit</th>
+                  <th className="py-3 px-4">Entry → Exit</th>
                   <th className="py-3 px-4">Exit Reason</th>
                   <th className="py-3 px-4">R-Multiple</th>
                   <th className="py-3 px-4">Realized P&L</th>
@@ -426,7 +426,7 @@ export default function TradeJournalView({ onOpenChart, onOpenDeepScan, onOpenAI
                         {pos.strategy}
                       </td>
                       <td className="py-3 px-4 text-gray-300">
-                        ₹{pos.entry_price} $\rightarrow$ <span className="font-bold text-white">₹{pos.exit_price}</span> ({pos.shares} sh)
+                        ₹{pos.entry_price} → <span className="font-bold text-white">₹{pos.exit_price}</span> ({pos.shares} sh)
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-0.5 rounded text-[11px] bg-gray-800 text-gray-300 border border-gray-700">

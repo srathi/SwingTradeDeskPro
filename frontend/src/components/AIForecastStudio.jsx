@@ -994,7 +994,7 @@ export default function AIForecastStudio({
                           <span>1️⃣ Stage 1: Dense Temporal Market Embedding</span>
                         </span>
                         <p className="text-[11px] text-gray-400">
-                          2-Layer Causal PyTorch Transformer encodes 20-day $[20, 6]$ OHLCVA sequences into $h_t \in \mathbb{R}^{64}$.
+                          2-Layer Causal Transformer encodes 20-day [20, 6] OHLCVA sequences into 64-dimensional latent state embeddings (h_t).
                         </p>
                       </div>
 
@@ -1012,7 +1012,7 @@ export default function AIForecastStudio({
                           <span>3️⃣ Stage 3: Chronological Ensemble Downstream</span>
                         </span>
                         <p className="text-[11px] text-gray-400">
-                          Random Forest Classifier fuses $[h_t, \text{Repo}, \text{CPI}, \text{Yield}, \text{USDINR}]$ to predict forward swing probabilities.
+                          Random Forest Classifier fuses latent market embeddings with macro factors (Repo Rate, CPI Inflation, Sovereign Yield, USD/INR) to predict forward swing probabilities.
                         </p>
                       </div>
                     </div>

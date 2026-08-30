@@ -236,11 +236,35 @@ class IndianMacroCalendar:
         ("2026-08-12", 3.90)
     ]
 
+    _live_usdinr_cache: Tuple[float, float, float] = (0.0, 87.35, 0.05) # (timestamp, value, change_pct)
+
     @classmethod
     def get_latest_macro_hud(cls) -> Dict[str, Any]:
-        """Returns the current macroeconomic snapshot for the HUD."""
+        """Returns the current macroeconomic snapshot for the HUD with live USD/INR rate."""
         latest_rbi = cls.RBI_MPC_HISTORY[-1]
         latest_cpi = cls.CPI_RELEASE_HISTORY[-1]
+
+        # Live USD/INR Rate (with 5-minute in-memory cache)
+        now_ts = datetime.now().timestamp()
+        last_ts, cached_val, cached_chg = getattr(cls, "_live_usdinr_cache", (0.0, 87.35, 0.05))
+        usdinr_val = cached_val
+        usdinr_chg = cached_chg
+
+        if now_ts - last_ts > 300: # 5 minutes TTL
+            try:
+                import yfinance as yf
+                yf_ticker = yf.Ticker("INR=X")
+                hist = yf_ticker.history(period="5d", interval="1d")
+                if not hist.empty and len(hist) >= 1:
+                    last_c = round(float(hist["Close"].iloc[-1]), 2)
+                    if last_c > 50.0:
+                        usdinr_val = last_c
+                        if len(hist) >= 2:
+                            prev_c = float(hist["Close"].iloc[-2])
+                            usdinr_chg = round(((last_c - prev_c) / prev_c) * 100.0, 2)
+                        cls._live_usdinr_cache = (now_ts, usdinr_val, usdinr_chg)
+            except Exception as e:
+                logger.warning(f"Live USD/INR fetch failed, using cached/fallback rate: {e}")
 
         return {
             "rbi_repo_rate": {
@@ -257,14 +281,14 @@ class IndianMacroCalendar:
                 "label": "India CPI Inflation (MoSPI)"
             },
             "india_10y_yield": {
-                "value": 6.85,
+                "value": 6.82,
                 "label": "India 10Y Sovereign Benchmark Yield",
                 "change_bps": -2.4
             },
             "usdinr": {
-                "value": 84.15,
+                "value": usdinr_val,
                 "label": "USD / INR Forex Rate",
-                "change_pct": 0.08
+                "change_pct": usdinr_chg
             },
             "zero_lookahead_verified": True,
             "statutory_cpi_lag_days": 12
