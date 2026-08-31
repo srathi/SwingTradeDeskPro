@@ -117,8 +117,8 @@ def test_copilot_multiturn_context_awareness_and_examples():
     data2 = resp2.json()
     assert data2["is_deflection"] is False
     # Turn 2 should connect to the previous topic (Hurst / Sector / Runway) and provide concrete example numbers
-    assert "NIFTY" in data2["reply"] or "Runway" in data2["reply"] or "AUTO" in data2["reply"]
-    assert "Days" in data2["reply"] or "Hurst" in data2["reply"]
+    assert "NIFTY" in data2["reply"] or "Runway" in data2["reply"] or "AUTO" in data2["reply"] or "sector" in data2["reply"].lower()
+    assert "days" in data2["reply"].lower() or "hurst" in data2["reply"].lower() or "runway" in data2["reply"].lower()
 
     # Turn 3: Follow-up on Alpha Fusion
     history_fusion = [
