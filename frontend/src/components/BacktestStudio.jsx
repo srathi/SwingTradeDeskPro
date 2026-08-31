@@ -453,6 +453,45 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
       {metrics && (
         <div className="space-y-6">
           
+          {/* Executive Results Header with One-Click PDF Export */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-gray-900 via-gray-900/90 to-gray-900 border border-gray-800 p-4 rounded-2xl shadow-lg">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[11px] uppercase font-mono text-cyan-400 font-bold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                  {metrics.ticker}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">Horizon: {period.toUpperCase()}</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white mt-1">
+                {strategies.find(s => s.id === metrics.strategy_id)?.name || metrics.strategy_id}
+              </h2>
+            </div>
+
+            <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+              <button
+                onClick={handleExportPdf}
+                disabled={pdfLoading}
+                className="px-4 py-2 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-red-900/30 transition-all border border-red-500/40"
+                title="Download 2-Page Institutional Strategy Factsheet (PDF)"
+              >
+                {pdfLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FileDown className="w-4 h-4" />
+                )}
+                <span>{pdfLoading ? "Generating..." : "📄 Export Factsheet (PDF)"}</span>
+              </button>
+
+              <button
+                onClick={exportCSV}
+                className="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-mono flex items-center space-x-1.5 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
           {/* Top Scorecard KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="bg-gray-900/80 border border-gray-800 rounded-xl p-3.5">

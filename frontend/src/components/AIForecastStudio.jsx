@@ -189,6 +189,31 @@ export default function AIForecastStudio({
 
   const handleExportCsv = exportForecastCSV;
 
+  const [klinePdfLoading, setKlinePdfLoading] = useState(false);
+
+  const handleExportKlinePdf = async () => {
+    if (!forecastData || !forecastData.ticker) return;
+    setKlinePdfLoading(true);
+    try {
+      const res = await fetch(`/api/deep-scan/export/pdf?ticker=${encodeURIComponent(forecastData.ticker)}&period=2y`);
+      if (!res.ok) throw new Error("Failed to generate PDF Report");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTicker = forecastData.ticker.replace('.NS', '').replace('.BO', '');
+      a.download = `SwingTradeDesk_ForecastReport_${cleanTicker}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Error downloading PDF Report: " + err.message);
+    } finally {
+      setKlinePdfLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       
@@ -508,6 +533,20 @@ export default function AIForecastStudio({
 
                   {/* Action Buttons */}
                   <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleExportKlinePdf}
+                      disabled={klinePdfLoading}
+                      className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white rounded-lg text-xs font-bold shadow-md shadow-red-900/30 transition-all border border-red-500/40"
+                      title="Download 2-Page Institutional Research & Forecast Tear Sheet (PDF)"
+                    >
+                      {klinePdfLoading ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                      ) : (
+                        <FileDown className="w-3.5 h-3.5 text-white" />
+                      )}
+                      <span>{klinePdfLoading ? "Generating..." : "📄 Export PDF Report"}</span>
+                    </button>
+
                     <button
                       onClick={() => onSelectTicker(forecastData.ticker)}
                       className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-medium transition-colors"

@@ -201,9 +201,23 @@ export default function SingleStockScanner({
               </p>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               {data && (
                 <>
+                  <button
+                    onClick={handleExportPdf}
+                    disabled={pdfLoading}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-900/30 transition-all border border-red-500/40"
+                    title="Download 2-Page Institutional Research Tear Sheet (PDF)"
+                  >
+                    {pdfLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileDown className="w-4 h-4" />
+                    )}
+                    <span>{pdfLoading ? "Generating..." : "📄 Export PDF Tear Sheet"}</span>
+                  </button>
+
                   <button
                     onClick={() => onOpenChart && onOpenChart(data.ticker)}
                     className="flex items-center space-x-1.5 px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-xl text-xs font-semibold transition-colors"
