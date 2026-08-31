@@ -152,6 +152,8 @@ export default function AIForecastStudio({
     document.body.removeChild(link);
   };
 
+  const handleExportCsv = exportForecastCSV;
+
   return (
     <div className="space-y-6">
       
