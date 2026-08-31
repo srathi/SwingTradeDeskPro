@@ -640,12 +640,39 @@ export default function SingleStockScanner({
                       </div>
                       <div className="flex justify-between text-gray-300">
                         <span>Stop Loss:</span>
-                        <span className="text-red-400 font-bold">₹{fmt(item.setup.stop_loss)}</span>
+                        <span className="text-red-400 font-bold">
+                          ₹{fmt(item.setup.stop_loss)}
+                          {item.setup.close > 0 && item.setup.stop_loss > 0 && (
+                            <span className="text-[10px] text-red-400/80 ml-1 font-normal">
+                              (-{Math.abs(item.setup.risk_pct ?? (((item.setup.close - item.setup.stop_loss) / item.setup.close) * 100)).toFixed(1)}%)
+                            </span>
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between text-gray-300">
-                        <span>Target 1 (2R):</span>
-                        <span className="text-emerald-400 font-bold">₹{fmt(item.setup.target_1)} (+{item.setup.reward_pct_t1}%)</span>
+                        <span>Target 1 ({item.setup.r_multiple_t1 || 2}R):</span>
+                        <span className="text-emerald-400 font-bold">
+                          ₹{fmt(item.setup.target_1)}
+                          {item.setup.close > 0 && item.setup.target_1 > 0 && (
+                            <span className="text-[10px] text-emerald-400/90 ml-1 font-normal">
+                              (+{(item.setup.reward_pct_t1 ?? (((item.setup.target_1 - item.setup.close) / item.setup.close) * 100)).toFixed(1)}%)
+                            </span>
+                          )}
+                        </span>
                       </div>
+                      {item.setup.target_2 && (
+                        <div className="flex justify-between text-gray-300">
+                          <span>Target 2 ({item.setup.r_multiple_t2 || 3}R):</span>
+                          <span className="text-emerald-400 font-bold">
+                            ₹{fmt(item.setup.target_2)}
+                            {item.setup.close > 0 && item.setup.target_2 > 0 && (
+                              <span className="text-[10px] text-emerald-400/90 ml-1 font-normal">
+                                (+{(item.setup.reward_pct_t2 ?? (((item.setup.target_2 - item.setup.close) / item.setup.close) * 100)).toFixed(1)}%)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
                       <div className="p-2 rounded bg-gray-900/80 text-[10px] text-gray-300 font-sans border border-gray-800 mt-2">
                         {item.setup.setup_summary}
                       </div>

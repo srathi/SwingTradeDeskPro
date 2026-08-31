@@ -141,19 +141,22 @@ class RSI28DivergenceStrategy(BaseStrategy):
 
         target_1 = round(close + (risk * p["rr_target_1"]), 2)
         target_2 = round(close + (risk * p["rr_target_2"]), 2)
+        reward_pct_t1 = round(((target_1 - close) / close) * 100.0, 2) if close > 0 else 0.0
+        reward_pct_t2 = round(((target_2 - close) / close) * 100.0, 2) if close > 0 else 0.0
 
         # 6. Quality Score (60 - 100)
         score = 65
-        rsi_delta = rsi2 - rsi1
-        if rsi_delta >= 4.0:
+        if rsi_diff >= 6.0:
             score += 15
-        elif rsi_delta >= 2.5:
+        elif rsi_diff >= 4.0:
             score += 10
-        if rsi28_curr <= 45.0:
-            score += 10 # Deep oversold recovery
-        if close >= open_price:
-            score += 10 # Bullish daily candle
+        if vol_ratio >= 1.25:
+            score += 10
+        if bars_ago <= 1:
+            score += 10
         score = min(score, 100)
+
+        timing_label = "Active Today" if bars_ago == 0 else f"{bars_ago}d ago pivot"
 
         return {
             "ticker": ticker,
@@ -165,13 +168,15 @@ class RSI28DivergenceStrategy(BaseStrategy):
             "high": round(high, 2),
             "low": round(low, 2),
             "volume": int(latest['Volume']),
-            "ema_20": round(float(latest.get('EMA_20', ema50)), 2),
-            "rsi": round(float(rsi28_curr), 1),
+            "ema_20": round(float(latest.get('EMA_20', close)), 2),
+            "rsi": round(float(rsi2), 1),
             "stop_loss": stop_loss,
             "target_1": target_1,
             "target_2": target_2,
             "risk_per_share": risk,
             "risk_pct": round((risk / close) * 100.0, 2),
+            "reward_pct_t1": reward_pct_t1,
+            "reward_pct_t2": reward_pct_t2,
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
             "setup_summary": f"RSI(28) Bullish Divergence (+{round(rsi_delta, 1)} RSI pts) bouncing off ₹{round(p_low2, 1)} support.",

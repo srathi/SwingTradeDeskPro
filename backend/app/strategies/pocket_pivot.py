@@ -125,6 +125,8 @@ class PocketPivotStrategy(BaseStrategy):
 
         target_1 = round(close + (risk * p["rr_target_1"]), 2)
         target_2 = round(close + (risk * p["rr_target_2"]), 2)
+        reward_pct_t1 = round(((target_1 - close) / close) * 100.0, 2) if close > 0 else 0.0
+        reward_pct_t2 = round(((target_2 - close) / close) * 100.0, 2) if close > 0 else 0.0
 
         # 6. Quality Score (60 - 100)
         score = 65
@@ -157,6 +159,8 @@ class PocketPivotStrategy(BaseStrategy):
             "target_2": target_2,
             "risk_per_share": risk,
             "risk_pct": round((risk / close) * 100.0, 2),
+            "reward_pct_t1": reward_pct_t1,
+            "reward_pct_t2": reward_pct_t2,
             "r_multiple_t1": p["rr_target_1"],
             "r_multiple_t2": p["rr_target_2"],
             "setup_summary": f"Pocket Pivot volume surge ({round(vol_down_ratio, 2)}x vs 10D max down-vol) bouncing off 10/20 EMA support.",
