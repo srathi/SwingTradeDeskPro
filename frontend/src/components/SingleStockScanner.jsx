@@ -868,45 +868,90 @@ export default function SingleStockScanner({
                   <Compass className="w-4 h-4 text-cyan-400" />
                   <h3 className="text-sm font-bold text-white">Alexander Elder Triple-Screen Matrix</h3>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-bold font-mono border ${data.mtf_confluence?.confluence_score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : data.mtf_confluence?.confluence_score >= 50 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
-                  {data.mtf_confluence?.badge || 'Triple Screen'}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2.5 py-0.5 rounded text-xs font-bold font-mono border ${
+                    data.mtf_confluence?.confluence_score >= 85 ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-purple-500/20' :
+                    data.mtf_confluence?.confluence_score >= 70 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/20' :
+                    data.mtf_confluence?.confluence_score >= 50 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                    'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  }`}>
+                    {data.mtf_confluence?.badge || 'Triple Screen'}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-cyan-400">
+                    {data.mtf_confluence?.confluence_score || 0}/100
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2.5 text-xs font-mono">
                 {/* Screen 1: Weekly Tide */}
                 <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 1: Weekly Tide</span>
-                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_1_weekly?.bias}</span>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 1: Weekly Tide (13/26 EMA + MACD)</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_1_weekly?.bias || data.mtf_confluence?.screen_1_weekly?.details}</span>
+                    {data.mtf_confluence?.screen_1_weekly?.ema_26 && (
+                      <span className="text-[10px] text-gray-500 block">
+                        Close ₹{data.mtf_confluence.screen_1_weekly.close} | 13 EMA ₹{data.mtf_confluence.screen_1_weekly.ema_13} | 26 EMA ₹{data.mtf_confluence.screen_1_weekly.ema_26}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_1_weekly?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                    {data.mtf_confluence?.screen_1_weekly?.bullish ? '✅ Bullish Tide' : '❌ Bearish Tide'}
+                  <span className={`px-2 py-1 rounded text-[11px] font-bold shrink-0 ml-2 ${
+                    data.mtf_confluence?.screen_1_weekly?.bullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                    data.mtf_confluence?.screen_1_weekly?.trend === 'NEUTRAL' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                    'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  }`}>
+                    {data.mtf_confluence?.screen_1_weekly?.status_label || (data.mtf_confluence?.screen_1_weekly?.bullish ? '✅ Bullish Tide' : '❌ Bearish Tide')}
                   </span>
                 </div>
 
                 {/* Screen 2: Daily Wave */}
                 <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 2: Daily Wave</span>
-                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_2_daily?.bias}</span>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 2: Daily Wave (20/50/200 EMA)</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_2_daily?.bias || data.mtf_confluence?.screen_2_daily?.details}</span>
+                    {data.mtf_confluence?.screen_2_daily?.ema_50 && (
+                      <span className="text-[10px] text-gray-500 block">
+                        20 EMA ₹{data.mtf_confluence.screen_2_daily.ema_20} | 50 EMA ₹{data.mtf_confluence.screen_2_daily.ema_50} | 200 EMA ₹{data.mtf_confluence.screen_2_daily.ema_200}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_2_daily?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                    {data.mtf_confluence?.screen_2_daily?.bullish ? '✅ Favorable Wave' : '⚠️ Pullback Pending'}
+                  <span className={`px-2 py-1 rounded text-[11px] font-bold shrink-0 ml-2 ${
+                    data.mtf_confluence?.screen_2_daily?.bullish ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                    data.mtf_confluence?.screen_2_daily?.structure === 'CONSOLIDATION' || data.mtf_confluence?.screen_2_daily?.structure === 'NEUTRAL' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                    'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  }`}>
+                    {data.mtf_confluence?.screen_2_daily?.status_label || (data.mtf_confluence?.screen_2_daily?.bullish ? '✅ Favorable Wave' : '⚠️ Pullback Pending')}
                   </span>
                 </div>
 
                 {/* Screen 3: Micro Timing */}
                 <div className="bg-gray-950/80 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 3: Micro Timing</span>
-                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_3_timing?.bias}</span>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold block">Screen 3: Micro Timing (Volume & RSI Hook)</span>
+                    <span className="text-gray-200 font-semibold">{data.mtf_confluence?.screen_3_timing?.bias || data.mtf_confluence?.screen_3_timing?.details}</span>
+                    {data.mtf_confluence?.screen_3_timing?.rsi_14 && (
+                      <span className="text-[10px] text-gray-500 block">
+                        RSI(14) {data.mtf_confluence.screen_3_timing.rsi_14} | Vol Ratio {data.mtf_confluence.screen_3_timing.vol_ratio}x | Candle: {data.mtf_confluence.screen_3_timing.is_green_candle ? '🟢 Bullish Green' : '🔴 Red / Pullback'}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${data.mtf_confluence?.screen_3_timing?.bullish ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-400'}`}>
-                    {data.mtf_confluence?.screen_3_timing?.bullish ? '⚡ Trigger Ready' : '⏳ Awaiting Pivot'}
+                  <span className={`px-2 py-1 rounded text-[11px] font-bold shrink-0 ml-2 ${
+                    data.mtf_confluence?.screen_3_timing?.trigger === 'ACTIVE_MOMENTUM_TRIGGER' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                    data.mtf_confluence?.screen_3_timing?.trigger === 'PARTIAL_MOMENTUM' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' :
+                    'bg-gray-800 text-gray-400 border border-gray-700'
+                  }`}>
+                    {data.mtf_confluence?.screen_3_timing?.status_label || (data.mtf_confluence?.screen_3_timing?.bullish ? '⚡ Trigger Ready' : '⏳ Awaiting Pivot')}
                   </span>
                 </div>
               </div>
+
+              {/* Confluence Synthesis Footer */}
+              {data.mtf_confluence?.verdict && (
+                <div className="p-2.5 bg-gray-950/90 rounded-xl border border-gray-800/80 text-[11px] text-gray-300 font-sans leading-relaxed">
+                  <span className="font-bold text-cyan-300 font-mono mr-1.5">Confluence Verdict:</span>
+                  {data.mtf_confluence.verdict}
+                </div>
+              )}
             </div>
 
             {/* Volume Profile & Anchored VWAPs */}

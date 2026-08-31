@@ -16,17 +16,46 @@ class MTFConfluenceEngine:
         """
         Computes Alexander Elder Triple-Screen Confluence on a daily dataframe by resampling to Weekly and analyzing Daily momentum.
         """
-        if df is None or len(df) < 50:
+        if df is None or len(df) < 30:
             return {
                 "confluence_score": 50,
                 "rating": "NEUTRAL",
                 "badge": "⭐ Neutral",
-                "screen_1_weekly": {"trend": "NEUTRAL", "details": "Insufficient history"},
-                "screen_2_daily": {"structure": "NEUTRAL", "details": "Insufficient history"},
-                "screen_3_timing": {"trigger": "WAIT", "details": "Insufficient history"}
+                "verdict": "Insufficient historical data to calculate full multi-timeframe weekly/daily confluence.",
+                "screen_1_weekly": {
+                    "trend": "NEUTRAL",
+                    "bullish": False,
+                    "bias": "Insufficient Data",
+                    "status_label": "⚠️ Neutral Tide",
+                    "details": "Insufficient history to compute weekly EMAs"
+                },
+                "screen_2_daily": {
+                    "structure": "NEUTRAL",
+                    "bullish": False,
+                    "bias": "Insufficient Data",
+                    "status_label": "⚠️ Neutral Wave",
+                    "details": "Insufficient history to compute daily EMAs"
+                },
+                "screen_3_timing": {
+                    "trigger": "WAIT",
+                    "bullish": False,
+                    "bias": "Insufficient Data",
+                    "status_label": "⏳ Awaiting Pivot",
+                    "details": "Insufficient history"
+                }
             }
 
-        daily_data = compute_all_indicators(df)
+        # Ensure datetime index for weekly resampling
+        df_work = df.copy()
+        if not isinstance(df_work.index, pd.DatetimeIndex):
+            if "Date" in df_work.columns:
+                df_work.index = pd.to_datetime(df_work["Date"])
+            elif "date" in df_work.columns:
+                df_work.index = pd.to_datetime(df_work["date"])
+            else:
+                df_work.index = pd.date_range(end=pd.Timestamp.now(), periods=len(df_work), freq="B")
+
+        daily_data = compute_all_indicators(df_work)
         d_latest = daily_data.iloc[-1]
         d_prev = daily_data.iloc[-2] if len(daily_data) >= 2 else d_latest
 
@@ -39,7 +68,7 @@ class MTFConfluenceEngine:
         d_vol_ratio = float(d_latest.get('Vol_Ratio', 1.0))
 
         # --- SCREEN 1: Weekly Macro Trend (The Tide) ---
-        weekly_df = df.resample('W-FRI').agg({
+        weekly_df = df_work.resample('W-FRI').agg({
             'Open': 'first',
             'High': 'max',
             'Low': 'min',
@@ -54,34 +83,54 @@ class MTFConfluenceEngine:
         w_ema13 = d_close
         w_ema26 = d_close
         w_rsi = 50.0
+        w_h_now = 0.0
+        w_h_prev = 0.0
 
-        if len(weekly_df) >= 26:
-            weekly_df['EMA_13'] = ema(weekly_df['Close'], 13)
-            weekly_df['EMA_26'] = ema(weekly_df['Close'], 26)
-            weekly_df['RSI_14'] = rsi(weekly_df['Close'], 14)
+        if len(weekly_df) >= 15:
+            weekly_df['EMA_13'] = ema(weekly_df['Close'], min(13, len(weekly_df)))
+            weekly_df['EMA_26'] = ema(weekly_df['Close'], min(26, len(weekly_df)))
+            weekly_df['RSI_14'] = rsi(weekly_df['Close'], min(14, len(weekly_df)))
             w_line, w_sig, w_hist = macd(weekly_df['Close'])
 
             w_latest = weekly_df.iloc[-1]
-            w_prev = weekly_df.iloc[-2]
+            w_prev = weekly_df.iloc[-2] if len(weekly_df) >= 2 else w_latest
             w_close = float(w_latest['Close'])
-            w_ema13 = float(w_latest['EMA_13'])
-            w_ema26 = float(w_latest['EMA_26'])
-            w_rsi = float(w_latest['RSI_14'])
-            w_h_now = float(w_hist.iloc[-1])
-            w_h_prev = float(w_hist.iloc[-2])
+            w_ema13 = float(w_latest.get('EMA_13', w_close))
+            w_ema26 = float(w_latest.get('EMA_26', w_close))
+            w_rsi = float(w_latest.get('RSI_14', 50.0))
+            w_h_now = float(w_hist.iloc[-1]) if len(w_hist) > 0 else 0.0
+            w_h_prev = float(w_hist.iloc[-2]) if len(w_hist) > 1 else w_h_now
 
             if w_close > w_ema13 > w_ema26 and w_h_now > w_h_prev:
                 w_trend = "STRONG_BULLISH_TIDE"
                 w_score = 40
                 w_details = f"Weekly close (₹{round(w_close, 1)}) > 13 EMA > 26 EMA with expanding weekly MACD momentum."
-            elif w_close > w_ema26:
+            elif w_close > w_ema26 or (w_close > w_ema13 and w_h_now >= 0):
                 w_trend = "HEALTHY_WEEKLY_UPTREND"
                 w_score = 30
                 w_details = f"Weekly structure is bullish above 26 EMA (₹{round(w_ema26, 1)})."
             elif w_close < w_ema26 and w_h_now < w_h_prev:
                 w_trend = "BEARISH_WEEKLY_TIDE"
                 w_score = 0
-                w_details = "Weekly trend is in active decline below 26 EMA. Counter-trend setups only."
+                w_details = f"Weekly trend is in active decline below 26 EMA (₹{round(w_ema26, 1)}). Counter-trend setups only."
+            else:
+                w_trend = "NEUTRAL"
+                w_score = 20
+                w_details = "Weekly momentum is rangebound / consolidating near EMA stack."
+
+        w_bullish = w_trend in ["STRONG_BULLISH_TIDE", "HEALTHY_WEEKLY_UPTREND"]
+        if w_trend == "STRONG_BULLISH_TIDE":
+            w_bias = "Strong Bullish Tide (13 > 26 EMA)"
+            w_status_label = "✅ Bullish Tide"
+        elif w_trend == "HEALTHY_WEEKLY_UPTREND":
+            w_bias = "Bullish Macro Structure (> 26 EMA)"
+            w_status_label = "✅ Bullish Tide"
+        elif w_trend == "BEARISH_WEEKLY_TIDE":
+            w_bias = "Bearish Macro Tide (< 26 EMA)"
+            w_status_label = "❌ Bearish Tide"
+        else:
+            w_bias = "Consolidating / Neutral Tide"
+            w_status_label = "⚠️ Neutral Tide"
 
         # --- SCREEN 2: Daily Swing Structure (The Wave) ---
         d_score = 20
@@ -96,10 +145,35 @@ class MTFConfluenceEngine:
             d_structure = "BULLISH_ACCUMULATION"
             d_score = 25
             d_details = "Daily price supported above 50 and 200 EMAs."
+        elif d_close >= d_ema20:
+            d_structure = "HEALTHY_PULLBACK"
+            d_score = 20
+            d_details = "Daily price holding above 20 EMA short-term momentum support."
         elif d_close < d_ema200:
             d_structure = "BELOW_200_EMA"
             d_score = 5
             d_details = "Trading below 200 EMA. Macro downtrend."
+        else:
+            d_structure = "CONSOLIDATION"
+            d_score = 15
+            d_details = "Daily price fluctuating between 50 and 200 EMAs."
+
+        d_bullish = d_structure in ["PERFECT_STAGE_2_UPTREND", "BULLISH_ACCUMULATION", "HEALTHY_PULLBACK"]
+        if d_structure == "PERFECT_STAGE_2_UPTREND":
+            d_bias = "Stage 2 Bull Wave (20 > 50 > 200 EMA)"
+            d_status_label = "✅ Favorable Wave"
+        elif d_structure == "BULLISH_ACCUMULATION":
+            d_bias = "Bullish Support (> 50/200 EMA)"
+            d_status_label = "✅ Favorable Wave"
+        elif d_structure == "HEALTHY_PULLBACK":
+            d_bias = "Holding 20 EMA Pullback"
+            d_status_label = "⚡ Favorable Wave"
+        elif d_structure == "BELOW_200_EMA":
+            d_bias = "Macro Downtrend (< 200 EMA)"
+            d_status_label = "❌ Bearish Wave"
+        else:
+            d_bias = "Rangebound Consolidation"
+            d_status_label = "⚠️ Pullback Pending"
 
         # --- SCREEN 3: Micro Execution Timing (The Ripple) ---
         t_score = 10
@@ -114,10 +188,29 @@ class MTFConfluenceEngine:
             t_trigger = "ACTIVE_MOMENTUM_TRIGGER"
             t_score = 25
             t_details = f"Bullish green bar with {round(d_vol_ratio, 2)}x volume expansion and upward RSI hook ({round(d_rsi, 1)})."
+        elif is_green and (d_close >= d_ema20 or is_rsi_hook):
+            t_trigger = "PARTIAL_MOMENTUM"
+            t_score = 20
+            t_details = f"Positive daily close with RSI upward hook ({round(d_rsi, 1)}), awaiting volume expansion."
         elif is_green or is_rsi_hook:
             t_trigger = "PARTIAL_MOMENTUM"
             t_score = 15
-            t_details = "Positive daily close, awaiting higher volume expansion."
+            t_details = "Positive price action, awaiting higher volume surge."
+        else:
+            t_trigger = "WAIT_FOR_TRIGGER"
+            t_score = 5
+            t_details = "Red candle or declining momentum. Awaiting reversal pivot."
+
+        t_bullish = t_trigger in ["ACTIVE_MOMENTUM_TRIGGER", "PARTIAL_MOMENTUM"]
+        if t_trigger == "ACTIVE_MOMENTUM_TRIGGER":
+            t_bias = f"Volume Surge ({round(d_vol_ratio, 2)}x) + RSI Hook"
+            t_status_label = "⚡ Trigger Ready"
+        elif t_trigger == "PARTIAL_MOMENTUM":
+            t_bias = f"Positive Reversal (RSI {round(d_rsi, 1)})"
+            t_status_label = "🟢 Setup Active"
+        else:
+            t_bias = "Awaiting Breakout / Reversal Pivot"
+            t_status_label = "⏳ Awaiting Pivot"
 
         # Total Confluence Calculation (0 - 100)
         total_score = min(100, w_score + d_score + t_score)
@@ -146,6 +239,9 @@ class MTFConfluenceEngine:
             "verdict": verdict,
             "screen_1_weekly": {
                 "trend": w_trend,
+                "bullish": w_bullish,
+                "bias": w_bias,
+                "status_label": w_status_label,
                 "score": w_score,
                 "close": round(w_close, 2),
                 "ema_13": round(w_ema13, 2),
@@ -155,6 +251,9 @@ class MTFConfluenceEngine:
             },
             "screen_2_daily": {
                 "structure": d_structure,
+                "bullish": d_bullish,
+                "bias": d_bias,
+                "status_label": d_status_label,
                 "score": d_score,
                 "close": round(d_close, 2),
                 "ema_20": round(d_ema20, 2),
@@ -164,6 +263,9 @@ class MTFConfluenceEngine:
             },
             "screen_3_timing": {
                 "trigger": t_trigger,
+                "bullish": t_bullish,
+                "bias": t_bias,
+                "status_label": t_status_label,
                 "score": t_score,
                 "rsi_14": round(d_rsi, 1),
                 "vol_ratio": round(d_vol_ratio, 2),
