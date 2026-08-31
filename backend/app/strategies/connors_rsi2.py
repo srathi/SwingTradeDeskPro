@@ -19,7 +19,7 @@ class ConnorsRSI2Strategy(BaseStrategy):
     description: str = "Exploits short-term institutional panic selloffs (RSI_2 < 10) in verified 200 SMA macro uptrends for rapid 3-7 day snapbacks."
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
-        "min_volume": 300_000,
+        "min_volume": 100_000,
         "rsi2_max": 10.0,
         "min_score": 60,
         "atr_multiplier_sl": 2.0,
@@ -34,13 +34,12 @@ class ConnorsRSI2Strategy(BaseStrategy):
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         p = {**self.default_params, **(params or {})}
-        if df is None or len(df) < 50:
+        if df is None or len(df) < 35:
             return None
 
         data = compute_all_indicators(df)
         curr = data.iloc[-1]
-        prev1 = data.iloc[-2]
-        prev2 = data.iloc[-3] if len(data) >= 3 else prev1
+        prev1 = data.iloc[-2] if len(data) >= 2 else curr
 
         close = float(curr['Close'])
         open_p = float(curr['Open'])
@@ -55,9 +54,10 @@ class ConnorsRSI2Strategy(BaseStrategy):
         if close < p["min_price"] or vol_sma < p["min_volume"]:
             return None
 
-        # 1. Macro Trend Filter (Price > 200 SMA / EMA)
-        sma200 = float(curr.get('SMA_200', curr.get('EMA_200', 0)))
-        if close < sma200:
+        # 1. Macro Trend Filter (Price > 200 SMA / EMA or Price > 50 EMA)
+        sma200 = float(curr['SMA_200']) if ('SMA_200' in curr and not pd.isna(curr['SMA_200'])) else float(curr.get('EMA_200', curr.get('EMA_50', close)))
+        is_macro = (close >= sma200 * 0.985) if len(data) >= 150 else (close >= float(curr.get('EMA_50', close)) * 0.985)
+        if not is_macro:
             return None
 
         # 2. Extreme 2-Period RSI Panic Filter (RSI_2 <= 10)
@@ -68,13 +68,13 @@ class ConnorsRSI2Strategy(BaseStrategy):
         # 3. Stop Loss and Target
         stop_loss = round(close - (atr_val * p["atr_multiplier_sl"]), 2)
         risk_per_share = round(close - stop_loss, 2)
-        if risk_per_share <= 0:
+        risk_pct = round((risk_per_share / close) * 100.0, 2) if close > 0 else 0.0
+        if risk_per_share <= 0 or risk_pct > 9.0:
             return None
 
         sma5 = float(curr.get('SMA_5', close * 1.03))
         target_1 = round(max(sma5, close + (risk_per_share * p["rr_target_1"])), 2)
         target_2 = round(close + (risk_per_share * p["rr_target_2"]), 2)
-        risk_pct = round((risk_per_share / close) * 100.0, 2)
 
         # Quality scoring
         score = 60
@@ -145,22 +145,25 @@ class ConnorsRSI2Strategy(BaseStrategy):
         data['Target_1'] = np.nan
         data['Target_2'] = np.nan
 
-        for i in range(50, len(data)):
+        start_idx = 35 if len(data) >= 50 else 20
+        for i in range(start_idx, len(data)):
             curr = data.iloc[i]
-            close = curr['Close']
-            sma_200 = curr['SMA_200'] if not pd.isna(curr['SMA_200']) else curr['EMA_200']
-            rsi2 = curr['RSI_2']
-            atr_val = curr['ATR_14']
-            vol_sma = curr['Vol_SMA20']
+            close = float(curr['Close'])
+            sma_200 = float(curr['SMA_200']) if ('SMA_200' in curr and not pd.isna(curr['SMA_200'])) else float(curr.get('EMA_200', curr.get('EMA_50', close)))
+            rsi2 = float(curr.get('RSI_2', 50.0))
+            atr_val = float(curr.get('ATR_14', close * 0.02))
+            vol_sma = float(curr.get('Vol_SMA20', 100_000))
 
             if close < p["min_price"] or vol_sma < p["min_volume"]:
                 continue
 
-            # Long Entry: Price > SMA 200 and RSI_2 <= 10.0
-            if (close > sma_200) and (rsi2 <= p["rsi2_max"]):
+            # Long Entry: Price > SMA 200/EMA 50 and RSI_2 <= 10.0
+            is_macro = (close >= sma_200 * 0.985) if i >= 150 else (close >= float(curr.get('EMA_50', close)) * 0.985)
+            if is_macro and (rsi2 <= p["rsi2_max"]):
                 sl = round(close - (atr_val * p["atr_multiplier_sl"]), 2)
                 risk = close - sl
-                if risk > 0:
+                risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
+                if risk > 0 and risk_pct <= 9.0:
                     data.iat[i, data.columns.get_loc('Signal')] = 1
                     data.iat[i, data.columns.get_loc('Stop_Loss')] = sl
                     data.iat[i, data.columns.get_loc('Target_1')] = round(close + (risk * p["rr_target_1"]), 2)

@@ -18,7 +18,7 @@ class GMMABreakoutStrategy(BaseStrategy):
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
         "min_volume": 100_000,
-        "min_slow_spread_pct": 1.5,
+        "min_slow_spread_pct": 1.2,
         "rr_target_1": 2.5,
         "rr_target_2": 4.0,
         "max_risk_pct": 8.5
@@ -31,7 +31,7 @@ class GMMABreakoutStrategy(BaseStrategy):
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         p = {**self.default_params, **(params or {})}
-        if df is None or len(df) < 80:
+        if df is None or len(df) < 45:
             return None
 
         # 1. Compute indicators
@@ -75,8 +75,8 @@ class GMMABreakoutStrategy(BaseStrategy):
         # Fast ribbon is aligned above or touching the slow ribbon
         is_ribbon_bullish = min_fast >= max_slow * 0.985
         
-        # Slow investor ribbon is expanding upward (30 EMA > 60 EMA)
-        is_slow_expanding = slow_30 > slow_60
+        # Slow investor ribbon is expanding upward (30 EMA >= 60 EMA)
+        is_slow_expanding = slow_30 >= slow_60 * 0.99
         slow_spread_pct = ((slow_30 - slow_60) / slow_60) * 100.0 if slow_60 > 0 else 0.0
 
         if not (is_ribbon_bullish and is_slow_expanding and slow_spread_pct >= p["min_slow_spread_pct"]):
@@ -84,7 +84,7 @@ class GMMABreakoutStrategy(BaseStrategy):
 
         # 5. Breakout or Trend Continuation Condition
         prev_20_high = float(data['High'].iloc[-21:-1].max()) if len(data) >= 22 else close
-        is_trend_leader = (close >= prev_20_high * 0.97) and (close >= open_price * 0.99)
+        is_trend_leader = (close >= prev_20_high * 0.97) and (close >= open_price * 0.99 or close >= low + (high - low) * 0.35)
 
         if not is_trend_leader:
             return None
@@ -113,15 +113,15 @@ class GMMABreakoutStrategy(BaseStrategy):
 
         # 7. Setup Score (60 - 100)
         score = 65
-        if slow_spread_pct >= 4.0:
+        if slow_spread_pct >= 3.5:
             score += 15
-        elif slow_spread_pct >= 2.5:
+        elif slow_spread_pct >= 2.0:
             score += 10
         if close >= prev_20_high * 0.995:
             score += 10 # Active 20D breakout
-        if vol_ratio >= 1.3:
+        if vol_ratio >= 1.2:
             score += 10
-        score = min(score, 100)
+        score = min(100, score)
 
         is_breaking = close >= prev_20_high * 0.995
         status_label = "GMMA Ribbon Expansion Breakout" if is_breaking else f"GMMA Trend Runner (+{round(slow_spread_pct, 1)}% Spread)"
@@ -180,7 +180,7 @@ class GMMABreakoutStrategy(BaseStrategy):
         data['Target_1'] = np.nan
         data['Target_2'] = np.nan
 
-        if len(data) < 80:
+        if len(data) < 45:
             return data
 
         fast_ribbon, slow_ribbon = gmma_ribbons(data['Close'])
@@ -188,13 +188,16 @@ class GMMABreakoutStrategy(BaseStrategy):
         slow_60 = slow_ribbon['EMA_60']
         fast_15 = fast_ribbon['EMA_15']
 
-        for i in range(50, len(data)):
+        start_idx = 35 if len(data) >= 50 else 20
+        for i in range(start_idx, len(data)):
             curr = data.iloc[i]
-            close = curr['Close']
-            open_p = curr['Open']
-            atr_val = curr['ATR_14']
-            ema20 = curr['EMA_20']
-            ema50 = curr['EMA_50']
+            close = float(curr['Close'])
+            open_p = float(curr['Open'])
+            high = float(curr['High'])
+            low = float(curr['Low'])
+            atr_val = float(curr.get('ATR_14', close * 0.02))
+            ema20 = float(curr.get('EMA_20', close))
+            ema50 = float(curr.get('EMA_50', close))
 
             if close < p["min_price"]:
                 continue
@@ -210,7 +213,7 @@ class GMMABreakoutStrategy(BaseStrategy):
                 continue
 
             is_ribbon_bullish = f15 >= s30 * 0.985
-            is_slow_expanding = s30 > s60
+            is_slow_expanding = s30 >= s60 * 0.99
             spread_pct = ((s30 - s60) / s60) * 100.0 if s60 > 0 else 0.0
 
             if not (is_ribbon_bullish and is_slow_expanding and spread_pct >= p["min_slow_spread_pct"]):

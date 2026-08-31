@@ -19,7 +19,7 @@ class VolatilitySqueezeStrategy(BaseStrategy):
     description: str = "Identifies explosive swing moves as Bollinger Bands expand outside Keltner Channels with accelerating MACD momentum."
     default_params: Dict[str, Any] = {
         "min_price": 50.0,
-        "min_volume": 300_000,
+        "min_volume": 100_000,
         "min_score": 60,
         "rr_target_1": 2.0,
         "rr_target_2": 3.5,
@@ -33,12 +33,12 @@ class VolatilitySqueezeStrategy(BaseStrategy):
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
         p = {**self.default_params, **(params or {})}
-        if df is None or len(df) < 50:
+        if df is None or len(df) < 35:
             return None
 
         data = compute_all_indicators(df)
         curr = data.iloc[-1]
-        prev = data.iloc[-2]
+        prev = data.iloc[-2] if len(data) >= 2 else curr
 
         close = float(curr['Close'])
         open_p = float(curr['Open'])
@@ -53,15 +53,16 @@ class VolatilitySqueezeStrategy(BaseStrategy):
         if close < p["min_price"] or vol_sma < p["min_volume"]:
             return None
 
-        # 1. Macro Trend Filter (Price > 200 EMA and 20 EMA > 50 EMA)
-        ema20 = float(curr.get('EMA_20', 0))
-        ema50 = float(curr.get('EMA_50', 0))
-        ema200 = float(curr.get('EMA_200', 0))
-        if close < ema200 or ema20 < ema50:
+        # 1. Macro Trend Filter (Price >= 50 EMA and 20 EMA >= 50 EMA or Price >= 200 EMA)
+        ema20 = float(curr.get('EMA_20', close))
+        ema50 = float(curr.get('EMA_50', close))
+        ema200 = float(curr.get('EMA_200', ema50))
+        is_macro_bull = (close >= ema50 * 0.985) and (ema20 >= ema50 * 0.985 or (close >= ema200 * 0.98 if len(data) >= 150 else True))
+        if not is_macro_bull:
             return None
 
-        # 2. Check Squeeze in the last 5 sessions (BB inside KC)
-        lookback = min(6, len(data))
+        # 2. Check Squeeze in the last 10 sessions (BB inside KC)
+        lookback = min(12, len(data))
         squeeze_active_recently = False
         for i in range(len(data) - lookback, len(data) - 1):
             row = data.iloc[i]
@@ -72,38 +73,39 @@ class VolatilitySqueezeStrategy(BaseStrategy):
         if not squeeze_active_recently:
             return None
 
-        # 3. Squeeze Firing / Expansion: Today BB Upper > KC Upper
+        # 3. Squeeze Firing / Expansion: Today BB Upper >= KC Upper or expanding
         bb_upper = float(curr['BB_Upper'])
         kc_upper = float(curr['KC_Upper'])
-        if bb_upper <= kc_upper:
+        is_expansion = (bb_upper >= kc_upper * 0.998) or (bb_upper > float(prev['BB_Upper']) and close >= ema20)
+        if not is_expansion:
             return None
 
-        # 4. Momentum Direction: MACD Histogram positive and increasing
+        # 4. Momentum Direction: MACD Histogram accelerating upward
         macd_h_curr = float(curr.get('MACD_Hist', 0))
         macd_h_prev = float(prev.get('MACD_Hist', 0))
-        if macd_h_curr <= 0 or macd_h_curr <= macd_h_prev:
+        if macd_h_curr <= macd_h_prev:
             return None
 
-        # 5. Bullish Candle confirmation
-        if close < float(curr['Open']):
+        # 5. Bullish Candle or Lower Rejection confirmation
+        if close < open_p and close < (low + (high - low) * 0.35):
             return None
 
         # Sizing & Risk Management
         recent_low = float(data['Low'].iloc[-lookback:].min())
         stop_loss = round(min(recent_low, close - (atr_val * p["atr_multiplier_sl"])), 2)
         risk_per_share = round(close - stop_loss, 2)
-        if risk_per_share <= 0:
+        risk_pct = round((risk_per_share / close) * 100.0, 2) if close > 0 else 0.0
+        if risk_per_share <= 0 or risk_pct > 9.0:
             return None
 
         target_1 = round(close + (risk_per_share * p["rr_target_1"]), 2)
         target_2 = round(close + (risk_per_share * p["rr_target_2"]), 2)
-        risk_pct = round((risk_per_share / close) * 100.0, 2)
 
         # Quality scoring
         score = 60
-        if vol_ratio >= 1.3: score += 15
-        if vol_ratio >= 2.0: score += 10
-        if close > float(curr.get('High_20', close)): score += 15
+        if vol_ratio >= 1.2: score += 15
+        if vol_ratio >= 1.6: score += 10
+        if close > float(curr.get('High_20', close)) * 0.995: score += 15
         score = min(100, score)
 
         if score < p["min_score"]:
@@ -150,7 +152,7 @@ class VolatilitySqueezeStrategy(BaseStrategy):
             "reasons": [
                 f"TTM Volatility Squeeze expansion out of Keltner Channel compression",
                 f"Accelerating MACD histogram momentum ({macd_h_curr:.2f} > {macd_h_prev:.2f})",
-                f"Stage 2 Bullish alignment (Price > 200 EMA & 20 EMA > 50 EMA)"
+                f"Stage 2 Bullish alignment (Price > 50 EMA & 20 EMA > 50 EMA)"
             ]
         }
 
@@ -167,42 +169,48 @@ class VolatilitySqueezeStrategy(BaseStrategy):
         data['Target_1'] = np.nan
         data['Target_2'] = np.nan
 
-        for i in range(50, len(data)):
+        start_idx = 35 if len(data) >= 50 else 20
+        for i in range(start_idx, len(data)):
             curr = data.iloc[i]
             prev = data.iloc[i - 1]
 
-            close = curr['Close']
-            open_p = curr['Open']
-            ema20 = curr['EMA_20']
-            ema50 = curr['EMA_50']
-            ema200 = curr['EMA_200']
-            atr_val = curr['ATR_14']
-            vol_sma = curr['Vol_SMA20']
+            close = float(curr['Close'])
+            open_p = float(curr['Open'])
+            high = float(curr['High'])
+            low = float(curr['Low'])
+            ema20 = float(curr.get('EMA_20', close))
+            ema50 = float(curr.get('EMA_50', close))
+            ema200 = float(curr.get('EMA_200', ema50))
+            atr_val = float(curr.get('ATR_14', close * 0.02))
+            vol_sma = float(curr.get('Vol_SMA20', 100_000))
 
             if close < p["min_price"] or vol_sma < p["min_volume"]:
                 continue
 
-            # Check recent squeeze (1 to 5 bars back)
+            # Check recent squeeze (1 to 10 bars back)
             had_squeeze = False
-            for look in range(max(0, i - 5), i):
+            for look in range(max(0, i - 10), i):
                 row = data.iloc[look]
-                if row['BB_Upper'] <= row['KC_Upper'] and row['BB_Lower'] >= row['KC_Lower']:
+                if float(row['BB_Upper']) <= float(row['KC_Upper']) and float(row['BB_Lower']) >= float(row['KC_Lower']):
                     had_squeeze = True
                     break
 
             if not had_squeeze:
                 continue
 
-            # Breakout expansion + MACD Hist positive & accelerating + macro bull
-            is_expansion = curr['BB_Upper'] > curr['KC_Upper']
-            is_macd_pos_inc = (curr['MACD_Hist'] > 0) and (curr['MACD_Hist'] > prev['MACD_Hist'])
-            is_macro_bull = (close > ema200) and (ema20 > ema50) and (close >= open_p)
+            # Breakout expansion + MACD Hist accelerating + macro bull
+            bb_upper = float(curr['BB_Upper'])
+            kc_upper = float(curr['KC_Upper'])
+            is_expansion = (bb_upper >= kc_upper * 0.998) or (bb_upper > float(prev['BB_Upper']) and close >= ema20)
+            is_macd_up = float(curr.get('MACD_Hist', 0)) > float(prev.get('MACD_Hist', 0))
+            is_macro_bull = (close >= ema50 * 0.985) and (ema20 >= ema50 * 0.985 or (close >= ema200 * 0.98 if i >= 150 else True)) and (close >= open_p or close >= low + (high - low) * 0.35)
 
-            if is_expansion and is_macd_pos_inc and is_macro_bull:
-                look_low = float(data['Low'].iloc[max(0, i - 5):i+1].min())
+            if is_expansion and is_macd_up and is_macro_bull:
+                look_low = float(data['Low'].iloc[max(0, i - 8):i+1].min())
                 sl = round(min(look_low, close - (atr_val * p["atr_multiplier_sl"])), 2)
                 risk = close - sl
-                if risk > 0:
+                risk_pct = (risk / close) * 100.0 if close > 0 else 0.0
+                if risk > 0 and risk_pct <= 9.0:
                     data.iat[i, data.columns.get_loc('Signal')] = 1
                     data.iat[i, data.columns.get_loc('Stop_Loss')] = sl
                     data.iat[i, data.columns.get_loc('Target_1')] = round(close + (risk * p["rr_target_1"]), 2)
