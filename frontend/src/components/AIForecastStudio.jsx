@@ -3,7 +3,7 @@ import {
   Sparkles, Search, TrendingUp, TrendingDown, ShieldAlert, 
   BarChart2, RefreshCw, Download, Layers, Activity, Cpu, 
   AlertTriangle, ArrowUpRight, ArrowDownRight, Compass, ShieldCheck,
-  CheckCircle2, Gauge, Zap, Database, ArrowRight
+  CheckCircle2, Gauge, Zap, Database, ArrowRight, FileDown
 } from 'lucide-react';
 import { 
   fetchAIForecast, 
@@ -99,6 +99,41 @@ export default function AIForecastStudio({
       setMacroResult(null);
     } finally {
       setMacroLoading(false);
+    }
+  };
+
+  const [macroPdfLoading, setMacroPdfLoading] = useState(false);
+
+  const handleExportMacroPdf = async () => {
+    if (!macroResult || !macroResult.ticker) return;
+    setMacroPdfLoading(true);
+    try {
+      const payload = {
+        ticker: macroResult.ticker,
+        forward_horizon: Number(forwardHorizon),
+        target_threshold_pct: Number(targetThresholdPct),
+        period: "2y"
+      };
+      const res = await fetch('/api/ai/macro-alignment/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Failed to generate Macro Alignment PDF");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTicker = macroResult.ticker.replace('.NS', '').replace('.BO', '');
+      a.download = `SwingTradeDesk_MacroMemo_${cleanTicker}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Error downloading Macro Alignment PDF: " + err.message);
+    } finally {
+      setMacroPdfLoading(false);
     }
   };
 
@@ -910,7 +945,19 @@ export default function AIForecastStudio({
 
                 {/* Quick Action Workflow Links */}
                 <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-800/80 text-xs">
-                  <span className="text-gray-400 text-[11px] font-semibold uppercase">Action Workflows:</span>
+                  <button
+                    onClick={handleExportMacroPdf}
+                    disabled={macroPdfLoading}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 rounded-lg font-medium transition-colors flex items-center space-x-1.5 shadow-sm"
+                    title="Download 2-Page Institutional Macro-Factor Alignment Memo (PDF)"
+                  >
+                    {macroPdfLoading ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                    ) : (
+                      <FileDown className="w-3.5 h-3.5 text-cyan-400" />
+                    )}
+                    <span>{macroPdfLoading ? "Generating..." : "Export Macro Memo (PDF)"}</span>
+                  </button>
                   <button
                     onClick={() => onSelectTicker(macroResult.ticker)}
                     className="px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-cyan-300 border border-gray-800 hover:border-cyan-500/40 rounded-lg font-medium transition-colors flex items-center space-x-1.5"

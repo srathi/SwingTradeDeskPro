@@ -100,3 +100,27 @@ def run_backtest(req: BacktestRequest):
     metrics["strategy_id"] = req.strategy_id
     metrics["period"] = req.period
     return metrics
+
+
+@router.post("/export/pdf")
+def export_backtest_pdf(req: BacktestRequest):
+    """
+    Executes the backtest and returns an Institutional Strategy Performance Factsheet PDF.
+    """
+    import io
+    from fastapi.responses import StreamingResponse
+    from backend.app.core.pdf_report_engine import PDFReportEngine
+
+    metrics = run_backtest(req)
+    pdf_bytes = PDFReportEngine.generate_backtest_pdf(metrics)
+    target_name = (req.ticker or req.universe or "Backtest").replace('.NS', '').replace('.BO', '').replace(':', '_').replace(' ', '_')
+    filename = f"SwingTradeDesk_Factsheet_{target_name}_{req.strategy_id}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf"
+        }
+    )
+

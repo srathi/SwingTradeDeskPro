@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   XCircle,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { runBacktest, fetchStrategies, fetchUniverses } from '../services/api';
 import StockSearchInput from './StockSearchInput';
@@ -264,6 +265,45 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!metrics) return;
+    setPdfLoading(true);
+    try {
+      const payload = {
+        ticker: metrics.ticker?.startsWith('Basket') ? null : metrics.ticker,
+        universe: metrics.ticker?.startsWith('Basket') ? metrics.ticker.replace('Basket: ', '') : null,
+        strategy_id: metrics.strategy_id || strategyId,
+        period: period,
+        initial_capital: Number(initialCapital),
+        risk_pct: Number(riskPct),
+        slippage_pct: Number(slippagePct),
+        enable_indian_taxes: enableTaxes
+      };
+      const res = await fetch('/api/backtest/export/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Failed to generate PDF Factsheet");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTarget = (metrics.ticker || "Backtest").replace('.NS', '').replace(':', '_').replace(' ', '_');
+      a.download = `SwingTradeDesk_Factsheet_${cleanTarget}_${metrics.strategy_id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Error downloading Backtest PDF Factsheet: " + err.message);
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const filteredTrades = metrics && metrics.trades ? metrics.trades.filter(t => {
@@ -558,13 +598,29 @@ export default function BacktestStudio({ initialTicker = "", initialStrategy = "
                 </div>
               </div>
 
-              <button
-                onClick={exportCSV}
-                className="px-3.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-mono flex items-center space-x-1.5 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Export CSV</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleExportPdf}
+                  disabled={pdfLoading}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 text-xs font-mono flex items-center space-x-1.5 transition-colors shadow-sm"
+                  title="Download 2-Page Institutional Strategy Factsheet (PDF)"
+                >
+                  {pdfLoading ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                  ) : (
+                    <FileDown className="w-3.5 h-3.5 text-cyan-400" />
+                  )}
+                  <span>{pdfLoading ? "Generating..." : "Export Factsheet (PDF)"}</span>
+                </button>
+
+                <button
+                  onClick={exportCSV}
+                  className="px-3.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-mono flex items-center space-x-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">

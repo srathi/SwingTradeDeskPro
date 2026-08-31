@@ -178,3 +178,27 @@ async def run_macro_factor_alignment(req: MacroAlignmentRequest):
         raise HTTPException(status_code=500, detail=f"Macro-Factor alignment failed: {str(e)}")
 
 
+@router.post("/macro-alignment/export/pdf")
+async def export_macro_alignment_pdf(req: MacroAlignmentRequest):
+    """
+    Executes the Macro-Factor Alignment pipeline and returns an Institutional Investment Memo PDF.
+    """
+    import io
+    from fastapi.responses import StreamingResponse
+    from backend.app.core.pdf_report_engine import PDFReportEngine
+
+    result = await run_macro_factor_alignment(req)
+    pdf_bytes = PDFReportEngine.generate_macro_pdf(result)
+    clean_sym = req.ticker.strip().replace('.NS', '').replace('.BO', '')
+    filename = f"SwingTradeDesk_MacroMemo_{clean_sym}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf"
+        }
+    )
+
+
+

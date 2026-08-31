@@ -18,7 +18,35 @@ from backend.app.strategies import STRATEGY_REGISTRY
 from backend.app.backtester.engine import BacktestEngine
 from backend.app.backtester.analytics import compute_performance_metrics
 
+import io
+from fastapi.responses import StreamingResponse
+from backend.app.core.pdf_report_engine import PDFReportEngine
+
 router = APIRouter(prefix="/api/deep-scan", tags=["DeepScan"])
+
+
+@router.get("/export/pdf")
+def export_deep_scan_pdf(
+    ticker: str = Query(..., description="Stock ticker symbol or company name"),
+    period: str = "2y",
+    capital: float = 500000.0,
+    risk_pct: float = 1.0
+):
+    """
+    Generates and downloads a 2-page Institutional Deep Scan Research Tear Sheet PDF.
+    """
+    scan_data = run_single_stock_deep_scan(ticker, period=period, capital=capital, risk_pct=risk_pct)
+    pdf_bytes = PDFReportEngine.generate_deepscan_pdf(scan_data)
+    clean_sym = scan_data.get('ticker', ticker).replace('.NS', '').replace('.BO', '')
+    filename = f"SwingTradeDesk_TearSheet_{clean_sym}.pdf"
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf"
+        }
+    )
 
 
 @router.get("/{ticker:path}")

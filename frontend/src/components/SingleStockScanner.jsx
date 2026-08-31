@@ -18,7 +18,8 @@ import {
   BookMarked,
   CheckCircle2,
   Target,
-  Compass
+  Compass,
+  FileDown
 } from 'lucide-react';
 import { fetchDeepScan, searchStocks, fetchAIForecast, fetchAlphaFusion, logJournalTrade } from '../services/api';
 import StockSearchInput from './StockSearchInput';
@@ -134,6 +135,31 @@ export default function SingleStockScanner({
     } catch (err) {
       alert("Failed to log trade to paper journal: " + err.message);
       setLogTradeStatus(null);
+    }
+  };
+
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!data || !data.ticker) return;
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/deep-scan/export/pdf?ticker=${encodeURIComponent(data.ticker)}&period=${period}&capital=${capital}&risk_pct=${riskPct}`);
+      if (!res.ok) throw new Error("Failed to generate PDF");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanTicker = data.ticker.replace('.NS', '').replace('.BO', '');
+      a.download = `SwingTradeDesk_TearSheet_${cleanTicker}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Error downloading PDF Tear Sheet: " + err.message);
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -420,6 +446,19 @@ export default function SingleStockScanner({
                   Instant Navigation:
                 </div>
                 <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleExportPdf}
+                    disabled={pdfLoading}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-sm"
+                    title="Download 2-Page Institutional Research Tear Sheet (PDF)"
+                  >
+                    {pdfLoading ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                    ) : (
+                      <FileDown className="w-3.5 h-3.5 text-cyan-400" />
+                    )}
+                    <span>{pdfLoading ? "Generating..." : "Export Tear Sheet"}</span>
+                  </button>
                   <button
                     onClick={() => onOpenChart && onOpenChart(data.ticker)}
                     className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 hover:border-cyan-500/50 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors"
