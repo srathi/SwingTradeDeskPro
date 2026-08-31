@@ -66,6 +66,17 @@ class MarketRegimeEngine:
             vix_prev = round(float(vix_df['Close'].iloc[-2]), 2)
             vix_change_pct = round(((vix_val - vix_prev) / vix_prev) * 100.0, 2)
 
+        # 1b. Fetch Brent Crude Oil Futures (BZ=F)
+        brent_df = data_engine.fetch_ticker_data("BZ=F", period="1mo", interval="1d")
+        brent_price = 78.50
+        brent_prev = 78.50
+        brent_change_pct = 0.0
+        if brent_df is not None and len(brent_df) >= 2:
+            brent_price = round(float(brent_df['Close'].iloc[-1]), 2)
+            brent_prev = round(float(brent_df['Close'].iloc[-2]), 2)
+            if brent_prev > 0:
+                brent_change_pct = round(((brent_price - brent_prev) / brent_prev) * 100.0, 2)
+
         # 2. Benchmark Technical Analysis
         bench_close = 24175.65 if market != "US" else 5800.0
         bench_change_pct = 0.35
@@ -272,6 +283,15 @@ class MarketRegimeEngine:
                 "label": vol_label,
                 "color": vol_color,
                 "implied_daily_move_pct": implied_daily_move
+            },
+            "brent_crude": {
+                "symbol": "BZ=F",
+                "name": "Brent Crude Oil",
+                "price": brent_price,
+                "change_pct": brent_change_pct,
+                "currency": "USD",
+                "unit": "$/bbl",
+                "impact_label": "High Energy Cost / Inflation Risk" if brent_price > 85 else "Moderate Range" if brent_price >= 70 else "Favorable / Disinflationary"
             },
             "breadth": {
                 "pct_above_200_ema": pct_200,

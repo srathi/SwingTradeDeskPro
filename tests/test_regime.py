@@ -47,6 +47,12 @@ def test_market_regime_engine_direct():
     assert res["mmi"]["zone"] in ["EXTREME_FEAR", "FEAR", "GREED", "EXTREME_GREED"]
     assert "components" in res["mmi"]
 
+    # 6. Brent Crude Oil
+    assert "brent_crude" in res
+    assert res["brent_crude"]["symbol"] == "BZ=F"
+    assert res["brent_crude"]["price"] > 0
+    assert "impact_label" in res["brent_crude"]
+
 
 def test_market_regime_api_endpoint():
     """Verify GET /api/market-regime/current returns valid JSON structure."""
@@ -61,3 +67,5 @@ def test_market_regime_api_endpoint():
     assert data["breadth"]["rating"] is not None
     assert data["volatility"]["implied_daily_move_pct"] is not None
     assert data["verdict"]["description"] is not None
+    assert "brent_crude" in data
+    assert data["brent_crude"]["price"] > 0

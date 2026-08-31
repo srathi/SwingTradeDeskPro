@@ -114,6 +114,20 @@ export default function TopHeader({
                 </span>
               </div>
 
+              {/* Brent Crude Oil Live Banner */}
+              {regimeData.brent_crude && (
+                <>
+                  <span className="text-gray-700 hidden sm:inline">|</span>
+                  <div className="hidden sm:flex items-center space-x-1" title="Brent Crude Oil Spot Futures ($/bbl) - Key Macro Driver for Indian Equities & CAD">
+                    <span className="text-gray-400">Brent:</span>
+                    <span className="text-white font-bold">${regimeData.brent_crude?.price?.toFixed(2) ?? regimeData.brent_crude?.price}</span>
+                    <span className={`text-[10px] font-bold ${regimeData.brent_crude?.change_pct >= 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      ({regimeData.brent_crude?.change_pct >= 0 ? '+' : ''}{regimeData.brent_crude?.change_pct}%)
+                    </span>
+                  </div>
+                </>
+              )}
+
               <span className="text-gray-700 hidden sm:inline">|</span>
 
               {/* Benchmark RSI */}
@@ -237,7 +251,7 @@ export default function TopHeader({
             </div>
 
             {/* Metrics Breakdown Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
               
               {/* Benchmark Nifty */}
               <div className="bg-gray-950/70 p-3.5 rounded-xl border border-gray-800 space-y-1.5">
@@ -259,7 +273,21 @@ export default function TopHeader({
                   {regimeData.volatility?.change_pct >= 0 ? '+' : ''}{regimeData.volatility?.change_pct}% Today
                 </div>
                 <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400">
-                  Implied Daily Move: <span className="text-amber-300 font-bold">±{regimeData.volatility?.implied_daily_move_pct ?? (regimeData.volatility?.value ? (regimeData.volatility.value / 15.87).toFixed(2) : '0.88')}%</span>
+                  Implied Move: <span className="text-amber-300 font-bold">±{regimeData.volatility?.implied_daily_move_pct ?? (regimeData.volatility?.value ? (regimeData.volatility.value / 15.87).toFixed(2) : '0.88')}%</span>
+                </div>
+              </div>
+
+              {/* Brent Crude Oil */}
+              <div className="bg-gray-950/70 p-3.5 rounded-xl border border-gray-800 space-y-1.5">
+                <span className="text-[10px] text-gray-400 uppercase font-bold block">Brent Crude Oil</span>
+                <div className="text-base font-bold text-white">
+                  ${regimeData.brent_crude?.price?.toFixed(2) ?? regimeData.brent_crude?.price ?? '78.50'}
+                </div>
+                <div className={`text-xs ${regimeData.brent_crude?.change_pct >= 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {regimeData.brent_crude?.change_pct >= 0 ? '+' : ''}{regimeData.brent_crude?.change_pct ?? 0}% Today
+                </div>
+                <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400">
+                  Energy Impact: <span className="text-cyan-300 font-bold">{regimeData.brent_crude?.impact_label?.split('/')[0] || 'NORMAL'}</span>
                 </div>
               </div>
 
@@ -271,7 +299,7 @@ export default function TopHeader({
                 </div>
                 <div className="text-xs text-gray-400">Above 200 EMA</div>
                 <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400">
-                  Breadth Quality: <span className="text-emerald-300 font-bold">{regimeData.breadth?.rating || regimeData.breadth?.health_status || 'HEALTHY'}</span>
+                  Quality: <span className="text-emerald-300 font-bold">{regimeData.breadth?.rating || regimeData.breadth?.health_status || 'HEALTHY'}</span>
                 </div>
               </div>
 

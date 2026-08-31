@@ -521,6 +521,7 @@ class PDFReportEngine:
         story.append(Spacer(1, 4))
         story.append(Paragraph("8. Indian Macroeconomic Factor Synchronization (Zero-Lookahead Alignment)", styles['SectionHeading']))
         macro_hud = data.get('macro_hud', {})
+        brent_val = float(data.get('brent_price', macro_hud.get('brent_price', 78.50)))
         macro_table_data = [
             [Paragraph("Macro Parameter", styles['TableHeader']), Paragraph("Current Level", styles['TableHeader']), Paragraph("Policy Stance & Trend", styles['TableHeader']), Paragraph("Macro Parameter", styles['TableHeader']), Paragraph("Current Level", styles['TableHeader']), Paragraph("Policy Stance & Trend", styles['TableHeader'])],
             [
@@ -530,6 +531,10 @@ class PDFReportEngine:
             [
                 Paragraph("CPI Inflation Rate", styles['TableCellBold']), Paragraph(f"<b>{macro_hud.get('cpi_inflation_pct', 3.65):.2f}%</b>", styles['TableCell']), Paragraph("Within RBI 4+/-2% Band", styles['TableCell']),
                 Paragraph("USD / INR Forex Rate", styles['TableCellBold']), Paragraph(f"<b>Rs {macro_hud.get('usd_inr_rate', 84.15):.2f}</b>", styles['TableCell']), Paragraph("Managed Float Stability", styles['TableCell'])
+            ],
+            [
+                Paragraph("Brent Crude Oil", styles['TableCellBold']), Paragraph(f"<b>${brent_val:.2f}</b>", styles['TableCellCyan']), Paragraph("Energy / CAD Driver", styles['TableCell']),
+                Paragraph("Monetary Stance", styles['TableCellBold']), Paragraph("<b>Disinflationary</b>", styles['TableCell']), Paragraph("Supportive for Equities", styles['TableCell'])
             ]
         ]
         t_m = Table(macro_table_data, colWidths=[110, 65, 95, 110, 65, 95])
