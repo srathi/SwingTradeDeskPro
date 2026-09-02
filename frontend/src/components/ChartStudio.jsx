@@ -148,9 +148,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
     const rsiContainer = rsiContainerRef.current;
 
     const initialWidth = container.clientWidth || 800;
-    const isMobile = window.innerWidth < 640;
-    const mainHeight = isFullscreen ? Math.max(360, window.innerHeight - 280) : (isMobile ? 320 : 420);
-    const rsiHeight = isFullscreen ? 140 : (isMobile ? 100 : 120);
+    const mainHeight = isFullscreen ? Math.max(360, window.innerHeight - 280) : 400;
+    const rsiHeight = isFullscreen ? 140 : 120;
 
     let chart = null;
     let rsiChart = null;
@@ -586,8 +585,8 @@ export default function ChartStudio({ initialTicker = "", onOpenRisk }) {
           </div>
 
           {/* Indicator toggles */}
-          <div className="flex items-end">
-            <div className="flex items-center space-x-1 bg-gray-950 p-1 rounded-lg border border-gray-800 text-gray-300 w-full h-[38px] overflow-x-auto no-scrollbar justify-start sm:justify-around whitespace-nowrap">
+          <div className="flex items-end space-x-1">
+            <div className="flex items-center space-x-1 bg-gray-950 p-1 rounded-lg border border-gray-800 text-gray-300 w-full h-[38px] justify-around">
               <button
                 onClick={() => setShowEMA20(!showEMA20)}
                 className={`px-1.5 py-1 rounded font-mono text-[10px] sm:text-[11px] ${showEMA20 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-gray-500'}`}
